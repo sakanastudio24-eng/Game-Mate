@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
-import { Text, Icon } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { colors, spacing } from '../lib/theme';
-import { Group } from '../lib/mockData';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { Group } from "../lib/mockData";
+import { colors, spacing } from "../lib/theme";
 
 // GroupCard: Shows group info, members, join button
 // Backend integration: onJoin() sends POST /api/groups/{id}/join in Phase B
@@ -15,30 +15,48 @@ interface GroupCardProps {
   isJoined?: boolean;
 }
 
-export function GroupCard({ group, onPress, onJoin, isJoined = false }: GroupCardProps) {
-  const modeColor = group.mode === 'ranked' ? colors.primary : colors.secondary;
+export function GroupCard({
+  group,
+  onPress,
+  onJoin,
+  isJoined = false,
+}: GroupCardProps) {
+  const modeColor = group.mode === "ranked" ? colors.primary : colors.secondary;
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+    >
       <View style={styles.header}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{group.name}</Text>
           <Text style={styles.game}>{group.game}</Text>
         </View>
         <View style={[styles.modeBadge, { backgroundColor: modeColor }]}>
-          <Text style={styles.modeText}>{group.mode === 'ranked' ? '⭐' : '😄'}</Text>
+          <Text style={styles.modeText}>
+            {group.mode === "ranked" ? "⭐" : "😄"}
+          </Text>
         </View>
       </View>
 
       <View style={styles.info}>
         <View style={styles.infoItem}>
-          <MaterialCommunityIcons name="account-group" size={16} color={colors.primary} />
+          <MaterialCommunityIcons
+            name="account-group"
+            size={16}
+            color={colors.primary}
+          />
           <Text style={styles.infoText}>{group.memberCount} members</Text>
         </View>
 
         {group.micRequired && (
           <View style={styles.infoItem}>
-            <MaterialCommunityIcons name="microphone" size={16} color={colors.primary} />
+            <MaterialCommunityIcons
+              name="microphone"
+              size={16}
+              color={colors.primary}
+            />
             <Text style={styles.infoText}>Mic required</Text>
           </View>
         )}
@@ -46,7 +64,7 @@ export function GroupCard({ group, onPress, onJoin, isJoined = false }: GroupCar
         {group.minRank && (
           <View style={styles.infoItem}>
             <Text style={styles.infoText}>
-              {group.minRank} - {group.maxRank || 'Max'}
+              {group.minRank} - {group.maxRank || "Max"}
             </Text>
           </View>
         )}
@@ -64,8 +82,10 @@ export function GroupCard({ group, onPress, onJoin, isJoined = false }: GroupCar
           pressed && styles.buttonPressed,
         ]}
       >
-        <Text style={[styles.joinButtonText, isJoined && styles.joinedButtonText]}>
-          {isJoined ? '✓ Joined' : 'Join'}
+        <Text
+          style={[styles.joinButtonText, isJoined && styles.joinedButtonText]}
+        >
+          {isJoined ? "✓ Joined" : "Join"}
         </Text>
       </Pressable>
     </Pressable>
@@ -85,9 +105,9 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   titleContainer: {
@@ -96,7 +116,7 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: spacing.xs,
   },
   game: {
@@ -112,13 +132,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   info: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     marginBottom: spacing.md,
   },
   infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   infoText: {
@@ -136,7 +156,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   joinedButton: {
     backgroundColor: colors.background,
@@ -145,7 +165,7 @@ const styles = StyleSheet.create({
   },
   joinButtonText: {
     color: colors.background,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 12,
   },
   joinedButtonText: {

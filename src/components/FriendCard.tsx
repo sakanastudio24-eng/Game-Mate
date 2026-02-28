@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
-import { Text } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { colors, spacing } from '../lib/theme';
-import { Friend } from '../lib/mockData';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { Friend } from "../lib/mockData";
+import { colors, spacing } from "../lib/theme";
 
 // FriendCard: Shows friend info, status, follow/unfollow button
 // Backend integration: onFollow() sends POST /api/friends/{id}/follow in Phase B
@@ -14,8 +14,13 @@ interface FriendCardProps {
   onFollow?: () => void;
 }
 
-export function FriendCard({ friend, isFollowing = false, onFollow }: FriendCardProps) {
-  const statusColor = friend.status === 'online' ? colors.online : colors.textMuted;
+export function FriendCard({
+  friend,
+  isFollowing = false,
+  onFollow,
+}: FriendCardProps) {
+  const statusColor =
+    friend.status === "online" ? colors.online : colors.textMuted;
 
   return (
     <View style={styles.card}>
@@ -25,14 +30,16 @@ export function FriendCard({ friend, isFollowing = false, onFollow }: FriendCard
         <View style={styles.info}>
           <View style={styles.nameRow}>
             <Text style={styles.name}>{friend.username}</Text>
-            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <View
+              style={[styles.statusDot, { backgroundColor: statusColor }]}
+            />
           </View>
 
           {friend.currentGame && (
             <Text style={styles.game}>Playing {friend.currentGame}</Text>
           )}
 
-          {friend.lastSeen && friend.status === 'offline' && (
+          {friend.lastSeen && friend.status === "offline" && (
             <Text style={styles.lastSeen}>
               Last seen {getTimeAgo(friend.lastSeen)}
             </Text>
@@ -40,8 +47,10 @@ export function FriendCard({ friend, isFollowing = false, onFollow }: FriendCard
 
           {friend.gamesPlayed.length > 0 && (
             <Text style={styles.games}>
-              {friend.gamesPlayed.slice(0, 2).join(', ')}
-              {friend.gamesPlayed.length > 2 ? ` +${friend.gamesPlayed.length - 2}` : ''}
+              {friend.gamesPlayed.slice(0, 2).join(", ")}
+              {friend.gamesPlayed.length > 2
+                ? ` +${friend.gamesPlayed.length - 2}`
+                : ""}
             </Text>
           )}
         </View>
@@ -56,7 +65,7 @@ export function FriendCard({ friend, isFollowing = false, onFollow }: FriendCard
         ]}
       >
         <MaterialCommunityIcons
-          name={isFollowing ? 'check' : 'plus'}
+          name={isFollowing ? "check" : "plus"}
           size={18}
           color={isFollowing ? colors.primary : colors.background}
         />
@@ -82,16 +91,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
   content: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
   },
   avatar: {
@@ -101,14 +110,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
     marginBottom: spacing.xs,
   },
   name: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
   },
   statusDot: {
@@ -135,8 +144,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   followingButton: {
     backgroundColor: colors.background,

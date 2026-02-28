@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
-import { Text, Chip } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Input } from '../../src/components/ui/Input';
-import { Button } from '../../src/components/ui/Button';
-import { Card } from '../../src/components/ui/Card';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Chip, Text } from "react-native-paper";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Input } from "../../src/components/ui/Input";
+import { colors, spacing } from "../../src/lib/theme";
 
 // CreateGroupModal: Form to create new group
 // Backend integration: POST /api/groups endpoint in Phase B
@@ -16,33 +16,48 @@ interface CreateGroupModalProps {
   onCreate: (groupData: any) => void;
 }
 
-export function CreateGroupModal({ isVisible, onClose, onCreate }: CreateGroupModalProps) {
-  const [groupName, setGroupName] = useState('');
-  const [game, setGame] = useState('');
-  const [mode, setMode] = useState<'ranked' | 'casual'>('ranked');
+export function CreateGroupModal({
+  isVisible,
+  onClose,
+  onCreate,
+}: CreateGroupModalProps) {
+  const [groupName, setGroupName] = useState("");
+  const [game, setGame] = useState("");
+  const [mode, setMode] = useState<"ranked" | "casual">("ranked");
   const [micRequired, setMicRequired] = useState(true);
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
 
   const handleCreate = () => {
     if (groupName && game) {
       onCreate({ groupName, game, mode, micRequired, description });
-      setGroupName('');
-      setGame('');
-      setMode('ranked');
+      setGroupName("");
+      setGame("");
+      setMode("ranked");
       setMicRequired(true);
-      setDescription('');
+      setDescription("");
       onClose();
     }
   };
 
-  const games = ['Valorant', 'League of Legends', 'CS2', 'Overwatch 2', 'Apex Legends', 'Fortnite'];
+  const games = [
+    "Valorant",
+    "League of Legends",
+    "CS2",
+    "Overwatch 2",
+    "Apex Legends",
+    "Fortnite",
+  ];
 
   return (
     <Modal visible={isVisible} animationType="slide" transparent={false}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Pressable onPress={onClose}>
-            <MaterialCommunityIcons name="close" size={24} color={colors.text} />
+            <MaterialCommunityIcons
+              name="close"
+              size={24}
+              color={colors.text}
+            />
           </Pressable>
           <Text style={styles.title}>Create Group</Text>
           <View style={{ width: 24 }} />
@@ -61,13 +76,13 @@ export function CreateGroupModal({ isVisible, onClose, onCreate }: CreateGroupMo
           {/* Game selection */}
           <Text style={styles.label}>Select Game</Text>
           <View style={styles.gameList}>
-            {games.map(g => (
+            {games.map((g) => (
               <Chip
                 key={g}
                 label={g}
                 selected={game === g}
                 onPress={() => setGame(g)}
-                mode={game === g ? 'flat' : 'outlined'}
+                mode={game === g ? "flat" : "outlined"}
                 selectedColor={colors.primary}
                 style={styles.gameChip}
               />
@@ -77,7 +92,7 @@ export function CreateGroupModal({ isVisible, onClose, onCreate }: CreateGroupMo
           {/* Mode selection */}
           <Text style={styles.label}>Game Mode</Text>
           <View style={styles.modeContainer}>
-            {['ranked', 'casual'].map(m => (
+            {["ranked", "casual"].map((m) => (
               <Pressable
                 key={m}
                 onPress={() => setMode(m as any)}
@@ -87,12 +102,9 @@ export function CreateGroupModal({ isVisible, onClose, onCreate }: CreateGroupMo
                 ]}
               >
                 <Text
-                  style={[
-                    styles.modeText,
-                    mode === m && styles.modeTextActive,
-                  ]}
+                  style={[styles.modeText, mode === m && styles.modeTextActive]}
                 >
-                  {m === 'ranked' ? '⭐ Ranked' : '😄 Casual'}
+                  {m === "ranked" ? "⭐ Ranked" : "😄 Casual"}
                 </Text>
               </Pressable>
             ))}
@@ -151,9 +163,9 @@ const styles = StyleSheet.create({
     paddingTop: 40,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -161,7 +173,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 18,
   },
   content: {
@@ -170,28 +182,28 @@ const styles = StyleSheet.create({
   },
   label: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
   gameList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   gameChip: {
     marginRight: spacing.xs,
   },
   modeContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
   },
   modeButton: {
     flex: 1,
     paddingVertical: spacing.md,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
@@ -202,7 +214,7 @@ const styles = StyleSheet.create({
   },
   modeText: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
   },
   modeTextActive: {
@@ -213,13 +225,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   micRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   micLabel: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
   },
   toggle: {
@@ -227,7 +239,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: colors.card,
-    justifyContent: 'center',
+    justifyContent: "center",
     paddingHorizontal: 3,
   },
   toggleActive: {
@@ -241,7 +253,7 @@ const styles = StyleSheet.create({
   },
   toggleIndicatorActive: {
     backgroundColor: colors.background,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   createButton: {
     marginTop: spacing.lg,

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Pressable, ScrollView } from 'react-native';
-import { Text, IconButton, Chip } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { colors, spacing, typography } from '../lib/theme';
-import { Post } from '../lib/mockData';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React from "react";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Chip, Text } from "react-native-paper";
+import { Post } from "../lib/mockData";
+import { colors, spacing } from "../lib/theme";
 
 // PostCard: Individual post in news feed
 // Shows author, content, hashtags, like/comment/bookmark actions
@@ -17,7 +17,13 @@ interface PostCardProps {
   onSave: (postId: string) => void;
 }
 
-export function PostCard({ post, isLiked, isSaved, onLike, onSave }: PostCardProps) {
+export function PostCard({
+  post,
+  isLiked,
+  isSaved,
+  onLike,
+  onSave,
+}: PostCardProps) {
   const timeAgo = getTimeAgo(post.timestamp);
 
   return (
@@ -37,7 +43,11 @@ export function PostCard({ post, isLiked, isSaved, onLike, onSave }: PostCardPro
       <Text style={styles.content}>{post.content}</Text>
 
       {/* Hashtags */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hashtagsContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.hashtagsContainer}
+      >
         {post.hashtags.map((tag, idx) => (
           <Chip
             key={`${post.id}-${idx}`}
@@ -53,37 +63,53 @@ export function PostCard({ post, isLiked, isSaved, onLike, onSave }: PostCardPro
       {/* Interaction buttons */}
       <View style={styles.actions}>
         <Pressable
-          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+          style={({ pressed }) => [
+            styles.actionButton,
+            pressed && styles.actionPressed,
+          ]}
           onPress={() => onLike(post.id)}
         >
           <MaterialCommunityIcons
-            name={isLiked ? 'heart' : 'heart-outline'}
+            name={isLiked ? "heart" : "heart-outline"}
             size={20}
             color={isLiked ? colors.primary : colors.textMuted}
           />
-          <Text style={[styles.actionText, isLiked && { color: colors.primary }]}>
+          <Text
+            style={[styles.actionText, isLiked && { color: colors.primary }]}
+          >
             {post.likes}
           </Text>
         </Pressable>
 
         <Pressable style={[styles.actionButton, { opacity: 0.5 }]}>
-          <MaterialCommunityIcons name="message-outline" size={20} color={colors.textMuted} />
+          <MaterialCommunityIcons
+            name="message-outline"
+            size={20}
+            color={colors.textMuted}
+          />
           <Text style={styles.actionText}>{post.comments}</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.actionButton, pressed && styles.actionPressed]}
+          style={({ pressed }) => [
+            styles.actionButton,
+            pressed && styles.actionPressed,
+          ]}
           onPress={() => onSave(post.id)}
         >
           <MaterialCommunityIcons
-            name={isSaved ? 'bookmark' : 'bookmark-outline'}
+            name={isSaved ? "bookmark" : "bookmark-outline"}
             size={20}
             color={isSaved ? colors.primary : colors.textMuted}
           />
         </Pressable>
 
         <Pressable style={[styles.actionButton, { opacity: 0.5 }]}>
-          <MaterialCommunityIcons name="share-outline" size={20} color={colors.textMuted} />
+          <MaterialCommunityIcons
+            name="share-outline"
+            size={20}
+            color={colors.textMuted}
+          />
         </Pressable>
       </View>
     </View>
@@ -98,7 +124,7 @@ function getTimeAgo(date: Date): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'just now';
+  if (diffMins < 1) return "just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
   if (diffDays < 7) return `${diffDays}d ago`;
@@ -115,14 +141,14 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   header: {
-    firstNames: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    firstNames: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   authorInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
   },
   authorAvatar: {
@@ -130,7 +156,7 @@ const styles = StyleSheet.create({
   },
   authorName: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
   },
   timestamp: {
@@ -157,15 +183,15 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingTop: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,

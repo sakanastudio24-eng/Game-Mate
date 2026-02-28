@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, TextInput, Pressable } from 'react-native';
-import { Text } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { mockFriends } from '../../src/lib/mockData';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Text } from "react-native-paper";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockFriends } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // ChatScreen: Direct messages with a friend
 // Backend integration: GET /api/messages/{friendId}, POST /api/messages endpoint in Phase B
@@ -13,20 +13,42 @@ import { colors, spacing } from '../../src/lib/theme';
 
 export default function ChatScreen() {
   const friend = mockFriends[0]; // Mock: use first friend
-  const [messages, setMessages] = useState<Array<{ id: string; user: string; text: string; timestamp: Date }>>([
-    { id: '1', user: friend.username, text: 'Hey! You free to play?', timestamp: new Date(Date.now() - 10 * 60000) },
-    { id: '2', user: 'You', text: 'Yeah let me load in', timestamp: new Date(Date.now() - 9 * 60000) },
-    { id: '3', user: friend.username, text: 'Cool, creating a lobby', timestamp: new Date(Date.now() - 5 * 60000) },
+  const [messages, setMessages] = useState<
+    Array<{ id: string; user: string; text: string; timestamp: Date }>
+  >([
+    {
+      id: "1",
+      user: friend.username,
+      text: "Hey! You free to play?",
+      timestamp: new Date(Date.now() - 10 * 60000),
+    },
+    {
+      id: "2",
+      user: "You",
+      text: "Yeah let me load in",
+      timestamp: new Date(Date.now() - 9 * 60000),
+    },
+    {
+      id: "3",
+      user: friend.username,
+      text: "Cool, creating a lobby",
+      timestamp: new Date(Date.now() - 5 * 60000),
+    },
   ]);
-  const [messageInput, setMessageInput] = useState('');
+  const [messageInput, setMessageInput] = useState("");
 
   const handleSendMessage = () => {
     if (messageInput.trim()) {
       setMessages([
         ...messages,
-        { id: Date.now().toString(), user: 'You', text: messageInput, timestamp: new Date() },
+        {
+          id: Date.now().toString(),
+          user: "You",
+          text: messageInput,
+          timestamp: new Date(),
+        },
       ]);
-      setMessageInput('');
+      setMessageInput("");
     }
   };
 
@@ -37,7 +59,7 @@ export default function ChatScreen() {
         showBackButton
         onBack={() => {}}
         rightAction={{
-          icon: 'phone',
+          icon: "phone",
           onPress: () => {},
         }}
       />
@@ -45,19 +67,33 @@ export default function ChatScreen() {
       {/* Messages list */}
       <FlatList
         data={messages}
-        keyExtractor={msg => msg.id}
+        keyExtractor={(msg) => msg.id}
         renderItem={({ item }) => (
-          <View style={[styles.messageRow, item.user === 'You' && styles.messageRowOwn]}>
+          <View
+            style={[
+              styles.messageRow,
+              item.user === "You" && styles.messageRowOwn,
+            ]}
+          >
             <View
               style={[
                 styles.messageBubble,
-                item.user === 'You' ? styles.messageBubbleOwn : styles.messageBubbleOther,
+                item.user === "You"
+                  ? styles.messageBubbleOwn
+                  : styles.messageBubbleOther,
               ]}
             >
-              <Text style={[styles.messageText, item.user === 'You' && styles.messageTextOwn]}>
+              <Text
+                style={[
+                  styles.messageText,
+                  item.user === "You" && styles.messageTextOwn,
+                ]}
+              >
                 {item.text}
               </Text>
-              <Text style={styles.messageTime}>{getTimeAgo(item.timestamp)}</Text>
+              <Text style={styles.messageTime}>
+                {getTimeAgo(item.timestamp)}
+              </Text>
             </View>
           </View>
         )}
@@ -69,7 +105,11 @@ export default function ChatScreen() {
       {/* Message composer */}
       <View style={styles.composer}>
         <Pressable style={styles.attachButton}>
-          <MaterialCommunityIcons name="plus" size={20} color={colors.primary} />
+          <MaterialCommunityIcons
+            name="plus"
+            size={20}
+            color={colors.primary}
+          />
         </Pressable>
 
         <TextInput
@@ -84,9 +124,16 @@ export default function ChatScreen() {
 
         <Pressable
           onPress={handleSendMessage}
-          style={({ pressed }) => [styles.sendButton, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [
+            styles.sendButton,
+            pressed && { opacity: 0.7 },
+          ]}
         >
-          <MaterialCommunityIcons name="send" size={20} color={colors.background} />
+          <MaterialCommunityIcons
+            name="send"
+            size={20}
+            color={colors.background}
+          />
         </Pressable>
       </View>
     </Screen>
@@ -98,7 +145,7 @@ function getTimeAgo(date: Date): string {
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'now';
+  if (diffMins < 1) return "now";
   if (diffMins < 60) return `${diffMins}m ago`;
   return `${Math.floor(diffMins / 60)}h ago`;
 }
@@ -113,14 +160,14 @@ const styles = StyleSheet.create({
   },
   messageRow: {
     marginVertical: spacing.xs,
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "flex-start",
   },
   messageRowOwn: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   messageBubble: {
-    maxWidth: '75%',
+    maxWidth: "75%",
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: 16,
@@ -145,21 +192,21 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   composer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   attachButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
     backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   input: {
     flex: 1,
@@ -176,7 +223,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

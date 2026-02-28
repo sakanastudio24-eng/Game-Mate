@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, List, Switch } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useState } from "react";
+import { StyleSheet } from "react-native";
+import { List, Switch, Text } from "react-native-paper";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // NotificationSettingsScreen: Push notification preferences
 // Backend integration: PATCH /api/me/notifications endpoint in Phase B
@@ -22,7 +21,7 @@ export default function NotificationSettingsScreen() {
   });
 
   const toggleSetting = (key: keyof typeof notifSettings) => {
-    setNotifSettings(prev => ({ ...prev, [key]: !prev[key] }));
+    setNotifSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -38,12 +37,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.friendRequests}
-              onValueChange={() => toggleSetting('friendRequests')}
+              onValueChange={() => toggleSetting("friendRequests")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('friendRequests')}
+          onPress={() => toggleSetting("friendRequests")}
         />
 
         <List.Item
@@ -52,12 +51,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.friendOnline}
-              onValueChange={() => toggleSetting('friendOnline')}
+              onValueChange={() => toggleSetting("friendOnline")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('friendOnline')}
+          onPress={() => toggleSetting("friendOnline")}
         />
 
         <List.Item
@@ -66,12 +65,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.friendActivity}
-              onValueChange={() => toggleSetting('friendActivity')}
+              onValueChange={() => toggleSetting("friendActivity")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('friendActivity')}
+          onPress={() => toggleSetting("friendActivity")}
         />
 
         <List.Item
@@ -80,12 +79,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.messages}
-              onValueChange={() => toggleSetting('messages')}
+              onValueChange={() => toggleSetting("messages")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('messages')}
+          onPress={() => toggleSetting("messages")}
         />
       </Card>
 
@@ -98,12 +97,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.groupInvites}
-              onValueChange={() => toggleSetting('groupInvites')}
+              onValueChange={() => toggleSetting("groupInvites")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('groupInvites')}
+          onPress={() => toggleSetting("groupInvites")}
         />
 
         <List.Item
@@ -112,12 +111,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.matchmaking}
-              onValueChange={() => toggleSetting('matchmaking')}
+              onValueChange={() => toggleSetting("matchmaking")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('matchmaking')}
+          onPress={() => toggleSetting("matchmaking")}
         />
       </Card>
 
@@ -130,12 +129,12 @@ export default function NotificationSettingsScreen() {
           right={() => (
             <Switch
               value={notifSettings.achievements}
-              onValueChange={() => toggleSetting('achievements')}
+              onValueChange={() => toggleSetting("achievements")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('achievements')}
+          onPress={() => toggleSetting("achievements")}
         />
       </Card>
     </Screen>
@@ -148,9 +147,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginBottom: spacing.md,
     letterSpacing: 0.5,
   },

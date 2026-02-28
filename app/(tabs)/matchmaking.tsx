@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, Card as PaperCard, SegmentedButtons, Chip } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { SegmentedButtons, Text } from "react-native-paper";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // MatchmakingScreen: Find matched groups
 // Backend integration: GET /api/matchmaking/suggestions endpoint in Phase B
@@ -23,48 +23,52 @@ interface MatchedGroup {
 }
 
 export default function MatchmakingScreen() {
-  const [filterType, setFilterType] = useState<'all' | 'active' | 'incoming'>('all');
-  const [dismissedGroups, setDismissedGroups] = useState<Set<string>>(new Set());
+  const [filterType, setFilterType] = useState<"all" | "active" | "incoming">(
+    "all",
+  );
+  const [dismissedGroups, setDismissedGroups] = useState<Set<string>>(
+    new Set(),
+  );
 
   const mockMatches: MatchedGroup[] = [
     {
-      id: '1',
-      game: 'Valorant',
+      id: "1",
+      game: "Valorant",
       players: 3,
-      yourRank: 'Platinum',
-      averageRank: 'Platinum',
-      playStyle: 'Competitive',
-      region: 'NA East',
+      yourRank: "Platinum",
+      averageRank: "Platinum",
+      playStyle: "Competitive",
+      region: "NA East",
       trustScore: 95,
     },
     {
-      id: '2',
-      game: 'CS:GO',
+      id: "2",
+      game: "CS:GO",
       players: 4,
-      yourRank: 'Gold',
-      averageRank: 'Gold',
-      playStyle: 'Casual',
-      region: 'NA West',
+      yourRank: "Gold",
+      averageRank: "Gold",
+      playStyle: "Casual",
+      region: "NA West",
       trustScore: 87,
     },
     {
-      id: '3',
-      game: 'Apex Legends',
+      id: "3",
+      game: "Apex Legends",
       players: 2,
-      yourRank: 'Diamond',
-      averageRank: 'Diamond',
-      playStyle: 'Ranked',
-      region: 'NA East',
+      yourRank: "Diamond",
+      averageRank: "Diamond",
+      playStyle: "Ranked",
+      region: "NA East",
       trustScore: 92,
     },
   ];
 
   const filteredMatches = mockMatches.filter(
-    match => !dismissedGroups.has(match.id)
+    (match) => !dismissedGroups.has(match.id),
   );
 
   const dismissMatch = (groupId: string) => {
-    setDismissedGroups(prev => new Set([...prev, groupId]));
+    setDismissedGroups((prev) => new Set([...prev, groupId]));
   };
 
   const renderMatchCard = (match: MatchedGroup) => (
@@ -142,11 +146,11 @@ export default function MatchmakingScreen() {
       <View style={styles.filterContainer}>
         <SegmentedButtons
           value={filterType}
-          onValueChange={val => setFilterType(val as any)}
+          onValueChange={(val) => setFilterType(val as any)}
           buttons={[
-            { value: 'all', label: 'All' },
-            { value: 'active', label: 'Active' },
-            { value: 'incoming', label: 'Incoming' },
+            { value: "all", label: "All" },
+            { value: "active", label: "Active" },
+            { value: "incoming", label: "Incoming" },
           ]}
           style={styles.segmentedButtons}
         />
@@ -156,7 +160,7 @@ export default function MatchmakingScreen() {
         <FlatList
           data={filteredMatches}
           renderItem={({ item }) => renderMatchCard(item)}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           scrollEnabled={false}
           contentContainerStyle={styles.matchesList}
         />
@@ -167,9 +171,7 @@ export default function MatchmakingScreen() {
             size={48}
             color={colors.textSecondary}
           />
-          <Text style={styles.emptyText}>
-            No matches available right now
-          </Text>
+          <Text style={styles.emptyText}>No matches available right now</Text>
           <Text style={styles.emptySubtext}>
             Update your preferences to find more groups
           </Text>
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.md,
   },
   segmentedButtons: {
-    width: '100%',
+    width: "100%",
   },
   matchesList: {
     paddingHorizontal: spacing.md,
@@ -195,14 +197,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.lg,
   },
   gameInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   gameIconContainer: {
@@ -210,13 +212,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 8,
     backgroundColor: colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: spacing.md,
   },
   gameName: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 16,
   },
   playStyle: {
@@ -225,8 +227,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   trustScore: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -234,33 +236,33 @@ const styles = StyleSheet.create({
   },
   trustText: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 12,
     marginLeft: spacing.xs,
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   statItem: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.md,
   },
   statLabel: {
     color: colors.textSecondary,
     fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
     letterSpacing: 0.3,
     marginBottom: spacing.xs,
   },
   statValue: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 14,
   },
   statDivider: {
@@ -268,18 +270,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: spacing.xl,
   },
   emptyText: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: spacing.md,
   },
   emptySubtext: {

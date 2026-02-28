@@ -1,12 +1,12 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { Text, List } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { mockCurrentUser } from '../../src/lib/mockData';
-import { colors, spacing, typography } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { List, Text } from "react-native-paper";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockCurrentUser } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // ProfileScreen: Tab 4 - User profile, stats, settings
 // Backend integration: GET /api/me endpoint in Phase B
@@ -18,9 +18,9 @@ export default function ProfileScreen() {
       <Header
         title="Profile"
         rightAction={{
-          icon: 'cog',
+          icon: "cog",
           onPress: () => {},
-          label: 'Settings',
+          label: "Settings",
         }}
       />
 
@@ -35,8 +35,17 @@ export default function ProfileScreen() {
         </View>
 
         {/* QR button */}
-        <Pressable style={({ pressed }) => [styles.qrButton, pressed && { opacity: 0.7 }]}>
-          <MaterialCommunityIcons name="qrcode" size={20} color={colors.primary} />
+        <Pressable
+          style={({ pressed }) => [
+            styles.qrButton,
+            pressed && { opacity: 0.7 },
+          ]}
+        >
+          <MaterialCommunityIcons
+            name="qrcode"
+            size={20}
+            color={colors.primary}
+          />
           <Text style={styles.qrButtonText}>Show QR Code</Text>
         </Pressable>
       </Card>
@@ -52,7 +61,9 @@ export default function ProfileScreen() {
           <Text style={styles.statLabel}>Groups</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{mockCurrentUser.gamesPlayed.length}</Text>
+          <Text style={styles.statValue}>
+            {mockCurrentUser.gamesPlayed.length}
+          </Text>
           <Text style={styles.statLabel}>Games</Text>
         </View>
       </View>
@@ -75,42 +86,78 @@ export default function ProfileScreen() {
 
         <List.Item
           title="Edit Profile"
-          left={() => <MaterialCommunityIcons name="pencil" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="pencil"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
 
         <List.Item
           title="Account Settings"
-          left={() => <MaterialCommunityIcons name="lock" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="lock"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
 
         <List.Item
           title="Notifications"
-          left={() => <MaterialCommunityIcons name="bell" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="bell"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
 
         <List.Item
           title="Privacy & Security"
-          left={() => <MaterialCommunityIcons name="shield" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="shield"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
 
         <List.Item
           title="Help & Support"
-          left={() => <MaterialCommunityIcons name="help-circle" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="help-circle"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
 
         <List.Item
           title="Logout"
-          left={() => <MaterialCommunityIcons name="logout" size={20} color={colors.destructive} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="logout"
+              size={20}
+              color={colors.destructive}
+            />
+          )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
           onPress={() => {}}
         />
@@ -124,8 +171,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   userHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
     marginBottom: spacing.md,
   },
@@ -137,7 +184,7 @@ const styles = StyleSheet.create({
   },
   username: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 18,
     marginBottom: spacing.xs,
   },
@@ -146,9 +193,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   qrButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: spacing.sm,
     paddingVertical: spacing.md,
     borderTopWidth: 1,
@@ -156,12 +203,12 @@ const styles = StyleSheet.create({
   },
   qrButtonText: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: spacing.lg,
   },
   statCard: {
@@ -169,7 +216,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
     flex: 1,
@@ -177,7 +224,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 20,
     marginBottom: spacing.xs,
   },
@@ -187,13 +234,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 14,
     marginBottom: spacing.md,
   },
   gamesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   gameTag: {
@@ -207,7 +254,7 @@ const styles = StyleSheet.create({
   gameTagText: {
     color: colors.primary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   settingsCard: {
     marginBottom: spacing.xl,

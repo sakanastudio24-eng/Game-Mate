@@ -1,28 +1,29 @@
-import React, { useState, useMemo } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import { Chip, Searchbar } from 'react-native-paper';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { GroupCard } from '../../src/components/GroupCard';
-import { mockGroups } from '../../src/lib/mockData';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useMemo, useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Chip, Searchbar } from "react-native-paper";
+import { GroupCard } from "../../src/components/GroupCard";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockGroups } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // DiscoverGroupsScreen: Browse and discover new groups
 // Backend integration: GET /api/groups/discover?search={query}&filter={filter} in Phase B
 // Features: Search, filter by game/mode, discover recommendations
 
 export default function DiscoverGroupsScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterGame, setFilterGame] = useState<string | null>(null);
   const [joinedGroups, setJoinedGroups] = useState<string[]>([]);
 
   // Unique games from mock data
-  const games = Array.from(new Set(mockGroups.map(g => g.game)));
+  const games = Array.from(new Set(mockGroups.map((g) => g.game)));
 
   // Filter groups
   const filteredGroups = useMemo(() => {
-    return mockGroups.filter(group => {
-      const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    return mockGroups.filter((group) => {
+      const matchesSearch =
+        group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         group.game.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesGame = !filterGame || group.game === filterGame;
       return matchesSearch && matchesGame;
@@ -30,8 +31,10 @@ export default function DiscoverGroupsScreen() {
   }, [searchQuery, filterGame]);
 
   const handleJoin = (groupId: string) => {
-    setJoinedGroups(prev =>
-      prev.includes(groupId) ? prev.filter(id => id !== groupId) : [...prev, groupId]
+    setJoinedGroups((prev) =>
+      prev.includes(groupId)
+        ? prev.filter((id) => id !== groupId)
+        : [...prev, groupId],
     );
   };
 
@@ -57,17 +60,17 @@ export default function DiscoverGroupsScreen() {
           selected={!filterGame}
           onPress={() => setFilterGame(null)}
           style={styles.filterChip}
-          mode={!filterGame ? 'flat' : 'outlined'}
+          mode={!filterGame ? "flat" : "outlined"}
           selectedColor={colors.primary}
         />
-        {games.map(game => (
+        {games.map((game) => (
           <Chip
             key={game}
             label={game}
             selected={filterGame === game}
             onPress={() => setFilterGame(game)}
             style={styles.filterChip}
-            mode={filterGame === game ? 'flat' : 'outlined'}
+            mode={filterGame === game ? "flat" : "outlined"}
             selectedColor={colors.primary}
           />
         ))}
@@ -76,7 +79,7 @@ export default function DiscoverGroupsScreen() {
       {/* Groups list */}
       <FlatList
         data={filteredGroups}
-        keyExtractor={group => group.id}
+        keyExtractor={(group) => group.id}
         renderItem={({ item }) => (
           <GroupCard
             group={item}
@@ -102,7 +105,7 @@ const styles = StyleSheet.create({
   filterContainer: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginBottom: spacing.md,
   },

@@ -1,43 +1,52 @@
-import React, { useState, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, FlatList } from 'react-native';
-import { Chip } from 'react-native-paper';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { PostCard } from '../../src/components/PostCard';
-import { mockPosts, Post } from '../../src/lib/mockData';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useMemo, useState } from "react";
+import { FlatList, ScrollView, StyleSheet } from "react-native";
+import { Chip } from "react-native-paper";
+import { PostCard } from "../../src/components/PostCard";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockPosts } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // NewsScreen: Tab 1 - Gaming news feed with category filtering
 // Backend integration: Posts fetched from /api/posts?category={category} endpoint in Phase B
 // State: activeCategory (filter), likedPosts, savedPosts (local)
 
 export default function NewsScreen() {
-  const [activeCategory, setActiveCategory] = useState<'fyp' | 'esports' | 'patches' | 'streams'>('fyp');
+  const [activeCategory, setActiveCategory] = useState<
+    "fyp" | "esports" | "patches" | "streams"
+  >("fyp");
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const [savedPosts, setSavedPosts] = useState<string[]>([]);
 
   // Filter posts by category
   const filteredPosts = useMemo(() => {
-    return mockPosts.filter(post => post.category === activeCategory);
+    return mockPosts.filter((post) => post.category === activeCategory);
   }, [activeCategory]);
 
   const handleLike = (postId: string) => {
-    setLikedPosts(prev =>
-      prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]
+    setLikedPosts((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId],
     );
   };
 
   const handleSave = (postId: string) => {
-    setSavedPosts(prev =>
-      prev.includes(postId) ? prev.filter(id => id !== postId) : [...prev, postId]
+    setSavedPosts((prev) =>
+      prev.includes(postId)
+        ? prev.filter((id) => id !== postId)
+        : [...prev, postId],
     );
   };
 
-  const categories: Array<{ id: 'fyp' | 'esports' | 'patches' | 'streams'; label: string }> = [
-    { id: 'fyp', label: 'For You' },
-    { id: 'esports', label: 'Esports' },
-    { id: 'patches', label: 'Patches' },
-    { id: 'streams', label: 'Streams' },
+  const categories: Array<{
+    id: "fyp" | "esports" | "patches" | "streams";
+    label: string;
+  }> = [
+    { id: "fyp", label: "For You" },
+    { id: "esports", label: "Esports" },
+    { id: "patches", label: "Patches" },
+    { id: "streams", label: "Streams" },
   ];
 
   return (
@@ -51,7 +60,7 @@ export default function NewsScreen() {
         style={styles.filterScroll}
         contentContainerStyle={styles.filterContent}
       >
-        {categories.map(cat => (
+        {categories.map((cat) => (
           <Chip
             key={cat.id}
             label={cat.label}
@@ -59,7 +68,7 @@ export default function NewsScreen() {
             onPress={() => setActiveCategory(cat.id)}
             style={styles.filterChip}
             selectedColor={colors.primary}
-            mode={activeCategory === cat.id ? 'flat' : 'outlined'}
+            mode={activeCategory === cat.id ? "flat" : "outlined"}
           />
         ))}
       </ScrollView>
@@ -67,7 +76,7 @@ export default function NewsScreen() {
       {/* Posts list */}
       <FlatList
         data={filteredPosts}
-        keyExtractor={post => post.id}
+        keyExtractor={(post) => post.id}
         renderItem={({ item }) => (
           <PostCard
             post={item}

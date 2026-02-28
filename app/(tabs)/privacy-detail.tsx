@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
-import { Switch, List } from 'react-native-paper';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { List, Switch } from "react-native-paper";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // PrivacyDetailScreen: Detailed privacy controls and blocked users
 // Backend integration: PUT /api/user/privacy/*, GET /api/user/blocked, DELETE /api/user/blocked/{userId} in Phase B
@@ -23,12 +23,12 @@ export default function PrivacyDetailScreen() {
   const [allowDataCollection, setAllowDataCollection] = useState(false);
 
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([
-    { id: '1', username: 'ToxicPlayer123', avatar: '😠' },
-    { id: '2', username: 'Spammer99', avatar: '🤖' },
+    { id: "1", username: "ToxicPlayer123", avatar: "😠" },
+    { id: "2", username: "Spammer99", avatar: "🤖" },
   ]);
 
   const handleUnblock = (userId: string) => {
-    setBlockedUsers(prev => prev.filter(u => u.id !== userId));
+    setBlockedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
   return (
@@ -56,7 +56,9 @@ export default function PrivacyDetailScreen() {
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <View style={styles.settingName}>Show Online Status</View>
-            <View style={styles.settingDesc}>Let friends see when you're online</View>
+            <View style={styles.settingDesc}>
+              Let friends see when you're online
+            </View>
           </View>
           <Switch
             value={showOnlineStatus}
@@ -68,7 +70,9 @@ export default function PrivacyDetailScreen() {
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <View style={styles.settingName}>Allow Friend Requests</View>
-            <View style={styles.settingDesc}>Let anyone send you friend requests</View>
+            <View style={styles.settingDesc}>
+              Let anyone send you friend requests
+            </View>
           </View>
           <Switch
             value={allowFriendRequests}
@@ -80,7 +84,9 @@ export default function PrivacyDetailScreen() {
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <View style={styles.settingName}>Allow Group Invites</View>
-            <View style={styles.settingDesc}>Let friends invite you to groups</View>
+            <View style={styles.settingDesc}>
+              Let friends invite you to groups
+            </View>
           </View>
           <Switch
             value={allowGroupInvites}
@@ -92,7 +98,9 @@ export default function PrivacyDetailScreen() {
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <View style={styles.settingName}>Allow Direct Messages</View>
-            <View style={styles.settingDesc}>Let anyone message you directly</View>
+            <View style={styles.settingDesc}>
+              Let anyone message you directly
+            </View>
           </View>
           <Switch
             value={allowMessages}
@@ -111,7 +119,9 @@ export default function PrivacyDetailScreen() {
         <View style={styles.settingItem}>
           <View style={styles.settingContent}>
             <View style={styles.settingName}>Allow Analytics</View>
-            <View style={styles.settingDesc}>Help us improve with usage analytics</View>
+            <View style={styles.settingDesc}>
+              Help us improve with usage analytics
+            </View>
           </View>
           <Switch
             value={allowDataCollection}
@@ -133,7 +143,7 @@ export default function PrivacyDetailScreen() {
         {blockedUsers.length > 0 ? (
           <FlatList
             data={blockedUsers}
-            keyExtractor={user => user.id}
+            keyExtractor={(user) => user.id}
             scrollEnabled={false}
             renderItem={({ item }) => (
               <View style={styles.blockedUserItem}>
@@ -167,15 +177,15 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
   },
   sectionTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   sectionLabel: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.primary,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     flex: 1,
   },
   badgeCount: {
@@ -185,13 +195,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: 12,
     fontSize: 12,
-    fontWeight: '700',
-    overflow: 'hidden',
+    fontWeight: "700",
+    overflow: "hidden",
   },
   settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.card,
@@ -202,7 +212,7 @@ const styles = StyleSheet.create({
   },
   settingName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.text,
     marginBottom: spacing.xs,
   },
@@ -212,16 +222,16 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   blockedUserItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.card,
   },
   blockedUserInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   blockedUserAvatar: {
@@ -229,19 +239,19 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     fontSize: 24,
     marginRight: spacing.md,
   },
   blockedUserName: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.text,
   },
   emptyState: {
     paddingVertical: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     fontSize: 14,

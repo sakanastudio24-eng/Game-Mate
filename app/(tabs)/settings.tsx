@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, List, Switch } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { StyleSheet } from "react-native";
+import { List, Switch, Text } from "react-native-paper";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // SettingsScreen: User preferences and account settings
 // Backend integration: PATCH /api/me/settings endpoint in Phase B
@@ -27,11 +27,11 @@ export default function SettingsScreen() {
   });
 
   const toggleNotification = (key: keyof typeof notifications) => {
-    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const togglePrivacy = (key: keyof typeof privacy) => {
-    setPrivacy(prev => ({ ...prev, [key]: !prev[key] }));
+    setPrivacy((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -45,7 +45,13 @@ export default function SettingsScreen() {
         <List.Item
           title="Change Email"
           description="Update your email address"
-          left={() => <MaterialCommunityIcons name="email" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="email"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
@@ -53,7 +59,13 @@ export default function SettingsScreen() {
         <List.Item
           title="Change Password"
           description="Update your password"
-          left={() => <MaterialCommunityIcons name="lock" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="lock"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
@@ -61,7 +73,13 @@ export default function SettingsScreen() {
         <List.Item
           title="Two-Factor Authentication"
           description="Add extra security"
-          left={() => <MaterialCommunityIcons name="shield-check" size={20} color={colors.primary} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="shield-check"
+              size={20}
+              color={colors.primary}
+            />
+          )}
           titleStyle={styles.listTitle}
           onPress={() => {}}
         />
@@ -76,12 +94,12 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={notifications.push}
-              onValueChange={() => toggleNotification('push')}
+              onValueChange={() => toggleNotification("push")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleNotification('push')}
+          onPress={() => toggleNotification("push")}
         />
 
         <List.Item
@@ -89,12 +107,12 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={notifications.email}
-              onValueChange={() => toggleNotification('email')}
+              onValueChange={() => toggleNotification("email")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleNotification('email')}
+          onPress={() => toggleNotification("email")}
         />
 
         <List.Item
@@ -102,12 +120,12 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={notifications.mentions}
-              onValueChange={() => toggleNotification('mentions')}
+              onValueChange={() => toggleNotification("mentions")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleNotification('mentions')}
+          onPress={() => toggleNotification("mentions")}
         />
 
         <List.Item
@@ -115,12 +133,12 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={notifications.groupUpdates}
-              onValueChange={() => toggleNotification('groupUpdates')}
+              onValueChange={() => toggleNotification("groupUpdates")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleNotification('groupUpdates')}
+          onPress={() => toggleNotification("groupUpdates")}
         />
       </Card>
 
@@ -134,12 +152,12 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={privacy.profilePublic}
-              onValueChange={() => togglePrivacy('profilePublic')}
+              onValueChange={() => togglePrivacy("profilePublic")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => togglePrivacy('profilePublic')}
+          onPress={() => togglePrivacy("profilePublic")}
         />
 
         <List.Item
@@ -147,12 +165,12 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={privacy.showOnlineStatus}
-              onValueChange={() => togglePrivacy('showOnlineStatus')}
+              onValueChange={() => togglePrivacy("showOnlineStatus")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => togglePrivacy('showOnlineStatus')}
+          onPress={() => togglePrivacy("showOnlineStatus")}
         />
 
         <List.Item
@@ -160,17 +178,23 @@ export default function SettingsScreen() {
           right={() => (
             <Switch
               value={privacy.allowMessages}
-              onValueChange={() => togglePrivacy('allowMessages')}
+              onValueChange={() => togglePrivacy("allowMessages")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => togglePrivacy('allowMessages')}
+          onPress={() => togglePrivacy("allowMessages")}
         />
 
         <List.Item
           title="Blocked Users"
-          left={() => <MaterialCommunityIcons name="block-helper" size={20} color={colors.destructive} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="block-helper"
+              size={20}
+              color={colors.destructive}
+            />
+          )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
           onPress={() => {}}
         />
@@ -224,9 +248,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginBottom: spacing.md,
     letterSpacing: 0.5,
   },

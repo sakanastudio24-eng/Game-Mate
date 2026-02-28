@@ -1,31 +1,44 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text } from 'react-native-paper';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Input } from '../../src/components/ui/Input';
-import { Button } from '../../src/components/ui/Button';
-import { Card } from '../../src/components/ui/Card';
-import { Chip } from '../../src/components/ui/Chip';
-import { mockCurrentUser } from '../../src/lib/mockData';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Chip } from "../../src/components/ui/Chip";
+import { Header } from "../../src/components/ui/Header";
+import { Input } from "../../src/components/ui/Input";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockCurrentUser } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // EditProfileScreen: Update user profile information
 // Backend integration: PATCH /api/me endpoint in Phase B
 // Fields: username, bio, avatar, games
 
-const availableGames = ['Valorant', 'League of Legends', 'CS2', 'Overwatch 2', 'Apex Legends', 'Fortnite', 'Dota 2', 'PUBG'];
-const avatars = ['🎮', '🎯', '🎪', '🧙', '⚔️', '🛡️', '🚀', '🔥'];
+const availableGames = [
+  "Valorant",
+  "League of Legends",
+  "CS2",
+  "Overwatch 2",
+  "Apex Legends",
+  "Fortnite",
+  "Dota 2",
+  "PUBG",
+];
+const avatars = ["🎮", "🎯", "🎪", "🧙", "⚔️", "🛡️", "🚀", "🔥"];
 
 export default function EditProfileScreen() {
   const [username, setUsername] = useState(mockCurrentUser.username);
-  const [bio, setBio] = useState(mockCurrentUser.bio || '');
-  const [avatar, setAvatar] = useState(mockCurrentUser.avatar || '🎮');
-  const [selectedGames, setSelectedGames] = useState<string[]>(mockCurrentUser.gamesPlayed);
+  const [bio, setBio] = useState(mockCurrentUser.bio || "");
+  const [avatar, setAvatar] = useState(mockCurrentUser.avatar || "🎮");
+  const [selectedGames, setSelectedGames] = useState<string[]>(
+    mockCurrentUser.gamesPlayed,
+  );
 
   const handleGameToggle = (game: string) => {
-    setSelectedGames(prev =>
-      prev.includes(game) ? prev.filter(g => g !== game) : [...prev, game].slice(0, 5)
+    setSelectedGames((prev) =>
+      prev.includes(game)
+        ? prev.filter((g) => g !== game)
+        : [...prev, game].slice(0, 5),
     );
   };
 
@@ -46,7 +59,7 @@ export default function EditProfileScreen() {
         </View>
 
         <View style={styles.avatarGrid}>
-          {avatars.map(ava => (
+          {avatars.map((ava) => (
             <Pressable
               key={ava}
               onPress={() => setAvatar(ava)}
@@ -85,7 +98,7 @@ export default function EditProfileScreen() {
       <Card style={styles.gameCard}>
         <Text style={styles.sectionTitle}>Favorite Games (up to 5)</Text>
         <View style={styles.gamesList}>
-          {availableGames.map(game => (
+          {availableGames.map((game) => (
             <Chip
               key={game}
               label={game}
@@ -98,20 +111,11 @@ export default function EditProfileScreen() {
 
       {/* Action buttons */}
       <View style={styles.actions}>
-        <Button
-          variant="primary"
-          onPress={handleSave}
-          fullWidth
-          size="large"
-        >
+        <Button variant="primary" onPress={handleSave} fullWidth size="large">
           Save Changes
         </Button>
 
-        <Button
-          variant="secondary"
-          fullWidth
-          size="large"
-        >
+        <Button variant="secondary" fullWidth size="large">
           Cancel
         </Button>
       </View>
@@ -119,16 +123,16 @@ export default function EditProfileScreen() {
   );
 }
 
-import { Pressable } from 'react-native';
+import { Pressable } from "react-native";
 
 const styles = StyleSheet.create({
   avatarCard: {
     marginBottom: spacing.lg,
-    alignItems: 'center',
+    alignItems: "center",
   },
   sectionTitle: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 14,
     marginBottom: spacing.md,
   },
@@ -139,9 +143,9 @@ const styles = StyleSheet.create({
     fontSize: 80,
   },
   avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     gap: spacing.md,
   },
   avatarOption: {
@@ -149,8 +153,8 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.card,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 2,
     borderColor: colors.border,
   },
@@ -166,8 +170,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   gamesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   actions: {

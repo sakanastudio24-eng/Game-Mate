@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, Searchbar, FAB } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { FAB, Searchbar, Text } from "react-native-paper";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // MessagesScreen: Conversation list
 // Backend integration: GET /api/messages/conversations endpoint in Phase B
@@ -21,45 +21,45 @@ interface Conversation {
 }
 
 export default function MessagesScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const conversations: Conversation[] = [
     {
-      id: '1',
-      participantName: 'ProGamer92',
-      lastMessage: 'Let\'s queue up later',
-      timestamp: '2 min ago',
+      id: "1",
+      participantName: "ProGamer92",
+      lastMessage: "Let's queue up later",
+      timestamp: "2 min ago",
       unreadCount: 3,
       onlineStatus: true,
     },
     {
-      id: '2',
-      participantName: 'SkyWalker',
-      lastMessage: 'Sounds good, see you tomorrow',
-      timestamp: '1 hour ago',
+      id: "2",
+      participantName: "SkyWalker",
+      lastMessage: "Sounds good, see you tomorrow",
+      timestamp: "1 hour ago",
       unreadCount: 0,
       onlineStatus: false,
     },
     {
-      id: '3',
-      participantName: 'EchoPlayer',
-      lastMessage: 'Group match is starting in 5 mins',
-      timestamp: '5 min ago',
+      id: "3",
+      participantName: "EchoPlayer",
+      lastMessage: "Group match is starting in 5 mins",
+      timestamp: "5 min ago",
       unreadCount: 1,
       onlineStatus: true,
     },
     {
-      id: '4',
-      participantName: 'NovaStrike',
-      lastMessage: 'Thanks for the invite!',
-      timestamp: '3 hours ago',
+      id: "4",
+      participantName: "NovaStrike",
+      lastMessage: "Thanks for the invite!",
+      timestamp: "3 hours ago",
       unreadCount: 0,
       onlineStatus: true,
     },
   ];
 
-  const filteredConversations = conversations.filter(conv =>
-    conv.participantName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredConversations = conversations.filter((conv) =>
+    conv.participantName.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const renderConversation = (conversation: Conversation) => (
@@ -97,9 +97,7 @@ export default function MessagesScreen() {
           <Text style={styles.timestamp}>{conversation.timestamp}</Text>
           {conversation.unreadCount > 0 && (
             <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>
-                {conversation.unreadCount}
-              </Text>
+              <Text style={styles.unreadText}>{conversation.unreadCount}</Text>
             </View>
           )}
         </View>
@@ -124,7 +122,7 @@ export default function MessagesScreen() {
         <FlatList
           data={filteredConversations}
           renderItem={({ item }) => renderConversation(item)}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           scrollEnabled={true}
           contentContainerStyle={styles.conversationsList}
         />
@@ -136,7 +134,7 @@ export default function MessagesScreen() {
             color={colors.textSecondary}
           />
           <Text style={styles.emptyText}>
-            {searchQuery ? 'No conversations found' : 'No messages yet'}
+            {searchQuery ? "No conversations found" : "No messages yet"}
           </Text>
         </View>
       )}
@@ -169,23 +167,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   conversationContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
     marginRight: spacing.md,
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.surface,
   },
   onlineBadge: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     right: 0,
     width: 12,
@@ -199,7 +197,7 @@ const styles = StyleSheet.create({
   },
   participantName: {
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 14,
     marginBottom: spacing.xs,
   },
@@ -208,7 +206,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   timestampContainer: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   timestamp: {
     color: colors.textSecondary,
@@ -220,24 +218,24 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   unreadText: {
     color: colors.background,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: spacing.lg,
     bottom: spacing.lg,
     backgroundColor: colors.primary,
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyText: {
     color: colors.textSecondary,

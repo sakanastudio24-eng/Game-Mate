@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text } from 'react-native-paper';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { mockFriends } from '../../src/lib/mockData';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockFriends } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // UserProfileScreen: View another user's profile
 // Backend integration: GET /api/users/{id} endpoint in Phase B
@@ -26,8 +26,18 @@ export default function UserProfileScreen() {
           <Text style={styles.avatar}>{user.avatar}</Text>
           <View style={styles.info}>
             <Text style={styles.name}>{user.username}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: user.status === 'online' ? colors.online : colors.textMuted }]} />
-            <Text style={styles.status}>{user.status === 'online' ? 'Online' : 'Offline'}</Text>
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor:
+                    user.status === "online" ? colors.online : colors.textMuted,
+                },
+              ]}
+            />
+            <Text style={styles.status}>
+              {user.status === "online" ? "Online" : "Offline"}
+            </Text>
           </View>
         </View>
 
@@ -40,11 +50,11 @@ export default function UserProfileScreen() {
 
         <View style={styles.actions}>
           <Button
-            variant={isFollowing ? 'secondary' : 'primary'}
+            variant={isFollowing ? "secondary" : "primary"}
             onPress={() => setIsFollowing(!isFollowing)}
             fullWidth
           >
-            {isFollowing ? '✓ Following' : '+ Follow'}
+            {isFollowing ? "✓ Following" : "+ Follow"}
           </Button>
           <Button variant="secondary" fullWidth>
             💬 Message
@@ -72,7 +82,7 @@ export default function UserProfileScreen() {
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statLabel}>Level</Text>
-          <Text style={styles.statValue}>{user.level || '—'}</Text>
+          <Text style={styles.statValue}>{user.level || "—"}</Text>
         </View>
       </View>
     </Screen>
@@ -84,8 +94,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: spacing.md,
     marginBottom: spacing.md,
   },
@@ -97,7 +107,7 @@ const styles = StyleSheet.create({
   },
   name: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 18,
     marginBottom: spacing.xs,
   },
@@ -112,8 +122,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   gameRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingVertical: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
@@ -126,7 +136,7 @@ const styles = StyleSheet.create({
   },
   gameName: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 12,
   },
   actions: {
@@ -137,13 +147,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 14,
     marginBottom: spacing.md,
   },
   gamesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   gameTag: {
@@ -157,10 +167,10 @@ const styles = StyleSheet.create({
   gameTagText: {
     color: colors.primary,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.lg,
   },
@@ -169,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -180,7 +190,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 18,
   },
 });

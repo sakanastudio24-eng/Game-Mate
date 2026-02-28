@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, List, Switch } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { StyleSheet } from "react-native";
+import { List, Switch, Text } from "react-native-paper";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // PrivacySettingsScreen: Privacy and content controls
 // Backend integration: PATCH /api/me/privacy endpoint in Phase B
@@ -20,7 +20,7 @@ export default function PrivacySettingsScreen() {
   });
 
   const toggleSetting = (key: keyof typeof privacySettings) => {
-    setPrivacySettings(prev => ({ ...prev, [key]: !prev[key] }));
+    setPrivacySettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -36,12 +36,12 @@ export default function PrivacySettingsScreen() {
           right={() => (
             <Switch
               value={privacySettings.profilePublic}
-              onValueChange={() => toggleSetting('profilePublic')}
+              onValueChange={() => toggleSetting("profilePublic")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('profilePublic')}
+          onPress={() => toggleSetting("profilePublic")}
         />
 
         <List.Item
@@ -50,12 +50,12 @@ export default function PrivacySettingsScreen() {
           right={() => (
             <Switch
               value={privacySettings.showOnlineStatus}
-              onValueChange={() => toggleSetting('showOnlineStatus')}
+              onValueChange={() => toggleSetting("showOnlineStatus")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('showOnlineStatus')}
+          onPress={() => toggleSetting("showOnlineStatus")}
         />
 
         <List.Item
@@ -64,12 +64,12 @@ export default function PrivacySettingsScreen() {
           right={() => (
             <Switch
               value={privacySettings.searchable}
-              onValueChange={() => toggleSetting('searchable')}
+              onValueChange={() => toggleSetting("searchable")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('searchable')}
+          onPress={() => toggleSetting("searchable")}
         />
       </Card>
 
@@ -82,12 +82,12 @@ export default function PrivacySettingsScreen() {
           right={() => (
             <Switch
               value={privacySettings.allowMessages}
-              onValueChange={() => toggleSetting('allowMessages')}
+              onValueChange={() => toggleSetting("allowMessages")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('allowMessages')}
+          onPress={() => toggleSetting("allowMessages")}
         />
 
         <List.Item
@@ -96,12 +96,12 @@ export default function PrivacySettingsScreen() {
           right={() => (
             <Switch
               value={privacySettings.allowGroupInvites}
-              onValueChange={() => toggleSetting('allowGroupInvites')}
+              onValueChange={() => toggleSetting("allowGroupInvites")}
               color={colors.primary}
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => toggleSetting('allowGroupInvites')}
+          onPress={() => toggleSetting("allowGroupInvites")}
         />
       </Card>
 
@@ -111,7 +111,13 @@ export default function PrivacySettingsScreen() {
         <List.Item
           title="Blocked Users"
           description="Manage blocked accounts"
-          left={() => <MaterialCommunityIcons name="block-helper" size={20} color={colors.destructive} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="block-helper"
+              size={20}
+              color={colors.destructive}
+            />
+          )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
           onPress={() => {}}
         />
@@ -119,7 +125,13 @@ export default function PrivacySettingsScreen() {
         <List.Item
           title="Report User"
           description="Report suspicious behavior"
-          left={() => <MaterialCommunityIcons name="alert-circle" size={20} color={colors.destructive} />}
+          left={() => (
+            <MaterialCommunityIcons
+              name="alert-circle"
+              size={20}
+              color={colors.destructive}
+            />
+          )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
           onPress={() => {}}
         />
@@ -134,9 +146,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginBottom: spacing.md,
     letterSpacing: 0.5,
   },

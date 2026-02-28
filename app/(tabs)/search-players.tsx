@@ -1,13 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
-import { Text, Searchbar, Chip } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { mockData } from '../../src/lib/mockData';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useMemo, useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Chip, Searchbar, Text } from "react-native-paper";
+import { Button } from "../../src/components/ui/Button";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // SearchPlayersScreen: Find and add players
 // Backend integration: GET /api/players/search endpoint in Phase B
@@ -22,61 +21,61 @@ interface PlayerSearchResult {
 }
 
 export default function SearchPlayersScreen() {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [addedPlayers, setAddedPlayers] = useState<Set<string>>(new Set());
 
-  const allGenres = ['FPS', 'RPG', 'Strategy', 'Sports', 'Fighting', 'MMO'];
+  const allGenres = ["FPS", "RPG", "Strategy", "Sports", "Fighting", "MMO"];
 
   const toggleGenre = (genre: string) => {
-    setSelectedGenres(prev =>
-      prev.includes(genre) ? prev.filter(g => g !== genre) : [...prev, genre]
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre],
     );
   };
 
   const mockSearchResults: PlayerSearchResult[] = [
     {
-      id: '1',
-      name: 'ProGamer92',
-      rank: 'Diamond',
-      games: ['Valorant', 'CS:GO'],
+      id: "1",
+      name: "ProGamer92",
+      rank: "Diamond",
+      games: ["Valorant", "CS:GO"],
       onlineStatus: true,
       mutualFriends: 3,
     },
     {
-      id: '2',
-      name: 'SkyWalker',
-      rank: 'Platinum',
-      games: ['Valorant', 'Apex'],
+      id: "2",
+      name: "SkyWalker",
+      rank: "Platinum",
+      games: ["Valorant", "Apex"],
       onlineStatus: false,
       mutualFriends: 1,
     },
     {
-      id: '3',
-      name: 'EchoPlayer',
-      rank: 'Gold',
-      games: ['CS:GO', 'Overwatch'],
+      id: "3",
+      name: "EchoPlayer",
+      rank: "Gold",
+      games: ["CS:GO", "Overwatch"],
       onlineStatus: true,
       mutualFriends: 2,
     },
   ];
 
   const filteredResults = useMemo(() => {
-    return mockSearchResults.filter(player => {
+    return mockSearchResults.filter((player) => {
       const matchesSearch = player.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
       const matchesGenres =
         selectedGenres.length === 0 ||
-        player.games.some(game =>
-          allGenres.some(genre => game.includes(genre))
+        player.games.some((game) =>
+          allGenres.some((genre) => game.includes(genre)),
         );
       return matchesSearch && matchesGenres;
     });
   }, [searchQuery, selectedGenres]);
 
   const toggleAddPlayer = (playerId: string) => {
-    setAddedPlayers(prev => {
+    setAddedPlayers((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(playerId)) {
         newSet.delete(playerId);
@@ -94,7 +93,9 @@ export default function SearchPlayersScreen() {
           <View style={styles.playerNameRow}>
             <Text style={styles.playerName}>{player.name}</Text>
             {player.onlineStatus && (
-              <View style={[styles.onlineBadge, { backgroundColor: colors.online }]} />
+              <View
+                style={[styles.onlineBadge, { backgroundColor: colors.online }]}
+              />
             )}
           </View>
           <Text style={styles.playerRank}>{player.rank} Rank</Text>
@@ -106,21 +107,16 @@ export default function SearchPlayersScreen() {
         </View>
 
         <Button
-          mode={addedPlayers.has(player.id) ? 'contained' : 'outlined'}
+          mode={addedPlayers.has(player.id) ? "contained" : "outlined"}
           onPress={() => toggleAddPlayer(player.id)}
           size="small"
-          label={addedPlayers.has(player.id) ? 'Added' : 'Add'}
+          label={addedPlayers.has(player.id) ? "Added" : "Add"}
         />
       </View>
 
       <View style={styles.gamesContainer}>
         {player.games.map((game, idx) => (
-          <Chip
-            key={idx}
-            label={game}
-            size="small"
-            style={styles.gameChip}
-          />
+          <Chip key={idx} label={game} size="small" style={styles.gameChip} />
         ))}
       </View>
     </Card>
@@ -142,7 +138,7 @@ export default function SearchPlayersScreen() {
       <View style={styles.filtersContainer}>
         <Text style={styles.filterLabel}>GAMES</Text>
         <View style={styles.chipGroup}>
-          {allGenres.map(genre => (
+          {allGenres.map((genre) => (
             <Chip
               key={genre}
               selected={selectedGenres.includes(genre)}
@@ -163,7 +159,7 @@ export default function SearchPlayersScreen() {
         <FlatList
           data={filteredResults}
           renderItem={({ item }) => renderPlayerCard(item)}
-          keyExtractor={item => item.id}
+          keyExtractor={(item) => item.id}
           scrollEnabled={false}
           contentContainerStyle={styles.resultsList}
         />
@@ -176,8 +172,8 @@ export default function SearchPlayersScreen() {
           />
           <Text style={styles.emptyText}>
             {searchQuery || selectedGenres.length > 0
-              ? 'No players found'
-              : 'Search for players to get started'}
+              ? "No players found"
+              : "Search for players to get started"}
           </Text>
         </View>
       )}
@@ -201,15 +197,15 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginBottom: spacing.sm,
     letterSpacing: 0.5,
   },
   chipGroup: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   filterChip: {
@@ -232,22 +228,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   playerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   playerInfo: {
     flex: 1,
   },
   playerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.xs,
   },
   playerName: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 16,
     marginRight: spacing.sm,
   },
@@ -258,7 +254,7 @@ const styles = StyleSheet.create({
   },
   playerRank: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 12,
     marginBottom: spacing.xs,
   },
@@ -267,8 +263,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   gamesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   gameChip: {
@@ -279,14 +275,14 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: spacing.xl,
   },
   emptyText: {
     color: colors.textSecondary,
     fontSize: 14,
     marginTop: spacing.md,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

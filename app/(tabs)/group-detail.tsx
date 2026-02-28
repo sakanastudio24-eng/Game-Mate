@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, TextInput, Pressable } from 'react-native';
-import { Text, Chip, IconButton } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { mockGroups } from '../../src/lib/mockData';
-import { colors, spacing, typography } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Chip, Text } from "react-native-paper";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { mockGroups } from "../../src/lib/mockData";
+import { colors, spacing } from "../../src/lib/theme";
 
 // GroupDetailScreen: Shows group details, members, chat, events
 // Backend integration: GET /api/groups/{id}, POST /api/groups/{id}/messages in Phase B
@@ -14,17 +14,24 @@ import { colors, spacing, typography } from '../../src/lib/theme';
 
 export default function GroupDetailScreen() {
   const group = mockGroups[0]; // Mock: use first group
-  const [activeTab, setActiveTab] = useState<'members' | 'chat' | 'events'>('chat');
-  const [chatMessage, setChatMessage] = useState('');
-  const [messages, setMessages] = useState<Array<{ id: string; user: string; text: string }>>([
-    { id: '1', user: 'ProPlayer_X', text: 'Who wants to ranked grind today?' },
-    { id: '2', user: 'You', text: 'I\'m in! Let\'s go.' },
+  const [activeTab, setActiveTab] = useState<"members" | "chat" | "events">(
+    "chat",
+  );
+  const [chatMessage, setChatMessage] = useState("");
+  const [messages, setMessages] = useState<
+    Array<{ id: string; user: string; text: string }>
+  >([
+    { id: "1", user: "ProPlayer_X", text: "Who wants to ranked grind today?" },
+    { id: "2", user: "You", text: "I'm in! Let's go." },
   ]);
 
   const handleSendMessage = () => {
     if (chatMessage.trim()) {
-      setMessages([...messages, { id: Date.now().toString(), user: 'You', text: chatMessage }]);
-      setChatMessage('');
+      setMessages([
+        ...messages,
+        { id: Date.now().toString(), user: "You", text: chatMessage },
+      ]);
+      setChatMessage("");
     }
   };
 
@@ -43,21 +50,35 @@ export default function GroupDetailScreen() {
         </View>
 
         <View style={styles.badges}>
-          {group.mode === 'ranked' && (
-            <Chip icon="star" label="Ranked" size="small" style={styles.badge} />
+          {group.mode === "ranked" && (
+            <Chip
+              icon="star"
+              label="Ranked"
+              size="small"
+              style={styles.badge}
+            />
           )}
           {group.micRequired && (
-            <Chip icon="microphone" label="Mic Required" size="small" style={styles.badge} />
+            <Chip
+              icon="microphone"
+              label="Mic Required"
+              size="small"
+              style={styles.badge}
+            />
           )}
           {group.minRank && (
-            <Chip label={`${group.minRank}+`} size="small" style={styles.badge} />
+            <Chip
+              label={`${group.minRank}+`}
+              size="small"
+              style={styles.badge}
+            />
           )}
         </View>
       </Card>
 
       {/* Tab selector */}
       <View style={styles.tabSelector}>
-        {['members', 'chat', 'events'].map(tab => (
+        {["members", "chat", "events"].map((tab) => (
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
@@ -79,7 +100,7 @@ export default function GroupDetailScreen() {
       </View>
 
       {/* Tab content */}
-      {activeTab === 'members' && (
+      {activeTab === "members" && (
         <FlatList
           data={group.members}
           keyExtractor={(_, idx) => `${idx}`}
@@ -87,20 +108,27 @@ export default function GroupDetailScreen() {
             <View style={styles.memberItem}>
               <Text style={styles.memberAvatar}>👤</Text>
               <Text style={styles.memberName}>Member {index + 1}</Text>
-              {index === 0 && <Chip label="Admin" size="small" style={styles.adminBadge} />}
+              {index === 0 && (
+                <Chip label="Admin" size="small" style={styles.adminBadge} />
+              )}
             </View>
           )}
           scrollEnabled={false}
         />
       )}
 
-      {activeTab === 'chat' && (
+      {activeTab === "chat" && (
         <>
           <FlatList
             data={messages}
-            keyExtractor={msg => msg.id}
+            keyExtractor={(msg) => msg.id}
             renderItem={({ item }) => (
-              <View style={[styles.messageItem, item.user === 'You' && styles.messageItemOwn]}>
+              <View
+                style={[
+                  styles.messageItem,
+                  item.user === "You" && styles.messageItemOwn,
+                ]}
+              >
                 <Text style={styles.messageUser}>{item.user}</Text>
                 <Text style={styles.messageText}>{item.text}</Text>
               </View>
@@ -125,16 +153,22 @@ export default function GroupDetailScreen() {
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <MaterialCommunityIcons name="send" size={20} color={colors.background} />
+              <MaterialCommunityIcons
+                name="send"
+                size={20}
+                color={colors.background}
+              />
             </Pressable>
           </View>
         </>
       )}
 
-      {activeTab === 'events' && (
+      {activeTab === "events" && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No events scheduled</Text>
-          <Text style={styles.emptySubtext}>Upcoming events will appear here</Text>
+          <Text style={styles.emptySubtext}>
+            Upcoming events will appear here
+          </Text>
         </View>
       )}
     </Screen>
@@ -146,14 +180,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: spacing.md,
   },
   gameName: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 16,
     marginBottom: spacing.xs,
   },
@@ -164,19 +198,19 @@ const styles = StyleSheet.create({
   },
   memberCount: {
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 24,
   },
   badges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
   badge: {
     marginRight: spacing.xs,
   },
   tabSelector: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     marginBottom: spacing.md,
@@ -184,9 +218,9 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     paddingVertical: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
     borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
+    borderBottomColor: "transparent",
   },
   tabButtonActive: {
     borderBottomColor: colors.primary,
@@ -194,14 +228,14 @@ const styles = StyleSheet.create({
   tabText: {
     color: colors.textMuted,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   tabTextActive: {
     color: colors.primary,
   },
   memberItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderBottomWidth: 1,
@@ -229,11 +263,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     marginVertical: spacing.xs,
-    maxWidth: '80%',
+    maxWidth: "80%",
   },
   messageItemOwn: {
     backgroundColor: colors.primary,
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
   },
   messageUser: {
     color: colors.textMuted,
@@ -245,7 +279,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   composer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
@@ -266,13 +300,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: spacing.xl,
   },
   emptyText: {

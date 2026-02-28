@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, List, Divider } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { Card } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { colors, spacing } from '../../src/lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Divider, List, Text } from "react-native-paper";
+import { Card } from "../../src/components/ui/Card";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // HelpScreen: FAQ, support, and documentation
 // Backend integration: Links to external support portal in Phase B
@@ -22,34 +21,40 @@ export default function HelpScreen() {
 
   const faqs: FAQItem[] = [
     {
-      question: 'How do I create a game group?',
-      answer: 'Tap the Create button on the Groups tab. Select your game, play style, rank requirement, and description. Invite friends or make it public for matchmaking.',
-      icon: 'plus-circle',
+      question: "How do I create a game group?",
+      answer:
+        "Tap the Create button on the Groups tab. Select your game, play style, rank requirement, and description. Invite friends or make it public for matchmaking.",
+      icon: "plus-circle",
     },
     {
-      question: 'What is matchmaking?',
-      answer: 'Matchmaking is our feature to automatically find compatible players for your group based on game, rank, play style, and region.',
-      icon: 'shuffle-variant',
+      question: "What is matchmaking?",
+      answer:
+        "Matchmaking is our feature to automatically find compatible players for your group based on game, rank, play style, and region.",
+      icon: "shuffle-variant",
     },
     {
-      question: 'How do I add friends?',
-      answer: 'Go to the Social tab and tap "Add Friends". Search for players by name or use QR codes to quickly add friends nearby.',
-      icon: 'account-plus',
+      question: "How do I add friends?",
+      answer:
+        'Go to the Social tab and tap "Add Friends". Search for players by name or use QR codes to quickly add friends nearby.',
+      icon: "account-plus",
     },
     {
-      question: 'What is my QR code?',
-      answer: 'Your unique QR code lets friends quickly add you without typing your name. Find it in your Profile settings under "My Code".',
-      icon: 'qrcode',
+      question: "What is my QR code?",
+      answer:
+        'Your unique QR code lets friends quickly add you without typing your name. Find it in your Profile settings under "My Code".',
+      icon: "qrcode",
     },
     {
-      question: 'How do I report a player?',
-      answer: 'Open their profile, tap the menu icon, and select "Report". Tell us what happened and we\'ll review it within 24 hours.',
-      icon: 'alert-circle',
+      question: "How do I report a player?",
+      answer:
+        'Open their profile, tap the menu icon, and select "Report". Tell us what happened and we\'ll review it within 24 hours.',
+      icon: "alert-circle",
     },
     {
-      question: 'Can I change my game preferences?',
-      answer: 'Yes! Go to your Profile, tap Edit Profile, and update your favorite games. You can add up to 5 games.',
-      icon: 'gamepad-variant',
+      question: "Can I change my game preferences?",
+      answer:
+        "Yes! Go to your Profile, tap Edit Profile, and update your favorite games. You can add up to 5 games.",
+      icon: "gamepad-variant",
     },
   ];
 
@@ -81,7 +86,7 @@ export default function HelpScreen() {
               )}
               right={() => (
                 <MaterialCommunityIcons
-                  name={expandedId === idx ? 'chevron-up' : 'chevron-down'}
+                  name={expandedId === idx ? "chevron-up" : "chevron-down"}
                   size={24}
                   color={colors.text}
                 />
@@ -108,7 +113,11 @@ export default function HelpScreen() {
           title="Email Support"
           description="support@gamemate.com"
           left={() => (
-            <MaterialCommunityIcons name="email" size={20} color={colors.primary} />
+            <MaterialCommunityIcons
+              name="email"
+              size={20}
+              color={colors.primary}
+            />
           )}
           titleStyle={styles.contactTitle}
           onPress={() => {}}
@@ -118,7 +127,11 @@ export default function HelpScreen() {
           title="Discord Community"
           description="Join our community server"
           left={() => (
-            <MaterialCommunityIcons name="discord" size={20} color={colors.primary} />
+            <MaterialCommunityIcons
+              name="discord"
+              size={20}
+              color={colors.primary}
+            />
           )}
           titleStyle={styles.contactTitle}
           onPress={() => {}}
@@ -128,7 +141,11 @@ export default function HelpScreen() {
           title="Twitter"
           description="@GameMateApp"
           left={() => (
-            <MaterialCommunityIcons name="twitter" size={20} color={colors.primary} />
+            <MaterialCommunityIcons
+              name="twitter"
+              size={20}
+              color={colors.primary}
+            />
           )}
           titleStyle={styles.contactTitle}
           onPress={() => {}}
@@ -137,7 +154,7 @@ export default function HelpScreen() {
 
       <Card style={styles.infoCard}>
         <Text style={styles.infoText}>
-          Version 1.0.0{'\n'}
+          Version 1.0.0{"\n"}
           Last updated: January 2025
         </Text>
       </Card>
@@ -161,14 +178,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   infoCard: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.md,
   },
   sectionTitle: {
     color: colors.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 12,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginBottom: spacing.md,
     letterSpacing: 0.5,
   },
@@ -181,7 +198,7 @@ const styles = StyleSheet.create({
   questionText: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   answerContainer: {
     backgroundColor: colors.surface,
@@ -200,11 +217,11 @@ const styles = StyleSheet.create({
   contactTitle: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   infoText: {
     color: colors.textSecondary,
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

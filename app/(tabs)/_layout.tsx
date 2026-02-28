@@ -1,7 +1,7 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { colors } from '@/src/lib/theme';
+import { colors } from "@/src/lib/theme";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Tabs } from "expo-router";
+import React from "react";
 
 export default function TabLayout() {
   return (
@@ -15,12 +15,13 @@ export default function TabLayout() {
           borderTopWidth: 1,
         },
         headerShown: false,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-      }}>
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+      }}
+    >
       <Tabs.Screen
         name="news"
         options={{
-          title: 'News',
+          title: "News",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="newspaper" size={24} color={color} />
           ),
@@ -29,7 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="groups"
         options={{
-          title: 'Groups',
+          title: "Groups",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="people" size={24} color={color} />
           ),
@@ -38,7 +39,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="social"
         options={{
-          title: 'Social',
+          title: "Social",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="heart" size={24} color={color} />
           ),
@@ -47,7 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Messages',
+          title: "Messages",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="message" size={24} color={color} />
           ),
@@ -56,7 +57,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="account" size={24} color={color} />
           ),

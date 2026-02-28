@@ -1,43 +1,46 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Button, Dialog, Portal, TextInput, List } from 'react-native-paper';
-import { Screen } from '../../src/components/ui/Screen';
-import { Header } from '../../src/components/ui/Header';
-import { colors, spacing } from '../../src/lib/theme';
+import React, { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Button, Dialog, Portal, TextInput } from "react-native-paper";
+import { Header } from "../../src/components/ui/Header";
+import { Screen } from "../../src/components/ui/Screen";
+import { colors, spacing } from "../../src/lib/theme";
 
 // AccountSettingsScreen: Change email, password, 2FA, delete account
 // Backend integration: PUT /api/user/email, /api/user/password, /api/user/2fa, DELETE /api/user in Phase B
 
 export default function AccountSettingsScreen() {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
 
-  const [changeEmailDialogVisible, setChangeEmailDialogVisible] = useState(false);
-  const [changePasswordDialogVisible, setChangePasswordDialogVisible] = useState(false);
+  const [changeEmailDialogVisible, setChangeEmailDialogVisible] =
+    useState(false);
+  const [changePasswordDialogVisible, setChangePasswordDialogVisible] =
+    useState(false);
   const [enable2FADialogVisible, setEnable2FADialogVisible] = useState(false);
-  const [deleteAccountDialogVisible, setDeleteAccountDialogVisible] = useState(false);
+  const [deleteAccountDialogVisible, setDeleteAccountDialogVisible] =
+    useState(false);
 
   const handleChangeEmail = () => {
     // Mock: validate & submit
-    console.log('Email changed to:', newEmail);
+    console.log("Email changed to:", newEmail);
     setChangeEmailDialogVisible(false);
-    setNewEmail('');
+    setNewEmail("");
   };
 
   const handleChangePassword = () => {
     if (newPassword !== confirmPassword) {
-      console.log('Passwords do not match');
+      console.log("Passwords do not match");
       return;
     }
     // Mock: validate & submit
-    console.log('Password changed');
+    console.log("Password changed");
     setChangePasswordDialogVisible(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
   };
 
   const handleToggle2FA = () => {
@@ -47,7 +50,7 @@ export default function AccountSettingsScreen() {
 
   const handleDeleteAccount = () => {
     // Mock: delete account
-    console.log('Account deleted');
+    console.log("Account deleted");
     setDeleteAccountDialogVisible(false);
   };
 
@@ -97,17 +100,17 @@ export default function AccountSettingsScreen() {
           <View>
             <View style={styles.label}>Two-Factor Authentication</View>
             <View style={styles.value}>
-              {twoFAEnabled ? 'Enabled' : 'Disabled'}
+              {twoFAEnabled ? "Enabled" : "Disabled"}
             </View>
           </View>
         </View>
         <Button
-          mode={twoFAEnabled ? 'contained' : 'outlined'}
+          mode={twoFAEnabled ? "contained" : "outlined"}
           onPress={() => setEnable2FADialogVisible(true)}
           labelStyle={styles.buttonLabel}
           style={styles.button}
         >
-          {twoFAEnabled ? 'Disable 2FA' : 'Enable 2FA'}
+          {twoFAEnabled ? "Disable 2FA" : "Enable 2FA"}
         </Button>
       </View>
 
@@ -154,7 +157,9 @@ export default function AccountSettingsScreen() {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setChangeEmailDialogVisible(false)}>Cancel</Button>
+            <Button onPress={() => setChangeEmailDialogVisible(false)}>
+              Cancel
+            </Button>
             <Button onPress={handleChangeEmail} labelStyle={styles.buttonLabel}>
               Save
             </Button>
@@ -169,7 +174,9 @@ export default function AccountSettingsScreen() {
           onDismiss={() => setChangePasswordDialogVisible(false)}
           style={styles.dialog}
         >
-          <Dialog.Title style={styles.dialogTitle}>Change Password</Dialog.Title>
+          <Dialog.Title style={styles.dialogTitle}>
+            Change Password
+          </Dialog.Title>
           <Dialog.Content>
             <TextInput
               label="Current Password"
@@ -200,8 +207,13 @@ export default function AccountSettingsScreen() {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setChangePasswordDialogVisible(false)}>Cancel</Button>
-            <Button onPress={handleChangePassword} labelStyle={styles.buttonLabel}>
+            <Button onPress={() => setChangePasswordDialogVisible(false)}>
+              Cancel
+            </Button>
+            <Button
+              onPress={handleChangePassword}
+              labelStyle={styles.buttonLabel}
+            >
               Change
             </Button>
           </Dialog.Actions>
@@ -216,19 +228,21 @@ export default function AccountSettingsScreen() {
           style={styles.dialog}
         >
           <Dialog.Title style={styles.dialogTitle}>
-            {twoFAEnabled ? 'Disable 2FA' : 'Enable 2FA'}
+            {twoFAEnabled ? "Disable 2FA" : "Enable 2FA"}
           </Dialog.Title>
           <Dialog.Content>
             <View style={styles.dialogContent}>
               <View style={styles.dialogText}>
                 {twoFAEnabled
-                  ? 'Are you sure you want to disable two-factor authentication?'
-                  : 'Enhance your account security with two-factor authentication. You will need an authenticator app.'}
+                  ? "Are you sure you want to disable two-factor authentication?"
+                  : "Enhance your account security with two-factor authentication. You will need an authenticator app."}
               </View>
             </View>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setEnable2FADialogVisible(false)}>Cancel</Button>
+            <Button onPress={() => setEnable2FADialogVisible(false)}>
+              Cancel
+            </Button>
             <Button onPress={handleToggle2FA} labelStyle={styles.buttonLabel}>
               Confirm
             </Button>
@@ -243,18 +257,23 @@ export default function AccountSettingsScreen() {
           onDismiss={() => setDeleteAccountDialogVisible(false)}
           style={styles.dialog}
         >
-          <Dialog.Title style={[styles.dialogTitle, { color: colors.destructive }]}>
+          <Dialog.Title
+            style={[styles.dialogTitle, { color: colors.destructive }]}
+          >
             Delete Account
           </Dialog.Title>
           <Dialog.Content>
             <View style={styles.dialogContent}>
               <View style={styles.dialogText}>
-                This action is permanent and cannot be undone. All your data, groups, and messages will be deleted.
+                This action is permanent and cannot be undone. All your data,
+                groups, and messages will be deleted.
               </View>
             </View>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteAccountDialogVisible(false)}>Cancel</Button>
+            <Button onPress={() => setDeleteAccountDialogVisible(false)}>
+              Cancel
+            </Button>
             <Button
               onPress={handleDeleteAccount}
               labelStyle={[styles.buttonLabel, { color: colors.destructive }]}
@@ -285,20 +304,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     color: colors.textMuted,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: spacing.xs,
   },
   value: {
     fontSize: 16,
     color: colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   button: {
     borderColor: colors.primary,
   },
   buttonLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   dialog: {
     backgroundColor: colors.card,
@@ -306,17 +325,17 @@ const styles = StyleSheet.create({
   dialogTitle: {
     color: colors.text,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   dialogContent: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: spacing.md,
   },
   dialogText: {
     color: colors.textMuted,
     fontSize: 14,
     lineHeight: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     backgroundColor: colors.background,

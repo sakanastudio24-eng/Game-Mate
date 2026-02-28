@@ -11,10 +11,6 @@
   "include": [
     "app/**/*.ts",
     "app/**/*.tsx",
-    "hooks/**/*.ts",
-    "hooks/**/*.tsx",
-    "constants/**/*.ts",
-    "constants/**/*.tsx",
     "src/components/**/*.ts",
     "src/components/**/*.tsx",
     "src/lib/**/*.ts",
@@ -23,7 +19,6 @@
     "expo-env.d.ts"
   ],
   "exclude": [
-    "src/app/**",
     "src/main.tsx",
     "src/styles/**",
     "src/imports/**",

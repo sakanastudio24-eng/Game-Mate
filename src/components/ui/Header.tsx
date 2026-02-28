@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
-import { Text } from 'react-native-paper';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { colors, spacing, typography } from '../../lib/theme';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import React from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { colors, spacing, typography } from "../../lib/theme";
 
 // Header component with title, optional back button, and action buttons
 // Used across all screens for consistent navigation header
@@ -72,9 +72,9 @@ export function Header({
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
   },
   leftSection: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   backButton: {
     marginRight: spacing.sm,
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     ...typography.heading,
     color: colors.text,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   subtitle: {
     color: colors.textSecondary,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   rightSection: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   iconButton: {

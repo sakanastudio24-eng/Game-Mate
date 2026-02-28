@@ -1,6 +1,6 @@
-import React from 'react';
-import { ScrollView, View, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing } from '../../lib/theme';
+import React from "react";
+import { ScrollView, StyleSheet, View, ViewStyle } from "react-native";
+import { colors, spacing } from "../../lib/theme";
 
 // Screen wrapper component for consistent padding and layout
 // Supports both scrollable and non-scrollable content
@@ -18,11 +18,7 @@ export function Screen({
   style,
   padded = true,
 }: ScreenProps) {
-  const containerStyle = [
-    styles.container,
-    padded && styles.padded,
-    style,
-  ];
+  const containerStyle = [styles.container, padded && styles.padded, style];
 
   if (scrollable) {
     return (

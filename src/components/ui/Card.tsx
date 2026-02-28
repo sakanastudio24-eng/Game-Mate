@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
-import { colors, spacing } from '../../lib/theme';
+import React from "react";
+import { StyleSheet, View, ViewStyle } from "react-native";
+import { colors, spacing } from "../../lib/theme";
 
 // Card component for grouping content
 // Provides consistent styling with padding and background
@@ -13,10 +13,7 @@ interface CardProps {
 
 export function Card({ children, style, onPress }: CardProps) {
   return (
-    <View
-      style={[styles.card, style]}
-      onTouchEnd={onPress}
-    >
+    <View style={[styles.card, style]} onTouchEnd={onPress}>
       {children}
     </View>
   );

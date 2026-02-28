@@ -1,11 +1,11 @@
-import React from 'react';
-import { TextInput, TextInputProps } from 'react-native-paper';
-import { colors, spacing } from '../../lib/theme';
+import React from "react";
+import { TextInput, TextInputProps } from "react-native-paper";
+import { colors, spacing } from "../../lib/theme";
 
 // Input wrapper around React Native Paper TextInput
 // Provides consistent styling for text fields
 
-interface InputProps extends Omit<TextInputProps, 'theme'> {
+interface InputProps extends Omit<TextInputProps, "theme"> {
   label?: string;
   error?: boolean;
   errorText?: string;

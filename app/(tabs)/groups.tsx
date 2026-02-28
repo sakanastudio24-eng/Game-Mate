@@ -5,16 +5,18 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Screen } from '../../src/components/ui/Screen';
 import { Header } from '../../src/components/ui/Header';
 import { GroupCard } from '../../src/components/GroupCard';
+import { CreateGroupModal } from '../../src/components/CreateGroupModal';
 import { mockGroups } from '../../src/lib/mockData';
 import { colors, spacing } from '../../src/lib/theme';
 
 // GroupsScreen: Tab 2 - Browse user's groups, create new, filter
 // Backend integration: GET /api/groups endpoint in Phase B
-// State: joinedGroups (local), filteredBy (ranked/casual)
+// State: joinedGroups (local), filteredBy (ranked/casual), createModalVisible
 
 export default function GroupsScreen() {
   const [joinedGroups, setJoinedGroups] = useState<string[]>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'ranked' | 'casual'>('all');
+  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   // Filter groups by mode
   const filteredGroups = useMemo(() => {
@@ -34,7 +36,7 @@ export default function GroupsScreen() {
         title="Groups"
         rightAction={{
           icon: 'plus',
-          onPress: () => {},
+          onPress: () => setCreateModalVisible(true),
           label: 'Create',
         }}
       />
@@ -66,6 +68,16 @@ export default function GroupsScreen() {
           />
         )}
         contentContainerStyle={styles.listContent}
+      />
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isVisible={createModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onCreate={(groupData) => {
+          // Mock: just close modal (in Phase B, send to API)
+          setCreateModalVisible(false);
+        }}
       />
     </Screen>
   );

@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   gameInfo: {
     flexDirection: 'row',
-    align: 'center',
+    alignItems: 'center',
     flex: 1,
   },
   gameIconContainer: {

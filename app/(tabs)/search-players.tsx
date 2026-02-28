@@ -120,7 +120,6 @@ export default function SearchPlayersScreen() {
             label={game}
             size="small"
             style={styles.gameChip}
-            textStyle={styles.chipText}
           />
         ))}
       </View>
@@ -152,9 +151,10 @@ export default function SearchPlayersScreen() {
                 styles.filterChip,
                 selectedGenres.includes(genre) && styles.filterChipActive,
               ]}
-              textStyle={styles.filterChipText}
               selectedColor={colors.primary}
-            />
+            >
+              {genre}
+            </Chip>
           ))}
         </View>
       </View>

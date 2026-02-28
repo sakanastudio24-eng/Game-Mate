@@ -25,18 +25,15 @@ export default function AccountSettingsScreen() {
 
   const handleChangeEmail = () => {
     // Mock: validate & submit
-    console.log("Email changed to:", newEmail);
     setChangeEmailDialogVisible(false);
     setNewEmail("");
   };
 
   const handleChangePassword = () => {
     if (newPassword !== confirmPassword) {
-      console.log("Passwords do not match");
       return;
     }
     // Mock: validate & submit
-    console.log("Password changed");
     setChangePasswordDialogVisible(false);
     setCurrentPassword("");
     setNewPassword("");
@@ -50,7 +47,6 @@ export default function AccountSettingsScreen() {
 
   const handleDeleteAccount = () => {
     // Mock: delete account
-    console.log("Account deleted");
     setDeleteAccountDialogVisible(false);
   };
 

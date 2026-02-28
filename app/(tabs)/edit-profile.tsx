@@ -45,8 +45,7 @@ export default function EditProfileScreen() {
   };
 
   const handleSave = () => {
-    // Mock: just reset (in Phase B, send to API)
-    console.log({ username, bio, avatar, selectedGames });
+    // Mock: close screen until API wiring is added in a later phase.
     router.back();
   };
 

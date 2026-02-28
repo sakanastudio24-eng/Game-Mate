@@ -43,15 +43,7 @@ export default function CreateGroupScreen() {
 
   const handleCreate = () => {
     if (validateForm()) {
-      // Backend: POST /api/groups with form data
-      console.log("Creating group:", {
-        groupName,
-        selectedGame,
-        mode,
-        micRequired,
-        minRank,
-        description,
-      });
+      // Backend: POST /api/groups with form data.
       router.back();
     }
   };
@@ -95,7 +87,7 @@ export default function CreateGroupScreen() {
         <Text style={styles.label}>Playing Style</Text>
         <SegmentedButtons
           value={mode}
-          onValueChange={(value) => setMode(value as any)}
+          onValueChange={(value) => setMode(value as "ranked" | "casual")}
           buttons={[
             { value: "ranked", label: "Ranked" },
             { value: "casual", label: "Casual" },

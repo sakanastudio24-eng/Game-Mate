@@ -1,0 +1,157 @@
+import React from 'react';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Text, Icon } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { colors, spacing } from '../lib/theme';
+import { Group } from '../lib/mockData';
+
+// GroupCard: Shows group info, members, join button
+// Backend integration: onJoin() sends POST /api/groups/{id}/join in Phase B
+
+interface GroupCardProps {
+  group: Group;
+  onPress?: () => void;
+  onJoin?: () => void;
+  isJoined?: boolean;
+}
+
+export function GroupCard({ group, onPress, onJoin, isJoined = false }: GroupCardProps) {
+  const modeColor = group.mode === 'ranked' ? colors.primary : colors.secondary;
+
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+      <View style={styles.header}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{group.name}</Text>
+          <Text style={styles.game}>{group.game}</Text>
+        </View>
+        <View style={[styles.modeBadge, { backgroundColor: modeColor }]}>
+          <Text style={styles.modeText}>{group.mode === 'ranked' ? '⭐' : '😄'}</Text>
+        </View>
+      </View>
+
+      <View style={styles.info}>
+        <View style={styles.infoItem}>
+          <MaterialCommunityIcons name="account-group" size={16} color={colors.primary} />
+          <Text style={styles.infoText}>{group.memberCount} members</Text>
+        </View>
+
+        {group.micRequired && (
+          <View style={styles.infoItem}>
+            <MaterialCommunityIcons name="microphone" size={16} color={colors.primary} />
+            <Text style={styles.infoText}>Mic required</Text>
+          </View>
+        )}
+
+        {group.minRank && (
+          <View style={styles.infoItem}>
+            <Text style={styles.infoText}>
+              {group.minRank} - {group.maxRank || 'Max'}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <Text style={styles.description} numberOfLines={2}>
+        {group.description}
+      </Text>
+
+      <Pressable
+        onPress={onJoin}
+        style={({ pressed }) => [
+          styles.joinButton,
+          isJoined && styles.joinedButton,
+          pressed && styles.buttonPressed,
+        ]}
+      >
+        <Text style={[styles.joinButtonText, isJoined && styles.joinedButtonText]}>
+          {isJoined ? '✓ Joined' : 'Join'}
+        </Text>
+      </Pressable>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardPressed: {
+    opacity: 0.8,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: spacing.md,
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  game: {
+    color: colors.textMuted,
+    fontSize: 12,
+  },
+  modeBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 6,
+  },
+  modeText: {
+    fontSize: 14,
+  },
+  info: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  infoText: {
+    color: colors.textMuted,
+    fontSize: 12,
+  },
+  description: {
+    color: colors.text,
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: spacing.md,
+  },
+  joinButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  joinedButton: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  joinButtonText: {
+    color: colors.background,
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  joinedButtonText: {
+    color: colors.primary,
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
+});

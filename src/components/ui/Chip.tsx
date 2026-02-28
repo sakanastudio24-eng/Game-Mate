@@ -9,7 +9,8 @@ import { colors } from "../../lib/theme";
 // Used for tags, filters, and selections
 
 interface ChipProps extends Omit<PaperChipProps, "children"> {
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
   selected?: boolean;
   onPress?: () => void;
   size?: "small" | "medium";
@@ -17,6 +18,7 @@ interface ChipProps extends Omit<PaperChipProps, "children"> {
 
 export function Chip({
   label,
+  children,
   selected = false,
   onPress,
   size = "medium",
@@ -35,7 +37,7 @@ export function Chip({
       textStyle={isSmall ? { fontSize: 12, lineHeight: 16 } : undefined}
       {...props}
     >
-      {label}
+      {children ?? label ?? ""}
     </PaperChip>
   );
 }

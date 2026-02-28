@@ -1,8 +1,9 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Chip, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { Post } from "../lib/mockData";
+import { Chip } from "./ui/Chip";
 import { colors, spacing } from "../lib/theme";
 
 // PostCard: Individual post in news feed
@@ -141,7 +142,7 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
   },
   header: {
-    firstNames: "row",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: spacing.md,

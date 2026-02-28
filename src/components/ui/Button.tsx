@@ -8,29 +8,51 @@ import { colors } from "../../lib/theme";
 // Button wrapper around React Native Paper Button
 // Provides consistent styling and color handling
 
+type ButtonVariant = "primary" | "secondary";
+
 interface ButtonProps extends Omit<PaperButtonProps, "children"> {
-  label: string;
+  label?: string;
+  children?: React.ReactNode;
   mode?: "contained" | "outlined" | "text";
+  variant?: ButtonVariant;
   size?: "small" | "medium" | "large";
+  fullWidth?: boolean;
 }
 
 export function Button({
   label,
+  children,
   mode = "contained",
+  variant,
   size = "medium",
+  fullWidth = false,
+  style,
   ...props
 }: ButtonProps) {
-  const buttonStyle = size === "small" ? { minHeight: 32 } : undefined;
+  const resolvedMode =
+    variant === "secondary"
+      ? "outlined"
+      : variant === "primary"
+        ? "contained"
+        : mode;
+
+  const buttonStyle = [
+    size === "small" ? { minHeight: 32 } : undefined,
+    fullWidth ? { width: "100%" as const } : undefined,
+    style,
+  ];
 
   return (
     <PaperButton
-      mode={mode}
-      textColor={mode === "contained" ? colors.background : colors.primary}
-      buttonColor={mode === "contained" ? colors.primary : undefined}
+      mode={resolvedMode}
+      textColor={
+        resolvedMode === "contained" ? colors.background : colors.primary
+      }
+      buttonColor={resolvedMode === "contained" ? colors.primary : undefined}
       style={buttonStyle}
       {...props}
     >
-      {label}
+      {children ?? label ?? ""}
     </PaperButton>
   );
 }

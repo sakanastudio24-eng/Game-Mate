@@ -9,8 +9,10 @@ export const colors = {
   destructive: "#FF6B6B", // Red - destructive actions
   background: "#1A1A1A", // Dark background
   surface: "#2D2D2D", // Elevated surfaces (cards)
+  card: "#2D2D2D", // Alias used by migrated screens
   text: "#F5F5F5", // Light text
   textSecondary: "#B0B0B0", // Secondary text
+  textMuted: "#B0B0B0", // Alias used by migrated screens
   border: "#3D3D3D", // Border/divider color
   success: "#51CF66", // Green - success states
   warning: "#FFD43B", // Yellow - warning states

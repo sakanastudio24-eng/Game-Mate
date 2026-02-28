@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, ViewStyle } from "react-native";
+import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { colors, spacing } from "../../lib/theme";
 
 // Card component for grouping content
@@ -7,8 +7,9 @@ import { colors, spacing } from "../../lib/theme";
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   onPress?: () => void;
+  variant?: "default" | "elevated";
 }
 
 export function Card({ children, style, onPress }: CardProps) {

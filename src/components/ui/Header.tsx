@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -12,6 +13,16 @@ interface HeaderProps {
   subtitle?: string;
   showBackButton?: boolean;
   onBack?: () => void;
+  rightAction?: {
+    icon: string;
+    onPress?: () => void;
+    label?: string;
+  };
+  rightAction2?: {
+    icon: string;
+    onPress?: () => void;
+    label?: string;
+  };
   rightIcon?: string;
   onRightPress?: () => void;
   rightIcon2?: string;
@@ -23,16 +34,24 @@ export function Header({
   subtitle,
   showBackButton = false,
   onBack,
+  rightAction,
+  rightAction2,
   rightIcon,
   onRightPress,
   rightIcon2,
   onRightPress2,
 }: HeaderProps) {
+  const router = useRouter();
+  const resolvedRightIcon = rightAction?.icon ?? rightIcon;
+  const resolvedRightPress = rightAction?.onPress ?? onRightPress;
+  const resolvedRightIcon2 = rightAction2?.icon ?? rightIcon2;
+  const resolvedRightPress2 = rightAction2?.onPress ?? onRightPress2;
+
   return (
     <View style={styles.header}>
       <View style={styles.leftSection}>
         {showBackButton && (
-          <Pressable onPress={onBack} style={styles.backButton}>
+          <Pressable onPress={onBack ?? (() => router.back())} style={styles.backButton}>
             <MaterialCommunityIcons
               name="chevron-left"
               size={24}
@@ -47,19 +66,19 @@ export function Header({
       </View>
 
       <View style={styles.rightSection}>
-        {rightIcon && (
-          <Pressable onPress={onRightPress} style={styles.iconButton}>
+        {resolvedRightIcon && (
+          <Pressable onPress={resolvedRightPress} style={styles.iconButton}>
             <MaterialCommunityIcons
-              name={rightIcon as any}
+              name={resolvedRightIcon as any}
               size={24}
               color={colors.text}
             />
           </Pressable>
         )}
-        {rightIcon2 && (
-          <Pressable onPress={onRightPress2} style={styles.iconButton}>
+        {resolvedRightIcon2 && (
+          <Pressable onPress={resolvedRightPress2} style={styles.iconButton}>
             <MaterialCommunityIcons
-              name={rightIcon2 as any}
+              name={resolvedRightIcon2 as any}
               size={24}
               color={colors.text}
             />

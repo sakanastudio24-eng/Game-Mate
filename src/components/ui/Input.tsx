@@ -9,12 +9,15 @@ interface InputProps extends Omit<TextInputProps, "theme"> {
   label?: string;
   error?: boolean;
   errorText?: string;
+  fullWidth?: boolean;
 }
 
 export function Input({
   label,
   error = false,
   errorText,
+  fullWidth = false,
+  style,
   ...props
 }: InputProps) {
   return (
@@ -26,7 +29,11 @@ export function Input({
       outlineColor={error ? colors.destructive : colors.border}
       activeOutlineColor={error ? colors.destructive : colors.primary}
       textColor={colors.text}
-      style={{ marginBottom: spacing.md, backgroundColor: colors.surface }}
+      style={[
+        { marginBottom: spacing.md, backgroundColor: colors.surface },
+        fullWidth ? { width: "100%" as const } : undefined,
+        style,
+      ]}
       {...props}
     />
   );

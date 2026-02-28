@@ -32,7 +32,11 @@ export default function TabLayout() {
         options={{
           title: "Groups",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="people" size={24} color={color} />
+            <MaterialCommunityIcons
+              name={"account-group" as any}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />
@@ -63,6 +67,24 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="index" options={{ href: null }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
+      <Tabs.Screen name="account-settings" options={{ href: null }} />
+      <Tabs.Screen name="chat" options={{ href: null }} />
+      <Tabs.Screen name="create-group" options={{ href: null }} />
+      <Tabs.Screen name="discover-groups" options={{ href: null }} />
+      <Tabs.Screen name="edit-profile" options={{ href: null }} />
+      <Tabs.Screen name="group-detail" options={{ href: null }} />
+      <Tabs.Screen name="help" options={{ href: null }} />
+      <Tabs.Screen name="matchmaking" options={{ href: null }} />
+      <Tabs.Screen name="notification-settings" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="privacy-detail" options={{ href: null }} />
+      <Tabs.Screen name="privacy-settings" options={{ href: null }} />
+      <Tabs.Screen name="qr-code" options={{ href: null }} />
+      <Tabs.Screen name="search-players" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="user-profile" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -1,7 +1,8 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { Chip } from "react-native-paper";
 import { FriendCard } from "../../src/components/FriendCard";
+import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockFriends, mockSuggestedUsers } from "../../src/lib/mockData";
@@ -12,6 +13,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // State: followingFriends, followingSuggested (local)
 
 export default function SocialScreen() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"friends" | "suggested">(
     "friends",
   );
@@ -68,6 +70,9 @@ export default function SocialScreen() {
             friend={item}
             isFollowing={following.includes(item.id)}
             onFollow={() => handleFollow(item.id)}
+            onPress={() =>
+              router.push(`/(tabs)/user-profile?userId=${item.id}` as any)
+            }
           />
         )}
         contentContainerStyle={styles.listContent}

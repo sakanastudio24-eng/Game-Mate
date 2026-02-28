@@ -1,8 +1,8 @@
+import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { Chip } from "react-native-paper";
-import { CreateGroupModal } from "../../src/components/CreateGroupModal";
 import { GroupCard } from "../../src/components/GroupCard";
+import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockGroups } from "../../src/lib/mockData";
@@ -13,11 +13,11 @@ import { colors, spacing } from "../../src/lib/theme";
 // State: joinedGroups (local), filteredBy (ranked/casual), createModalVisible
 
 export default function GroupsScreen() {
+  const router = useRouter();
   const [joinedGroups, setJoinedGroups] = useState<string[]>([]);
   const [filterMode, setFilterMode] = useState<"all" | "ranked" | "casual">(
     "all",
   );
-  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   // Filter groups by mode
   const filteredGroups = useMemo(() => {
@@ -39,8 +39,13 @@ export default function GroupsScreen() {
         title="Groups"
         rightAction={{
           icon: "plus",
-          onPress: () => setCreateModalVisible(true),
+          onPress: () => router.push("/(tabs)/create-group" as any),
           label: "Create",
+        }}
+        rightAction2={{
+          icon: "compass-outline",
+          onPress: () => router.push("/(tabs)/discover-groups" as any),
+          label: "Discover",
         }}
       />
 
@@ -68,19 +73,12 @@ export default function GroupsScreen() {
             group={item}
             isJoined={joinedGroups.includes(item.id)}
             onJoin={() => handleJoin(item.id)}
+            onPress={() =>
+              router.push(`/(tabs)/group-detail?groupId=${item.id}` as any)
+            }
           />
         )}
         contentContainerStyle={styles.listContent}
-      />
-
-      {/* Create Group Modal */}
-      <CreateGroupModal
-        isVisible={createModalVisible}
-        onClose={() => setCreateModalVisible(false)}
-        onCreate={(groupData) => {
-          // Mock: just close modal (in Phase B, send to API)
-          setCreateModalVisible(false);
-        }}
       />
     </Screen>
   );

@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -13,13 +14,15 @@ import { colors, spacing } from "../../src/lib/theme";
 // Navigates to settings, edit profile, QR code screens
 
 export default function ProfileScreen() {
+  const router = useRouter();
+
   return (
     <Screen scrollable>
       <Header
         title="Profile"
         rightAction={{
           icon: "cog",
-          onPress: () => {},
+          onPress: () => router.push("/(tabs)/settings" as any),
           label: "Settings",
         }}
       />
@@ -36,6 +39,7 @@ export default function ProfileScreen() {
 
         {/* QR button */}
         <Pressable
+          onPress={() => router.push("/(tabs)/qr-code" as any)}
           style={({ pressed }) => [
             styles.qrButton,
             pressed && { opacity: 0.7 },
@@ -94,7 +98,7 @@ export default function ProfileScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/edit-profile" as any)}
         />
 
         <List.Item
@@ -107,7 +111,7 @@ export default function ProfileScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
 
         <List.Item
@@ -120,7 +124,7 @@ export default function ProfileScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/notification-settings" as any)}
         />
 
         <List.Item
@@ -133,7 +137,7 @@ export default function ProfileScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/privacy-settings" as any)}
         />
 
         <List.Item
@@ -146,7 +150,7 @@ export default function ProfileScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/help" as any)}
         />
 
         <List.Item
@@ -159,7 +163,7 @@ export default function ProfileScreen() {
             />
           )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
-          onPress={() => {}}
+          onPress={() => router.replace("/(tabs)/news" as any)}
         />
       </Card>
     </Screen>

@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
@@ -12,7 +13,8 @@ import { colors, spacing } from "../../src/lib/theme";
 // State: messages (local), messageInput
 
 export default function ChatScreen() {
-  const friend = mockFriends[0]; // Mock: use first friend
+  const { userId } = useLocalSearchParams<{ userId?: string }>();
+  const friend = mockFriends.find((item) => item.id === userId) ?? mockFriends[0];
   const [messages, setMessages] = useState<
     Array<{ id: string; user: string; text: string; timestamp: Date }>
   >([
@@ -57,7 +59,6 @@ export default function ChatScreen() {
       <Header
         title={friend.username}
         showBackButton
-        onBack={() => {}}
         rightAction={{
           icon: "phone",
           onPress: () => {},

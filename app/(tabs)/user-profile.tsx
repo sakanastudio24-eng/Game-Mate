@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -13,12 +14,14 @@ import { colors, spacing } from "../../src/lib/theme";
 // Shows: avatar, name, level, games, stats, follow/message buttons
 
 export default function UserProfileScreen() {
-  const user = mockFriends[0]; // Mock: use first friend
+  const router = useRouter();
+  const { userId } = useLocalSearchParams<{ userId?: string }>();
+  const user = mockFriends.find((item) => item.id === userId) ?? mockFriends[0];
   const [isFollowing, setIsFollowing] = useState(false);
 
   return (
     <Screen scrollable>
-      <Header title={user.username} showBackButton onBack={() => {}} />
+      <Header title={user.username} showBackButton />
 
       {/* User card */}
       <Card style={styles.userCard}>
@@ -56,7 +59,11 @@ export default function UserProfileScreen() {
           >
             {isFollowing ? "✓ Following" : "+ Follow"}
           </Button>
-          <Button variant="secondary" fullWidth>
+          <Button
+            variant="secondary"
+            fullWidth
+            onPress={() => router.push(`/(tabs)/chat?userId=${user.id}` as any)}
+          >
             💬 Message
           </Button>
         </View>

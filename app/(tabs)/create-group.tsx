@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SegmentedButtons, Text } from "react-native-paper";
@@ -23,6 +24,7 @@ const games = [
 const ranks = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Radiant"];
 
 export default function CreateGroupScreen() {
+  const router = useRouter();
   const [groupName, setGroupName] = useState("");
   const [selectedGame, setSelectedGame] = useState("Valorant");
   const [mode, setMode] = useState<"ranked" | "casual">("ranked");
@@ -50,13 +52,13 @@ export default function CreateGroupScreen() {
         minRank,
         description,
       });
-      // Navigate back or show success toast
+      router.back();
     }
   };
 
   return (
     <Screen scrollable>
-      <Header title="Create Group" showBackButton onBack={() => {}} />
+      <Header title="Create Group" showBackButton />
 
       <Card style={styles.card}>
         <Text style={styles.label}>Group Name *</Text>

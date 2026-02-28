@@ -12,18 +12,23 @@ interface FriendCardProps {
   friend: Friend;
   isFollowing?: boolean;
   onFollow?: () => void;
+  onPress?: () => void;
 }
 
 export function FriendCard({
   friend,
   isFollowing = false,
   onFollow,
+  onPress,
 }: FriendCardProps) {
   const statusColor =
     friend.status === "online" ? colors.online : colors.textMuted;
 
   return (
-    <View style={styles.card}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+    >
       <View style={styles.content}>
         <Text style={styles.avatar}>{friend.avatar}</Text>
 
@@ -57,7 +62,10 @@ export function FriendCard({
       </View>
 
       <Pressable
-        onPress={onFollow}
+        onPress={(event) => {
+          event.stopPropagation();
+          onFollow?.();
+        }}
         style={({ pressed }) => [
           styles.button,
           isFollowing && styles.followingButton,
@@ -70,7 +78,7 @@ export function FriendCard({
           color={isFollowing ? colors.primary : colors.background}
         />
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 
@@ -96,6 +104,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  cardPressed: {
+    opacity: 0.9,
   },
   content: {
     flex: 1,

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { FlatList, ScrollView, StyleSheet } from "react-native";
-import { Chip } from "react-native-paper";
 import { PostCard } from "../../src/components/PostCard";
+import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockPosts } from "../../src/lib/mockData";

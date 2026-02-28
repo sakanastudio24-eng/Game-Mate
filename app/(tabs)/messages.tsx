@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
@@ -5,6 +6,7 @@ import { FAB, Searchbar, Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { mockFriends } from "../../src/lib/mockData";
 import { colors, spacing } from "../../src/lib/theme";
 
 // MessagesScreen: Conversation list
@@ -21,6 +23,7 @@ interface Conversation {
 }
 
 export default function MessagesScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
   const conversations: Conversation[] = [
@@ -63,7 +66,22 @@ export default function MessagesScreen() {
   );
 
   const renderConversation = (conversation: Conversation) => (
-    <Card style={styles.conversationCard} key={conversation.id}>
+    <Card
+      style={styles.conversationCard}
+      key={conversation.id}
+      onPress={() => {
+        const matchedFriend = mockFriends.find(
+          (friend) =>
+            friend.name === conversation.participantName ||
+            friend.username === conversation.participantName,
+        );
+        if (matchedFriend) {
+          router.push(`/(tabs)/chat?userId=${matchedFriend.id}` as any);
+        } else {
+          router.push("/(tabs)/chat" as any);
+        }
+      }}
+    >
       <View style={styles.conversationContent}>
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
@@ -107,7 +125,7 @@ export default function MessagesScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Messages" showBackButton onBack={() => {}} />
+      <Header title="Messages" showBackButton />
 
       <Searchbar
         placeholder="Search conversations..."
@@ -141,7 +159,7 @@ export default function MessagesScreen() {
 
       <FAB
         icon="pencil"
-        onPress={() => {}}
+        onPress={() => router.push("/(tabs)/search-players" as any)}
         style={styles.fab}
         color={colors.background}
       />

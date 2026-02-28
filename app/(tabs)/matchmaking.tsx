@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
@@ -23,6 +24,7 @@ interface MatchedGroup {
 }
 
 export default function MatchmakingScreen() {
+  const router = useRouter();
   const [filterType, setFilterType] = useState<"all" | "active" | "incoming">(
     "all",
   );
@@ -123,7 +125,7 @@ export default function MatchmakingScreen() {
       <View style={styles.actionButtons}>
         <Button
           mode="contained"
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/group-detail" as any)}
           style={{ flex: 1 }}
           size="small"
           label="Join"
@@ -141,7 +143,7 @@ export default function MatchmakingScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Matchmaking" showBackButton onBack={() => {}} />
+      <Header title="Matchmaking" showBackButton />
 
       <View style={styles.filterContainer}>
         <SegmentedButtons

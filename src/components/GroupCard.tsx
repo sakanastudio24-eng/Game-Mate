@@ -75,7 +75,10 @@ export function GroupCard({
       </Text>
 
       <Pressable
-        onPress={onJoin}
+        onPress={(event) => {
+          event.stopPropagation();
+          onJoin?.();
+        }}
         style={({ pressed }) => [
           styles.joinButton,
           isJoined && styles.joinedButton,

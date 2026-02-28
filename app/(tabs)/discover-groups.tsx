@@ -1,7 +1,9 @@
+import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { Chip, Searchbar } from "react-native-paper";
+import { Searchbar } from "react-native-paper";
 import { GroupCard } from "../../src/components/GroupCard";
+import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockGroups } from "../../src/lib/mockData";
@@ -12,6 +14,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // Features: Search, filter by game/mode, discover recommendations
 
 export default function DiscoverGroupsScreen() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGame, setFilterGame] = useState<string | null>(null);
   const [joinedGroups, setJoinedGroups] = useState<string[]>([]);
@@ -40,7 +43,7 @@ export default function DiscoverGroupsScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Discover Groups" showBackButton onBack={() => {}} />
+      <Header title="Discover Groups" showBackButton />
 
       {/* Search */}
       <Searchbar
@@ -85,6 +88,9 @@ export default function DiscoverGroupsScreen() {
             group={item}
             isJoined={joinedGroups.includes(item.id)}
             onJoin={() => handleJoin(item.id)}
+            onPress={() =>
+              router.push(`/(tabs)/group-detail?groupId=${item.id}` as any)
+            }
           />
         )}
         contentContainerStyle={styles.listContent}

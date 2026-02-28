@@ -1,9 +1,10 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { Chip, Searchbar, Text } from "react-native-paper";
+import { Searchbar, Text } from "react-native-paper";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
+import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { colors, spacing } from "../../src/lib/theme";
@@ -124,7 +125,7 @@ export default function SearchPlayersScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Find Players" showBackButton onBack={() => {}} />
+      <Header title="Find Players" showBackButton />
 
       <Searchbar
         placeholder="Search by name..."

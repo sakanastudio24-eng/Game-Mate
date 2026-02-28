@@ -1,11 +1,13 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
-import { Chip, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
+import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
-import { mockGroups } from "../../src/lib/mockData";
+import { mockFriends, mockGroups } from "../../src/lib/mockData";
 import { colors, spacing } from "../../src/lib/theme";
 
 // GroupDetailScreen: Shows group details, members, chat, events
@@ -13,7 +15,9 @@ import { colors, spacing } from "../../src/lib/theme";
 // Tabs: members, chat, events
 
 export default function GroupDetailScreen() {
-  const group = mockGroups[0]; // Mock: use first group
+  const router = useRouter();
+  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
+  const group = mockGroups.find((item) => item.id === groupId) ?? mockGroups[0];
   const [activeTab, setActiveTab] = useState<"members" | "chat" | "events">(
     "chat",
   );
@@ -37,7 +41,7 @@ export default function GroupDetailScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title={group.name} showBackButton onBack={() => {}} />
+      <Header title={group.name} showBackButton />
 
       {/* Group header info */}
       <Card style={styles.headerCard}>
@@ -105,13 +109,25 @@ export default function GroupDetailScreen() {
           data={group.members}
           keyExtractor={(_, idx) => `${idx}`}
           renderItem={({ item, index }) => (
-            <View style={styles.memberItem}>
+            <Pressable
+              style={styles.memberItem}
+              onPress={() => {
+                const matchedUser = mockFriends.find(
+                  (friend) => friend.username === item || friend.name === item,
+                );
+                if (matchedUser) {
+                  router.push(
+                    `/(tabs)/user-profile?userId=${matchedUser.id}` as any,
+                  );
+                }
+              }}
+            >
               <Text style={styles.memberAvatar}>👤</Text>
-              <Text style={styles.memberName}>Member {index + 1}</Text>
+              <Text style={styles.memberName}>{item}</Text>
               {index === 0 && (
                 <Chip label="Admin" size="small" style={styles.adminBadge} />
               )}
-            </View>
+            </Pressable>
           )}
           scrollEnabled={false}
         />

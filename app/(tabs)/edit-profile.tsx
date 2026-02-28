@@ -1,5 +1,6 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
@@ -27,6 +28,7 @@ const availableGames = [
 const avatars = ["🎮", "🎯", "🎪", "🧙", "⚔️", "🛡️", "🚀", "🔥"];
 
 export default function EditProfileScreen() {
+  const router = useRouter();
   const [username, setUsername] = useState(mockCurrentUser.username);
   const [bio, setBio] = useState(mockCurrentUser.bio || "");
   const [avatar, setAvatar] = useState(mockCurrentUser.avatar || "🎮");
@@ -45,11 +47,12 @@ export default function EditProfileScreen() {
   const handleSave = () => {
     // Mock: just reset (in Phase B, send to API)
     console.log({ username, bio, avatar, selectedGames });
+    router.back();
   };
 
   return (
     <Screen scrollable>
-      <Header title="Edit Profile" showBackButton onBack={() => {}} />
+      <Header title="Edit Profile" showBackButton />
 
       {/* Avatar selector */}
       <Card style={styles.avatarCard}>
@@ -115,15 +118,13 @@ export default function EditProfileScreen() {
           Save Changes
         </Button>
 
-        <Button variant="secondary" fullWidth size="large">
+        <Button variant="secondary" fullWidth size="large" onPress={() => router.back()}>
           Cancel
         </Button>
       </View>
     </Screen>
   );
 }
-
-import { Pressable } from "react-native";
 
 const styles = StyleSheet.create({
   avatarCard: {

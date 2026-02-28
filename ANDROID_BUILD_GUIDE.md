@@ -5,7 +5,7 @@
 ✅ **Tab Navigation Fixed** - All 5 main tabs now properly wired (News, Groups, Social, Messages, Profile)  
 ✅ **UI Components Complete** - 31 screens built and functional  
 ✅ **EAS Configuration Ready** - Build configuration created  
-⚠️ **Local Build Not Possible** - Java runtime & Android SDK not installed on development machine  
+⚠️ **Local Build Not Possible** - Java runtime & Android SDK not installed on development machine
 
 ---
 
@@ -27,11 +27,13 @@ npx eas build --platform android
 ```
 
 **First-time setup will ask for:**
+
 - Email for Expo account
 - Android Application ID (suggestion: `com.yourcompany.gamemate`)
 - Keystore generation (Expo manages this for you)
 
 **Build types supported:**
+
 - **Preview** (internal testing): `npx eas build --platform android --profile preview`
 - **Production** (app stores): `npx eas build --platform android --profile production`
 - **Development** (testing): `npx eas build --platform android --profile development`
@@ -87,6 +89,7 @@ npx eas build --platform android --profile production
 ### 3. Follow the Prompts
 
 The EAS CLI will ask:
+
 - Application ID: `com.zech1v1.gamemate`
 - Generate new keystore? Yes (first time only)
 - Store credentials? Yes
@@ -106,6 +109,7 @@ You can also watch live at: `https://expo.dev/builds`
 ### 5. Download APK
 
 Once complete:
+
 - APK will be available to download
 - Test on physical Android device or emulator
 - Share via ADB, email, or upload to Google Play
@@ -204,6 +208,7 @@ npx eas register # If you don't have an account
 Check the EAS dashboard for detailed logs: `https://expo.dev/builds`
 
 Common fixes:
+
 - Update package dependencies: `npm install --force`
 - Clear build cache: `npx eas build --platform android --clear-cache`
 - Check app.json for valid configuration
@@ -253,7 +258,7 @@ eas build:download --id <BUILD_ID>
 **Version:** 1.0.0  
 **Min Android:** API 21 (Android 5.0)  
 **React Native:** 0.75.2  
-**Expo:** 54.0.0  
+**Expo:** 54.0.0
 
 ---
 
@@ -281,7 +286,7 @@ eas build:download --id <BUILD_ID>
 ## Git Commits for Deployment
 
 ```
-✅ 223b066 - fix(navigation): wire up 5 main tabs 
+✅ 223b066 - fix(navigation): wire up 5 main tabs
 ✅ fe42e46 - config: add eas.json for Expo cloud builds
 ✅ 38ec028 - docs: build status guide
 ✅ 554ec09 - phase-c screens
@@ -306,7 +311,7 @@ npx eas build --platform android           # Cloud build
 npx eas build --platform android --local   # Local build (requires Java)
 npx eas build --platform all               # iOS + Android
 
-# Testing  
+# Testing
 npx expo run:android      # Run on emulator
 npx expo run:ios         # Run on iPhone simulator
 

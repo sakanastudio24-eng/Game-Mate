@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Button, Dialog, Portal, TextInput } from "react-native-paper";
+import { Button, Dialog, Portal, Text, TextInput } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { colors, spacing } from "../../src/lib/theme";
@@ -56,14 +56,14 @@ export default function AccountSettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Account Settings" showBackButton onBack={() => {}} />
+      <Header title="Account Settings" showBackButton />
 
       {/* Email Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <View style={styles.label}>Current Email</View>
-            <View style={styles.value}>user@example.com</View>
+            <Text style={styles.label}>Current Email</Text>
+            <Text style={styles.value}>user@example.com</Text>
           </View>
         </View>
         <Button
@@ -80,8 +80,8 @@ export default function AccountSettingsScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <View style={styles.label}>Password</View>
-            <View style={styles.value}>••••••••</View>
+            <Text style={styles.label}>Password</Text>
+            <Text style={styles.value}>••••••••</Text>
           </View>
         </View>
         <Button
@@ -98,10 +98,10 @@ export default function AccountSettingsScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <View style={styles.label}>Two-Factor Authentication</View>
-            <View style={styles.value}>
+            <Text style={styles.label}>Two-Factor Authentication</Text>
+            <Text style={styles.value}>
               {twoFAEnabled ? "Enabled" : "Disabled"}
-            </View>
+            </Text>
           </View>
         </View>
         <Button
@@ -118,10 +118,10 @@ export default function AccountSettingsScreen() {
       <View style={[styles.section, styles.dangerSection]}>
         <View style={styles.sectionHeader}>
           <View>
-            <View style={[styles.label, { color: colors.destructive }]}>
+            <Text style={[styles.label, { color: colors.destructive }]}>
               Delete Account
-            </View>
-            <View style={styles.value}>Permanently delete your account</View>
+            </Text>
+            <Text style={styles.value}>Permanently delete your account</Text>
           </View>
         </View>
         <Button
@@ -232,11 +232,11 @@ export default function AccountSettingsScreen() {
           </Dialog.Title>
           <Dialog.Content>
             <View style={styles.dialogContent}>
-              <View style={styles.dialogText}>
+              <Text style={styles.dialogText}>
                 {twoFAEnabled
                   ? "Are you sure you want to disable two-factor authentication?"
                   : "Enhance your account security with two-factor authentication. You will need an authenticator app."}
-              </View>
+              </Text>
             </View>
           </Dialog.Content>
           <Dialog.Actions>
@@ -264,10 +264,10 @@ export default function AccountSettingsScreen() {
           </Dialog.Title>
           <Dialog.Content>
             <View style={styles.dialogContent}>
-              <View style={styles.dialogText}>
+              <Text style={styles.dialogText}>
                 This action is permanent and cannot be undone. All your data,
                 groups, and messages will be deleted.
-              </View>
+              </Text>
             </View>
           </Dialog.Content>
           <Dialog.Actions>

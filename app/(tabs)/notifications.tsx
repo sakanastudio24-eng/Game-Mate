@@ -170,7 +170,7 @@ export default function NotificationsScreen() {
       <Header
         title="Notifications"
         showBackButton
-        onBack={() => {}}
+
         subtitle={unreadCount > 0 ? `${unreadCount} new` : undefined}
       />
 

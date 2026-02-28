@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
@@ -13,6 +14,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // State: notification toggles, privacy settings (local)
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState({
     push: true,
     email: false,
@@ -36,7 +38,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Settings" showBackButton onBack={() => {}} />
+      <Header title="Settings" showBackButton />
 
       {/* Account section */}
       <Card style={styles.section}>
@@ -53,7 +55,7 @@ export default function SettingsScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
 
         <List.Item
@@ -67,7 +69,7 @@ export default function SettingsScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
 
         <List.Item
@@ -81,7 +83,7 @@ export default function SettingsScreen() {
             />
           )}
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
       </Card>
 
@@ -196,7 +198,7 @@ export default function SettingsScreen() {
             />
           )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
       </Card>
 
@@ -207,7 +209,7 @@ export default function SettingsScreen() {
         <List.Item
           title="About"
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/help" as any)}
         />
 
         <List.Item
@@ -219,13 +221,13 @@ export default function SettingsScreen() {
         <List.Item
           title="Terms of Service"
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/help" as any)}
         />
 
         <List.Item
           title="Privacy Policy"
           titleStyle={styles.listTitle}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
       </Card>
 
@@ -235,6 +237,7 @@ export default function SettingsScreen() {
         fullWidth
         size="large"
         style={styles.logoutButton}
+        onPress={() => router.replace("/(tabs)/news" as any)}
       >
         Logout
       </Button>

@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
@@ -11,6 +12,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // Backend integration: PATCH /api/me/privacy endpoint in Phase B
 
 export default function PrivacySettingsScreen() {
+  const router = useRouter();
   const [privacySettings, setPrivacySettings] = useState({
     profilePublic: true,
     showOnlineStatus: true,
@@ -25,7 +27,7 @@ export default function PrivacySettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Privacy & Security" showBackButton onBack={() => {}} />
+      <Header title="Privacy & Security" showBackButton />
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Profile Visibility</Text>
@@ -119,7 +121,7 @@ export default function PrivacySettingsScreen() {
             />
           )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
 
         <List.Item
@@ -133,7 +135,7 @@ export default function PrivacySettingsScreen() {
             />
           )}
           titleStyle={[styles.listTitle, { color: colors.destructive }]}
-          onPress={() => {}}
+          onPress={() => router.push("/(tabs)/help" as any)}
         />
       </Card>
     </Screen>

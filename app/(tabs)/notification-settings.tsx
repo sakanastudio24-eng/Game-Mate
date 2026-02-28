@@ -26,7 +26,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Notifications" showBackButton onBack={() => {}} />
+      <Header title="Notifications" showBackButton />
 
       <Card style={styles.section}>
         <Text style={styles.sectionTitle}>Social</Text>

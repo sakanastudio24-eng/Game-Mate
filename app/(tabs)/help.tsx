@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 import { Divider, List, Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
@@ -60,7 +60,7 @@ export default function HelpScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Help & Support" showBackButton onBack={() => {}} />
+      <Header title="Help & Support" showBackButton />
 
       <View style={styles.introContainer}>
         <Text style={styles.introText}>
@@ -120,7 +120,7 @@ export default function HelpScreen() {
             />
           )}
           titleStyle={styles.contactTitle}
-          onPress={() => {}}
+          onPress={() => Linking.openURL("mailto:support@gamemate.com")}
         />
 
         <List.Item
@@ -128,13 +128,13 @@ export default function HelpScreen() {
           description="Join our community server"
           left={() => (
             <MaterialCommunityIcons
-              name="discord"
+              name={"discord" as any}
               size={20}
               color={colors.primary}
             />
           )}
           titleStyle={styles.contactTitle}
-          onPress={() => {}}
+          onPress={() => Linking.openURL("https://discord.com")}
         />
 
         <List.Item
@@ -142,13 +142,13 @@ export default function HelpScreen() {
           description="@GameMateApp"
           left={() => (
             <MaterialCommunityIcons
-              name="twitter"
+              name={"twitter" as any}
               size={20}
               color={colors.primary}
             />
           )}
           titleStyle={styles.contactTitle}
-          onPress={() => {}}
+          onPress={() => Linking.openURL("https://twitter.com/GameMateApp")}
         />
       </Card>
 

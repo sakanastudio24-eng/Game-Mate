@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Alert, Linking, Pressable, Share, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
@@ -19,9 +19,16 @@ export default function QRCodeScreen() {
 
   const colors_list = [colors.primary, "#66BAFF", "#66FF9F", "#FF6BA6"];
 
+  const handleShare = async () => {
+    await Share.share({
+      message: mockQRCode.shareUrl,
+      url: mockQRCode.shareUrl,
+    });
+  };
+
   return (
     <Screen scrollable>
-      <Header title="QR Code" showBackButton onBack={() => {}} />
+      <Header title="QR Code" showBackButton />
 
       {/* Tabs */}
       <View style={styles.tabSelector}>
@@ -100,15 +107,28 @@ export default function QRCodeScreen() {
               fullWidth
               size="large"
               icon="content-copy"
+              onPress={handleShare}
             >
               Copy Link
             </Button>
 
-            <Button variant="secondary" fullWidth size="large" icon="download">
+            <Button
+              variant="secondary"
+              fullWidth
+              size="large"
+              icon="download"
+              onPress={() => Linking.openURL(mockQRCode.url)}
+            >
               Download
             </Button>
 
-            <Button variant="secondary" fullWidth size="large" icon="share">
+            <Button
+              variant="secondary"
+              fullWidth
+              size="large"
+              icon="share"
+              onPress={handleShare}
+            >
               Share
             </Button>
           </View>
@@ -127,7 +147,15 @@ export default function QRCodeScreen() {
             </Text>
           </View>
 
-          <Button variant="primary" fullWidth size="large" icon="camera">
+          <Button
+            variant="primary"
+            fullWidth
+            size="large"
+            icon="camera"
+            onPress={() =>
+              Alert.alert("Camera", "Scanner integration is coming next.")
+            }
+          >
             Open Camera
           </Button>
         </Card>

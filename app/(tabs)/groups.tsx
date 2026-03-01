@@ -1,7 +1,18 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Image, Modal, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  Animated,
+  Image,
+  Modal,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  View,
+} from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -26,6 +37,7 @@ type AISwipeItem = {
   score: number;
   reasons: string[];
 };
+const SWIPE_ACTION_THRESHOLD = 90;
 
 function mapAiCandidate(group: (typeof SUGGESTED_GROUPS)[number]): AIGroupCandidate {
   const gameKey = group.game.toLowerCase();
@@ -80,6 +92,7 @@ export default function GroupsScreen() {
   const [aiSwipeError, setAiSwipeError] = useState<string | null>(null);
   const [aiSwipeItems, setAiSwipeItems] = useState<AISwipeItem[]>([]);
   const groupThumbSize = responsive.isSmallPhone ? 66 : responsive.isLargePhone ? 86 : 78;
+  const swipeX = useRef(new Animated.Value(0)).current;
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -198,7 +211,7 @@ export default function GroupsScreen() {
 
       setAiSwipeItems(ranked);
     } catch (error) {
-      setAiSwipeError(error instanceof Error ? error.message : "Unable to load AI matches");
+      setAiSwipeError(error instanceof Error ? error.message : "Unable to load matches");
       setAiSwipeItems([]);
     } finally {
       setAiSwipeLoading(false);
@@ -206,18 +219,81 @@ export default function GroupsScreen() {
   };
 
   const handleSwipeLeft = () => {
-    setAiSwipeItems((prev) => prev.slice(1));
+    const current = aiSwipeItems[0];
+    if (!current) return;
+    Animated.timing(swipeX, {
+      toValue: -Math.max(responsive.width, 320),
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      setAiSwipeItems((prev) => prev.slice(1));
+      swipeX.setValue(0);
+    });
   };
 
   const handleSwipeRight = () => {
     const current = aiSwipeItems[0];
     if (!current) return;
-    joinGroup(current.group.id);
-    setAiSwipeItems((prev) => prev.slice(1));
-    Alert.alert("Joined Group", `You joined "${current.group.name}".`);
+    Animated.timing(swipeX, {
+      toValue: Math.max(responsive.width, 320),
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      joinGroup(current.group.id);
+      setAiSwipeItems((prev) => prev.slice(1));
+      swipeX.setValue(0);
+      Alert.alert("Joined Group", `You joined "${current.group.name}".`);
+    });
   };
 
   const activeAiItem = aiSwipeItems[0] ?? null;
+  const rightGlowOpacity = swipeX.interpolate({
+    inputRange: [0, SWIPE_ACTION_THRESHOLD * 0.5, SWIPE_ACTION_THRESHOLD * 2],
+    outputRange: [0, 0.16, 0.42],
+    extrapolate: "clamp",
+  });
+  const leftGlowOpacity = swipeX.interpolate({
+    inputRange: [-SWIPE_ACTION_THRESHOLD * 2, -SWIPE_ACTION_THRESHOLD * 0.5, 0],
+    outputRange: [0.42, 0.16, 0],
+    extrapolate: "clamp",
+  });
+  const cardRotation = swipeX.interpolate({
+    inputRange: [-180, 0, 180],
+    outputRange: ["-8deg", "0deg", "8deg"],
+    extrapolate: "clamp",
+  });
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 8,
+        onPanResponderMove: (_, gesture) => {
+          swipeX.setValue(gesture.dx);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dx >= SWIPE_ACTION_THRESHOLD) {
+            handleSwipeRight();
+            return;
+          }
+          if (gesture.dx <= -SWIPE_ACTION_THRESHOLD) {
+            handleSwipeLeft();
+            return;
+          }
+          Animated.spring(swipeX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 6,
+          }).start();
+        },
+      }),
+    [handleSwipeLeft, handleSwipeRight, swipeX],
+  );
+
+  useEffect(() => {
+    if (!aiSwipeVisible || !activeAiItem) {
+      swipeX.setValue(0);
+    }
+  }, [activeAiItem, aiSwipeVisible, swipeX]);
 
   return (
     <View style={styles.screen}>
@@ -332,15 +408,14 @@ export default function GroupsScreen() {
               <Pressable
                 onPress={openAiSwipe}
                 accessibilityRole="button"
-                accessibilityLabel="Open AI swipe group recommendations"
+                accessibilityLabel="Open swipe group recommendations"
                 style={({ pressed }) => [
                   styles.aiSwipeButton,
                   { minHeight: responsive.buttonHeightSmall },
                   pressed && styles.pressed,
                 ]}
               >
-                <MaterialCommunityIcons name="robot-outline" size={16} color={colors.text} />
-                <Text style={styles.aiSwipeButtonText}>AI Swipe</Text>
+                <MaterialCommunityIcons name="card-multiple-outline" size={18} color={colors.text} />
               </Pressable>
               <Pressable
                 onPress={() => router.push("/(tabs)/create-group")}
@@ -511,16 +586,18 @@ export default function GroupsScreen() {
         onRequestClose={() => setAiSwipeVisible(false)}
       >
         <Pressable style={styles.aiModalBackdrop} onPress={() => setAiSwipeVisible(false)}>
+          <Animated.View pointerEvents="none" style={[styles.swipeScreenGlowLeft, { opacity: leftGlowOpacity }]} />
+          <Animated.View pointerEvents="none" style={[styles.swipeScreenGlowRight, { opacity: rightGlowOpacity }]} />
           <Pressable
             style={[styles.aiModalCard, { borderRadius: responsive.cardRadius }]}
             onPress={() => null}
           >
             <View style={styles.aiModalHeader}>
-              <Text style={styles.aiModalTitle}>AI Group Swipe</Text>
+              <Text style={styles.aiModalTitle}>Group Swipe</Text>
               <Pressable
                 onPress={() => setAiSwipeVisible(false)}
                 accessibilityRole="button"
-                accessibilityLabel="Close AI group swipe"
+                accessibilityLabel="Close group swipe"
                 style={({ pressed }) => [styles.aiModalClose, pressed && styles.pressed]}
               >
                 <MaterialCommunityIcons name="close" size={18} color={colors.textSecondary} />
@@ -539,7 +616,7 @@ export default function GroupsScreen() {
                 <Pressable
                   onPress={() => void openAiSwipe()}
                   accessibilityRole="button"
-                  accessibilityLabel="Retry AI recommendations"
+                  accessibilityLabel="Retry recommendations"
                   style={({ pressed }) => [styles.aiRetryButton, pressed && styles.pressed]}
                 >
                   <Text style={styles.aiRetryButtonText}>Retry</Text>
@@ -551,7 +628,15 @@ export default function GroupsScreen() {
                 <Text style={styles.aiStateCopy}>Refresh later for more recommendations.</Text>
               </View>
             ) : (
-              <View style={styles.aiResultWrap}>
+              <Animated.View
+                style={[
+                  styles.aiResultWrap,
+                  {
+                    transform: [{ translateX: swipeX }, { rotate: cardRotation }],
+                  },
+                ]}
+                {...panResponder.panHandlers}
+              >
                 <Image source={{ uri: activeAiItem.group.thumbnail }} style={styles.aiGroupImage} />
                 <View style={styles.aiTitleRow}>
                   <Text style={styles.aiGroupName}>{activeAiItem.group.name}</Text>
@@ -563,6 +648,7 @@ export default function GroupsScreen() {
                   {activeAiItem.group.game} · {activeAiItem.group.members} members ·{" "}
                   {activeAiItem.group.online} online
                 </Text>
+                <Text style={styles.swipeHint}>Swipe left to pass, swipe right to join</Text>
                 <View style={styles.aiReasonWrap}>
                   {activeAiItem.reasons.map((reason) => (
                     <View key={`${activeAiItem.group.id}-${reason}`} style={styles.aiReasonChip}>
@@ -576,26 +662,26 @@ export default function GroupsScreen() {
                   ))}
                 </View>
                 <View style={styles.aiActionsRow}>
-                  <Pressable
-                    onPress={handleSwipeLeft}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Skip ${activeAiItem.group.name}`}
-                    style={({ pressed }) => [styles.aiSkipButton, pressed && styles.pressed]}
-                  >
-                    <MaterialCommunityIcons name="close" size={18} color={colors.text} />
-                    <Text style={styles.aiSkipButtonText}>Skip</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={handleSwipeRight}
+                    <Pressable
+                      onPress={handleSwipeLeft}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Pass on ${activeAiItem.group.name}`}
+                      style={({ pressed }) => [styles.aiSkipButton, pressed && styles.pressed]}
+                    >
+                      <MaterialCommunityIcons name="close" size={18} color={colors.text} />
+                      <Text style={styles.aiSkipButtonText}>Pass</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={handleSwipeRight}
                     accessibilityRole="button"
                     accessibilityLabel={`Join ${activeAiItem.group.name}`}
                     style={({ pressed }) => [styles.aiJoinButton, pressed && styles.pressed]}
                   >
                     <MaterialCommunityIcons name="check" size={18} color="#1A1A1A" />
-                    <Text style={styles.aiJoinButtonText}>Join</Text>
-                  </Pressable>
-                </View>
-              </View>
+                      <Text style={styles.aiJoinButtonText}>Join</Text>
+                    </Pressable>
+                  </View>
+              </Animated.View>
             )}
           </Pressable>
         </Pressable>
@@ -779,17 +865,11 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    width: 42,
+    height: 42,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-  },
-  aiSwipeButtonText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: "800",
-    marginLeft: 4,
   },
   createButton: {
     backgroundColor: colors.primary,
@@ -910,6 +990,23 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.55)",
     justifyContent: "center",
     paddingHorizontal: spacing.md,
+    position: "relative",
+  },
+  swipeScreenGlowLeft: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: "50%",
+    backgroundColor: "rgba(255,88,88,0.45)",
+  },
+  swipeScreenGlowRight: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: "50%",
+    backgroundColor: "rgba(74,222,128,0.42)",
   },
   aiModalCard: {
     borderWidth: 1,
@@ -972,6 +1069,11 @@ const styles = StyleSheet.create({
   },
   aiResultWrap: {
     gap: spacing.sm,
+  },
+  swipeHint: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
   },
   aiGroupImage: {
     width: "100%",

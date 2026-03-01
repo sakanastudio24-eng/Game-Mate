@@ -121,17 +121,17 @@ export default function AIAdvisorScreen() {
   return (
     <Screen scrollable>
       <Header
-        title="AI Advisor"
+        title="Search"
         subtitle={typeof params.source === "string" ? `Source: ${params.source}` : "Recommendations"}
         showBackButton
       />
 
       <View style={styles.section}>
         <Searchbar
-          placeholder="Search with AI..."
+          placeholder="Search recommendations..."
           value={query}
           onChangeText={setQuery}
-          accessibilityLabel="Search AI recommendations"
+          accessibilityLabel="Search recommendations"
           style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
           inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
           placeholderTextColor={colors.textSecondary}
@@ -150,7 +150,7 @@ export default function AIAdvisorScreen() {
         <Pressable
           onPress={() => void loadRecommendations()}
           accessibilityRole="button"
-          accessibilityLabel="Refresh AI recommendations"
+          accessibilityLabel="Refresh recommendations"
           style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}
         >
           <MaterialCommunityIcons name="refresh" size={16} color="#1A1A1A" />
@@ -187,7 +187,7 @@ export default function AIAdvisorScreen() {
             key={group.id}
             onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
             accessibilityRole="button"
-            accessibilityLabel={`${group.name}, AI score ${result.score}`}
+            accessibilityLabel={`${group.name}, match score ${result.score}`}
             style={({ pressed }) => [styles.card, pressed && styles.pressed]}
           >
             <View style={styles.cardTop}>

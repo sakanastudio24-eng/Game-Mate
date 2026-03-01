@@ -281,11 +281,10 @@ export default function NewsScreen() {
                       } as any)
                     }
                     accessibilityRole="button"
-                    accessibilityLabel="Open AI recommendations search"
+                    accessibilityLabel="Open recommendations search"
                     style={({ pressed }) => [styles.advisorButton, pressed && styles.pressed]}
                   >
-                    <MaterialCommunityIcons name="robot-outline" size={14} color="#1A1A1A" />
-                    <Text style={styles.advisorButtonText}>AI</Text>
+                    <MaterialCommunityIcons name="magnify" size={16} color="#1A1A1A" />
                   </Pressable>
                   {item.duration ? (
                     <View style={styles.durationBadge}>
@@ -560,21 +559,14 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   advisorButton: {
-    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.primary,
     backgroundColor: colors.primary,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  advisorButtonText: {
-    color: "#1A1A1A",
-    fontSize: 12,
-    fontWeight: "800",
-    marginLeft: 4,
+    width: 34,
+    height: 34,
   },
   feedLabel: {
     color: colors.text,

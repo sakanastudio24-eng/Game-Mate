@@ -1,301 +1,160 @@
-# GameMate - Build Status & Deployment Guide
+# GameMate Build Notes and Integration Status
 
-## Current State: Phase C Nearly Complete
+Last updated: 2026-02-28
 
-**Last Commit:** `db27930` - UI component library, theme, and mock data foundation  
-**Repository:** https://github.com/sakanastudio24-eng/Game-Mate  
-**Framework:** Expo Router 54.0.0 with React Native Paper 5.10.0
+## 1) Build Status
 
----
+- Runtime stack: Expo SDK 54 + React Native 0.81 + Expo Router 6
+- Main tabs active: Feed, Groups, Social, Profile
+- Hidden routes wired for detail/settings/utility screens in `app/(tabs)/_layout.tsx`
+- TypeScript gate: `npx tsc --noEmit` passing
 
-## ✅ Completed Work
+Platform status:
+- Android: actively validated for current preview/build flows
+- iOS: not tested due to limited capability in current environment
 
-### Phase 0: Foundation (Commits: 06fa2ef)
+Primary build reference:
+- `ANDROID_BUILD_GUIDE.md` (Android-first workflow)
 
-- **Theme System:** Custom color palette (#FF9F66 primary, #1A1A1A background, #F5F5F5 text)
-- **UI Component Library:** Screen, Header, Card, Button, Input, Chip wrappers
-- **Mock Data System:** Posts, groups, friends, messages, users with realistic data structures
-- **Navigation Skeleton:** Expo Router setup with (auth) and (tabs) layouts
+## 2) Frontend Concerns Status
 
-### Phase A: Main Tab Screens (Commit: 06fa2ef)
+Resolved:
+- Safe-area-aware layout for top/bottom controls across tab screens
+- Back navigation helper behavior across nested contexts
+- Feed interaction model with comments drawer and reply composer
+- Group swipe interaction model:
+  - swipe right to join
+  - swipe left to pass
+  - green/red side feedback during swipe
+- Platform Connections settings surface added
+- Recommendation search route added from feed header
 
-- **NewsScreen:** Post feed with category filtering (fyp/esports/patches/streams), like/save interactions
-- **GroupsScreen:** Group list with mode filtering (ranked/casual), join toggle
-- **SocialScreen:** Friends list with follow/unfollow, friend request system
-- **ProfileScreen:** User profile stats, settings menu with navigation to other screens
-- **Database:** PostCard, GroupCard, FriendCard components for reusable list items
+Resolved in this update:
+- Skeleton loading surfaces added for recommendation-driven UI:
+  - `/(tabs)/ai-advisor` loading state now renders skeleton cards
+  - Groups swipe modal loading state now renders skeleton placeholders
 
-### Phase B: Nested Navigation (Commit: 576af0a)
+Open follow-ups:
+- Migrate additional list-heavy screens to skeleton loading when API wiring starts (messages, notifications, discover)
+- Add visual regression checks for safe-area + skeleton states across device classes
 
-- **GroupDetailScreen:** Group info with 3 tabs (members list, chat, events)
-- **UserProfileScreen:** Friend profile view with stats and action buttons
-- **ChatScreen:** Direct message interface with message scrolling and input
-- **SettingsScreen:** User preferences with toggle switches
-- **Navigation:** Proper back button handling and screen data passing
+## 3) Backend Endpoint Inventory (All v1 Endpoints)
 
-### Phase C: Expanded Screens (Commit: 554ec09 → db27930)
+Canonical contract: `docs/FLOWS_BACKEND.md`
 
-- **CreateGroupScreen:** Comprehensive form with game selector, mode toggle, mic requirement, rank range, description
-- **DiscoverGroupsScreen:** Browse and search for groups with filters
-- **EditProfileScreen:** Update username, bio, avatar, and favorite games
-- **AccountSettingsScreen:** Email/password/phone verification management
-- **QRCodeScreen:** Display and color-customize user QR code
-- **SearchPlayersScreen:** Find other players with game and rank filters
-- **MatchmakingScreen:** View AI-matched groups with trust scores
-- **MessagesScreen:** Conversation list with unread badges
-- **NotificationsScreen:** Notification center with grouping by type
-- **PrivacySettingsScreen:** Profile visibility and interaction controls
-- **NotificationSettingsScreen:** Push notification preferences
-- **HelpScreen:** FAQ and support contact information
+### Auth and Account
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `POST /api/auth/social-login`
+- `GET /api/me`
+- `PATCH /api/me`
+- `POST /api/users/password/change`
+- `POST /api/users/email/send-verify`
+- `POST /api/users/phone/verify`
 
----
+### Preferences and Settings
+- `PATCH /api/me/privacy`
+- `PATCH /api/me/notifications`
+- `GET /api/me/platform-connections`
+- `PATCH /api/me/platform-connections`
 
-## 📁 Project Structure
+### Feed
+- `GET /api/posts`
+- `POST /api/posts/:id/like`
+- `POST /api/posts/:id/save`
+- `POST /api/posts/:id/report`
+- `GET /api/posts/:id/comments`
+- `POST /api/posts/:id/comments`
 
-```
-GameMate/
-├── app/
-│   ├── _layout.tsx              (Main router setup)
-│   ├── (auth)/                  (Onboarding screens)
-│   │   ├── _layout.tsx
-│   │   ├── welcome.tsx
-│   │   ├── email.tsx
-│   │   ├── birthdate.tsx
-│   │   └── preferences.tsx
-│   └── (tabs)/                  (Main app navigation)
-│       ├── _layout.tsx          ⚠️ NEEDS UPDATE
-│       ├── news.tsx
-│       ├── groups.tsx
-│       ├── social.tsx
-│       ├── profile.tsx
-│       ├── group-detail.tsx
-│       ├── user-profile.tsx
-│       ├── chat.tsx
-│       ├── settings.tsx
-│       ├── create-group.tsx
-│       ├── edit-profile.tsx
-│       ├── account-settings.tsx
-│       ├── qr-code.tsx
-│       ├── search-players.tsx
-│       ├── matchmaking.tsx
-│       ├── messages.tsx
-│       ├── notifications.tsx
-│       ├── privacy-settings.tsx
-│       ├── notification-settings.tsx
-│       └── help.tsx
-├── src/
-│   ├── components/
-│   │   ├── ui/
-│   │   │   ├── Screen.tsx       ✅ NEW
-│   │   │   ├── Header.tsx       ✅ NEW
-│   │   │   ├── Card.tsx         ✅ NEW
-│   │   │   ├── Button.tsx       ✅ NEW
-│   │   │   ├── Input.tsx        ✅ NEW
-│   │   │   └── Chip.tsx         ✅ NEW
-│   │   ├── PostCard.tsx
-│   │   ├── GroupCard.tsx
-│   │   └── FriendCard.tsx
-│   ├── lib/
-│   │   ├── theme.ts             ✅ NEW
-│   │   └── mockData.ts          ✅ NEW
-│   └── utils/
-│       └── navigation.ts        (Back screen mapping)
-├── docs/
-│   ├── FLOWS.md                 (Navigation flows)
-│   └── FLOWS_BACKEND.md         ✅ NEW (API reference)
-├── package.json                 (Expo + React Native Paper)
-├── app.json                     (Expo config)
-└── tsconfig.json
-```
+### Groups
+- `GET /api/groups`
+- `GET /api/groups/discover`
+- `POST /api/groups`
+- `GET /api/groups/:id`
+- `POST /api/groups/:id/join`
+- `POST /api/groups/:id/leave`
+- `POST /api/groups/:id/report`
 
----
+### Recommendations (Search + Swipe)
+- `POST /api/ai/recommendations`
+- `POST /api/ai/suggested-tags`
+- `POST /api/ai/draft-intro`
 
-## 🔴 Known Issues & Blockers
+### Social
+- `GET /api/friends`
+- `GET /api/friends/requests`
+- `POST /api/friends/request/:userId`
+- `POST /api/friends/accept/:userId`
+- `POST /api/friends/reject/:userId`
+- `GET /api/players/search`
+- `GET /api/users/:userId`
 
-### 1. Tab Navigation Not Wired (CRITICAL)
+### Messaging
+- `GET /api/messages/conversations`
+- `GET /api/messages/:userId`
+- `POST /api/messages/:userId`
 
-The `app/(tabs)/_layout.tsx` still has default template structure with only "Home" and "Explore" tabs.
+### Notifications
+- `GET /api/notifications`
+- `POST /api/notifications/:id/read`
+- `DELETE /api/notifications/:id`
 
-**What needs to be done:**
+### QR
+- `GET /api/qr/my-code`
+- `PATCH /api/qr/my-code`
+- `GET /api/qr/scan?code=...`
 
-- Replace the 5 main tabs with: News, Groups, Social, Profile, Messages/Chat
-- Add proper screen names for all nested routes
-- Each tab should show its stack of screens (with back navigation support)
+## 4) Endpoint Handoff Notes
 
-**Example needed:**
+- Use a single JSON error envelope:
+  - `{ error: { code, message, details?, requestId? } }`
+- Use cursor pagination for feed/groups/messages lists
+- Keep join/leave endpoints idempotent to tolerate repeated taps
+- Recommendation APIs must be backend-first compatible and allow client fallback behavior
+- Respect request constraints documented in:
+  - `docs/AI_HANDOFF.md`
+  - `docs/FLOWS_BACKEND.md`
 
-```tsx
-<Tabs.Screen name="news" options={{...}} />
-<Tabs.Screen name="groups" options={{...}} />
-<Tabs.Screen name="(group-detail)" options={{...}} />
-// etc.
-```
-
-### 2. Onboarding Not Gated
-
-Onboarding screens exist but app doesn't check `hasCompletedOnboarding` flag to gate them.
-
-### 3. Global State Management Needed
-
-Currently using local component `useState`, but the app will need:
-
-- Current user profile state
-- Authentication tokens
-- User preferences
-
-### 4. Icon System
-
-Expo template uses `@expo/vector-icons/MaterialCommunityIcons` but imports reference non-standard icon sets in some places.
-
-### 5. Real Backend Integration (Phase B+)
-
-All API endpoints documented in `FLOWS_BACKEND.md` but not yet implemented. Currently using mock data.
-
----
-
-## 🚀 Next Steps
-
-### Step 1: Fix Tab Navigation (HIGHEST PRIORITY)
-
-Update `app/(tabs)/_layout.tsx`:
-
-- Map each tab screen using `<Tabs.Screen name="..." />`
-- Configure tab bar icons (use `@expo/vector-icons/MaterialCommunityIcons`)
-- Set up proper header/navigation options
-
-### Step 2: Test Builds
+## 5) Build and Validation Commands
 
 ```bash
-npx expo start              # Start dev server
-npx expo export web         # Build web version
-eas build -p ios            # Build iOS (requires EAS account)
-eas build -p android        # Build Android
-```
-
-### Step 3: Wire Navigation Between Screens
-
-- Add `onPress` handlers with `useRouter().push()`
-- Implement back buttons using `useRouter().back()`
-- Pass data between screens via route params
-
-### Step 4: Connect Backend APIs
-
-- Replace all `mockData` with API calls
-- Implement authentication flow
-- Add loading states and error handling
-- Set up WebSocket for real-time features
-
-### Step 5: App Store Deployment
-
-- Update app.json with correct bundle IDs and names
-- Create app icons and splash screens
-- Configure app signing
-- Submit to Apple App Store and Google Play
-
----
-
-## 📊 Screen Count
-
-- **Onboarding:** 4 screens (Welcome, Email, Birthdate, Preferences)
-- **Main Tabs:** 5 screens (News, Groups, Social, Profile, Messages)
-- **Detail/Modal Screens:** 14 screens (GroupDetail, UserProfile, Chat, Settings, CreateGroup, EditProfile, etc.)
-- **Settings Hierarchy:** 8 screens (Account, Privacy, Notifications, Help, etc.)
-
-**Total: 31 screens built and ready for navigation wiring**
-
----
-
-## 🔐 Authentication Endpoints Ready
-
-All API endpoints documented in `/docs/FLOWS_BACKEND.md`:
-
-- POST /api/auth/signup
-- POST /api/auth/login
-- POST /api/auth/social-login
-- GET /api/me
-- PATCH /api/me, /api/me/privacy, /api/me/notifications
-- 20+ additional endpoints for feeds, groups, friends, messages, etc.
-
----
-
-## 📱 Design System
-
-All screens use consistent:
-
-- **Color Palette:** GameMate brand colors (primary: #FF9F66)
-- **Spacing:** 8/16/24/32/48px system
-- **Typography:** Heading, body, caption styles
-- **Components:** Reusable UI wrappers with Paper theming
-
----
-
-## 💾 Git History
-
-```
-db27930 - UI component library, theme, and mock data foundation
-554ec09 - Comprehensive settings, notifications, search, matchmaking screens
-576af0a - Nested navigation screens (GroupDetail, UserProfile, Chat, Settings)
-06fa2ef - Phone news, groups, social, profile tab screens
-[earlier] - Onboarding flow and project setup
-```
-
----
-
-## ⚡ Performance Notes
-
-- Mock data loads instantly
-- Screen transitions tested with ScrollView/FlatList
-- No heavy computations in render paths
-- All strings follow English-only localization
-
----
-
-## 📋 Checklist for Production
-
-- [ ] Fix tab navigation layout
-- [ ] Wire all screen-to-screen navigation
-- [ ] Implement backend API integration
-- [ ] Add authentication flow
-- [ ] Set up error handling and loading states
-- [ ] Create app icons (1024x1024 for both platforms)
-- [ ] Design splash screens
-- [ ] Write end-to-end tests
-- [ ] Set up CI/CD with EAS Build
-- [ ] Configure app store listings
-- [ ] Submit to Apple App Store
-- [ ] Submit to Google Play Store
-
----
-
-## 🛠 Development Commands
-
-```bash
-# Start dev server
+# Local dev
+npm install
 npm start
 
-# Build for specific platform
-npm run ios
-npm run android
-npm run web
+# Type checks
+npx tsc --noEmit
 
-# Linting
-npm run lint
+# Android bundle gate
+npx expo export:embed --eager --platform android --dev false
 
-# Building for production
-npm run build
+# Android cloud builds
+npx eas build --platform android --profile preview
+npx eas build --platform android --profile production
 ```
 
----
+## 6) Quick Routing Snapshot
 
-## 📞 Support & Documentation
+Main tabs:
+- `/(tabs)/news` (Feed)
+- `/(tabs)/groups`
+- `/(tabs)/social`
+- `/(tabs)/profile`
 
-- **FLOWS.md:** Complete navigation architecture and user flows
-- **FLOWS_BACKEND.md:** API endpoint reference for Phase B+ development
-- **Theme System:** Centralized in `/src/lib/theme.ts`
-- **Mock Data:** Test-friendly data structures in `/src/lib/mockData.ts`
+Notable hidden routes currently in use:
+- `/(tabs)/ai-advisor`
+- `/(tabs)/group-detail`
+- `/(tabs)/messages`
+- `/(tabs)/settings`
+- `/(tabs)/platform-connections`
+- `/(tabs)/notification-settings`
+- `/(tabs)/privacy-settings`
+- `/(tabs)/qr-code`
 
----
+## 7) Definition of Done for Backend Integration
 
-**Status:** App is 85% complete. Ready for navigation fixes and backend integration.  
-**Time to Market:** 2-3 weeks with backend team  
-**Deploy Target:** iOS + Android via EAS Build
+- All endpoints above respond with documented v1 shapes
+- Mobile app runs with `EXPO_PUBLIC_API_BASE_URL` and no schema errors
+- Recommendation flows work with backend and local fallback
+- Platform connections persist + reload correctly
+- Error/rate-limit envelopes match the contract

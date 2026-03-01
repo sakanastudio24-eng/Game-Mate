@@ -75,6 +75,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ href: null }} />
       <Tabs.Screen name="explore" options={{ href: null }} />
       <Tabs.Screen name="account-settings" options={{ href: null }} />
+      <Tabs.Screen name="ai-advisor" options={{ href: null }} />
       <Tabs.Screen name="chat" options={{ href: null }} />
       <Tabs.Screen name="create-group" options={{ href: null }} />
       <Tabs.Screen name="create-collection" options={{ href: null }} />

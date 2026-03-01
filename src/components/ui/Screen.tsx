@@ -34,11 +34,11 @@ export function Screen({
   useEffect(() => {
     Animated.timing(entry, {
       toValue: 1,
-      duration: 220,
+      duration: responsive.motionBase,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [entry]);
+  }, [entry, responsive.motionBase]);
 
   const animatedStyle = {
     opacity: entry,
@@ -46,7 +46,13 @@ export function Screen({
       {
         translateY: entry.interpolate({
           inputRange: [0, 1],
-          outputRange: [14, 0],
+          outputRange: [responsive.screenEntranceOffset, 0],
+        }),
+      },
+      {
+        scale: entry.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.995, 1],
         }),
       },
     ],

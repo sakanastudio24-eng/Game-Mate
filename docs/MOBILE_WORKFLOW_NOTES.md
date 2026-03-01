@@ -1,6 +1,6 @@
 # Mobile Workflow Notes (Expo / React Native)
 
-Last updated: 2026-02-28
+Last updated: 2026-03-01
 
 ## 1) Implementation Checklist (Working Preview Build)
 
@@ -35,6 +35,40 @@ Use this checklist before calling the preview build "ready":
 - Status picker updates online state consistently.
 - Collection tabs (Videos/Games/Groups) all render and route correctly.
 - Video preview cards are tappable and open preview route.
+
+## 1.1) 2026-03-01 Checklist Execution Log
+
+Completed this pass:
+1. Skeleton loading system (expanded primitives)
+- Added reusable `SkeletonAvatar`, `SkeletonLine`, and `SkeletonList`.
+- Kept image-card skeletons on the video search surface.
+
+2. Optimistic UI interactions
+- Feed like toggle now applies instantly with undo toast.
+- Group join now applies instantly with undo toast in groups list and swipe flow.
+
+3. Offline snapshot cache (local save-state)
+- Added `useLocalCache(key)` hook with storage fallback support.
+- Cached feed snapshot, liked/saved IDs, group joined/deleted IDs, last-opened group, and search recents.
+
+4. Premium search behavior
+- Added debounced search on video search and groups search.
+- Added recent searches list and clear action.
+- Added reusable filter chips and wired category filters on video search.
+- Added stronger empty state copy via reusable `EmptyState`.
+
+5. Continue surfaces
+- Video search now shows continue chips for last search and last opened video.
+- Groups now shows continue chip for last opened group.
+
+6. Share UX
+- Added copy-link fallback placeholder option in share menus (feed and groups), alongside existing share-sheet options.
+
+Still open:
+- Global toast service and shared undo queue (currently screen-local toasts).
+- Real persistent storage package install (`@react-native-async-storage/async-storage`) for guaranteed cross-session persistence.
+- Autocomplete suggestion panel and backend-driven search suggestions.
+- Full activity badge system, duplicate-group templates, and pull-to-refresh animation polish.
 
 ## 2) Postmortem: Problems and Growth
 

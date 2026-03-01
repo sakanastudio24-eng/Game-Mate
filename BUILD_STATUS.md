@@ -1,6 +1,6 @@
 # GameMate Build Notes and Integration Status
 
-Last updated: 2026-02-28
+Last updated: 2026-03-01
 
 ## 1) Build Status
 
@@ -33,10 +33,22 @@ Resolved in this update:
 - Skeleton loading surfaces added for recommendation-driven UI:
   - `/(tabs)/ai-advisor` loading state now renders skeleton cards
   - Groups swipe modal loading state now renders skeleton placeholders
+- Search UX upgraded in `/(tabs)/ai-advisor`:
+  - video-first ranking model (top 2 AI picks + top 8 search results)
+  - fixed search bar + infinite 2-column vertical grid
+  - image-first cards with duration, metadata, and engagement stats
+  - debounced search input, recent-search cache, category filter chips
+  - continue surface for last search / last opened video
+- Optimistic + local-cache interaction upgrades:
+  - Feed likes now use optimistic toggle pattern with undo toast
+  - Groups join actions now show undo toast and update instantly
+  - Local cache hooks added for feed snapshot, likes/saves, group joins/deletes, and search context
+- Share UX upgraded with copy-link fallback placeholder in feed and groups
 
 Open follow-ups:
 - Migrate additional list-heavy screens to skeleton loading when API wiring starts (messages, notifications, discover)
 - Add visual regression checks for safe-area + skeleton states across device classes
+- Add persistent storage backend package (`@react-native-async-storage/async-storage`) to replace in-memory fallback used by `useLocalCache` when package is absent
 
 ## 3) Backend Endpoint Inventory (All v1 Endpoints)
 

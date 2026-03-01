@@ -385,6 +385,11 @@ export default function NewsScreen() {
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.drawerListContent}
                 showsVerticalScrollIndicator
+                keyboardShouldPersistTaps="handled"
+                initialNumToRender={8}
+                maxToRenderPerBatch={10}
+                windowSize={5}
+                removeClippedSubviews
                 renderItem={({ item }) => (
                   <View style={styles.drawerComment}>
                     <Image

@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -65,6 +66,7 @@ export default function ExploreScreen() {
         placeholder="Search routes..."
         value={query}
         onChangeText={setQuery}
+        {...androidKeyboardCompatProps}
         accessibilityLabel="Search routes"
         style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
         inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}

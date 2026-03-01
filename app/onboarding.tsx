@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { androidKeyboardCompatProps } from "../src/lib/androidInput";
 import { useResponsive } from "../src/lib/responsive";
 import { primeHomeContentCache } from "../src/lib/content-data";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
@@ -294,6 +295,7 @@ export default function OnboardingScreen() {
                   placeholderTextColor="#999"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  {...androidKeyboardCompatProps}
                   accessibilityLabel="Email address"
                   style={styles.input}
                 />
@@ -344,6 +346,7 @@ export default function OnboardingScreen() {
                   placeholderTextColor="#999"
                   accessibilityLabel="Date of birth"
                   keyboardType="number-pad"
+                  {...androidKeyboardCompatProps}
                   maxLength={8}
                   style={styles.input}
                 />

@@ -1,6 +1,7 @@
 import React from "react";
 import { View } from "react-native";
 import { HelperText, TextInput, TextInputProps } from "react-native-paper";
+import { androidKeyboardCompatProps } from "../../lib/androidInput";
 import { useResponsive } from "../../lib/responsive";
 import { colors, spacing } from "../../lib/theme";
 
@@ -32,6 +33,7 @@ export function Input({
       <TextInput
         label={label}
         mode="flat"
+        {...androidKeyboardCompatProps}
         activeUnderlineColor={colors.primary}
         underlineColor={colors.border}
         outlineColor={error ? colors.destructive : colors.border}

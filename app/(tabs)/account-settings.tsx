@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { Button, Dialog, Portal, Text, TextInput } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -153,6 +154,7 @@ export default function AccountSettingsScreen() {
               value={newEmail}
               onChangeText={setNewEmail}
               keyboardType="email-address"
+              {...androidKeyboardCompatProps}
               style={styles.input}
               placeholderTextColor={colors.textMuted}
               textColor={colors.text}
@@ -185,6 +187,7 @@ export default function AccountSettingsScreen() {
               value={currentPassword}
               onChangeText={setCurrentPassword}
               secureTextEntry
+              {...androidKeyboardCompatProps}
               style={styles.input}
               placeholderTextColor={colors.textMuted}
               textColor={colors.text}
@@ -194,6 +197,7 @@ export default function AccountSettingsScreen() {
               value={newPassword}
               onChangeText={setNewPassword}
               secureTextEntry
+              {...androidKeyboardCompatProps}
               style={styles.input}
               placeholderTextColor={colors.textMuted}
               textColor={colors.text}
@@ -203,6 +207,7 @@ export default function AccountSettingsScreen() {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
+              {...androidKeyboardCompatProps}
               style={styles.input}
               placeholderTextColor={colors.textMuted}
               textColor={colors.text}

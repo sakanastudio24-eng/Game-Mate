@@ -6,6 +6,7 @@ import { FAB, Searchbar, Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { mockFriends } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -137,6 +138,7 @@ export default function MessagesScreen() {
         placeholder="Search conversations..."
         onChangeText={setSearchQuery}
         value={searchQuery}
+        {...androidKeyboardCompatProps}
         style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
         inputStyle={[styles.searchbarInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textSecondary}

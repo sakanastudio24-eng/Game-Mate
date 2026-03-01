@@ -13,6 +13,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { SearchAutocompleteList } from "../../src/components/ui/SearchAutocompleteList";
 import { Skeleton } from "../../src/components/ui/Skeleton";
 import { NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { useResponsive } from "../../src/lib/responsive";
@@ -374,6 +375,7 @@ export default function AIAdvisorScreen() {
           placeholder="Search videos..."
           value={queryInput}
           onChangeText={setQueryInput}
+          {...androidKeyboardCompatProps}
           accessibilityLabel="Search videos"
           style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
           inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}

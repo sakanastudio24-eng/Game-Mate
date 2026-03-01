@@ -6,6 +6,7 @@ import { GroupCard } from "../../src/components/GroupCard";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { mockGroups } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -52,6 +53,7 @@ export default function DiscoverGroupsScreen() {
         placeholder="Search groups..."
         onChangeText={setSearchQuery}
         value={searchQuery}
+        {...androidKeyboardCompatProps}
         style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
         inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textMuted}

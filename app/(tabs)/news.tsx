@@ -17,6 +17,7 @@ import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { useToast } from "../../src/components/ui/ToastProvider";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
@@ -529,6 +530,7 @@ export default function NewsScreen() {
                   placeholder="Reply to this post..."
                   accessibilityLabel="Write a reply"
                   mode="flat"
+                  {...androidKeyboardCompatProps}
                   style={styles.drawerInput}
                   contentStyle={styles.drawerInputContent}
                   textColor={colors.text}

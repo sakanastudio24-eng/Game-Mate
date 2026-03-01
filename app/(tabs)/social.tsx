@@ -5,6 +5,7 @@ import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -365,6 +366,7 @@ export default function SocialScreen() {
             placeholder={searchPlaceholder}
             value={search}
             onChangeText={setSearch}
+            {...androidKeyboardCompatProps}
             accessibilityLabel={searchPlaceholder}
             style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
             inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}

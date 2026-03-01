@@ -5,6 +5,7 @@ import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { mockFriends } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -152,6 +153,7 @@ export default function ChatScreen() {
           placeholderTextColor={colors.textMuted}
           value={messageInput}
           onChangeText={setMessageInput}
+          {...androidKeyboardCompatProps}
           multiline
           maxLength={500}
           accessibilityLabel="Message input"

@@ -7,6 +7,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -137,6 +138,7 @@ export default function SearchPlayersScreen() {
         placeholder="Search by name..."
         onChangeText={setSearchQuery}
         value={searchQuery}
+        {...androidKeyboardCompatProps}
         style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
         inputStyle={[styles.searchbarInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textSecondary}

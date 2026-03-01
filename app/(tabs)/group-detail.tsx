@@ -7,6 +7,7 @@ import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { mockFriends, mockGroups } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -306,6 +307,7 @@ export default function GroupDetailScreen() {
               placeholderTextColor={colors.textMuted}
               value={chatMessage}
               onChangeText={setChatMessage}
+              {...androidKeyboardCompatProps}
               multiline
               editable
               accessibilityLabel="Group message"

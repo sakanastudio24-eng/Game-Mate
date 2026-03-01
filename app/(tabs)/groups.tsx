@@ -34,6 +34,7 @@ import {
 import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { mockCurrentUser } from "../../src/lib/mockData";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -533,6 +534,7 @@ export default function GroupsScreen() {
               placeholder="Search groups..."
               value={queryInput}
               onChangeText={setQueryInput}
+              {...androidKeyboardCompatProps}
               accessibilityLabel="Search groups"
               style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
               inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
@@ -744,8 +746,11 @@ export default function GroupsScreen() {
   const panResponder = useMemo(
     () =>
       PanResponder.create({
+        onStartShouldSetPanResponder: () => false,
         onMoveShouldSetPanResponder: (_, gesture) =>
           Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 8,
+        onPanResponderTerminationRequest: () => true,
+        onShouldBlockNativeResponder: () => false,
         onPanResponderMove: (_, gesture) => {
           swipeX.setValue(gesture.dx);
         },

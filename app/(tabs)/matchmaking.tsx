@@ -7,6 +7,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // MatchmakingScreen: Find matched groups
@@ -25,6 +26,7 @@ interface MatchedGroup {
 
 export default function MatchmakingScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [filterType, setFilterType] = useState<"all" | "active" | "incoming">(
     "all",
   );
@@ -74,7 +76,10 @@ export default function MatchmakingScreen() {
   };
 
   const renderMatchCard = (match: MatchedGroup) => (
-    <Card style={styles.matchCard} key={match.id}>
+    <Card
+      style={[styles.matchCard, { borderRadius: responsive.cardRadius, padding: responsive.cardPadding }]}
+      key={match.id}
+    >
       <View style={styles.cardHeader}>
         <View style={styles.gameInfo}>
           <View style={styles.gameIconContainer}>
@@ -85,8 +90,12 @@ export default function MatchmakingScreen() {
             />
           </View>
           <View>
-            <Text style={styles.gameName}>{match.game}</Text>
-            <Text style={styles.playStyle}>{match.playStyle}</Text>
+            <Text style={[styles.gameName, { fontSize: responsive.sectionTitleSize - 4 }]}>
+              {match.game}
+            </Text>
+            <Text style={[styles.playStyle, { fontSize: responsive.bodySmallSize }]}>
+              {match.playStyle}
+            </Text>
           </View>
         </View>
 
@@ -96,29 +105,31 @@ export default function MatchmakingScreen() {
             size={16}
             color={colors.primary}
           />
-          <Text style={styles.trustText}>{match.trustScore}%</Text>
+          <Text style={[styles.trustText, { fontSize: responsive.bodySmallSize }]}>
+            {match.trustScore}%
+          </Text>
         </View>
       </View>
 
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Players</Text>
-          <Text style={styles.statValue}>{match.players}/5</Text>
+          <Text style={[styles.statLabel, { fontSize: responsive.captionSize }]}>Players</Text>
+          <Text style={[styles.statValue, { fontSize: responsive.bodySize }]}>{match.players}/5</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Your Rank</Text>
-          <Text style={styles.statValue}>{match.yourRank}</Text>
+          <Text style={[styles.statLabel, { fontSize: responsive.captionSize }]}>Your Rank</Text>
+          <Text style={[styles.statValue, { fontSize: responsive.bodySize }]}>{match.yourRank}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Avg Rank</Text>
-          <Text style={styles.statValue}>{match.averageRank}</Text>
+          <Text style={[styles.statLabel, { fontSize: responsive.captionSize }]}>Avg Rank</Text>
+          <Text style={[styles.statValue, { fontSize: responsive.bodySize }]}>{match.averageRank}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statLabel}>Region</Text>
-          <Text style={styles.statValue}>{match.region}</Text>
+          <Text style={[styles.statLabel, { fontSize: responsive.captionSize }]}>Region</Text>
+          <Text style={[styles.statValue, { fontSize: responsive.bodySize }]}>{match.region}</Text>
         </View>
       </View>
 
@@ -185,14 +196,12 @@ export default function MatchmakingScreen() {
 
 const styles = StyleSheet.create({
   filterContainer: {
-    marginHorizontal: spacing.md,
     marginVertical: spacing.md,
   },
   segmentedButtons: {
     width: "100%",
   },
   matchesList: {
-    paddingHorizontal: spacing.md,
     paddingBottom: spacing.lg,
   },
   matchCard: {

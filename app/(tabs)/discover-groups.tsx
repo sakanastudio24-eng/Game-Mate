@@ -7,6 +7,7 @@ import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockGroups } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // DiscoverGroupsScreen: Browse and discover new groups
@@ -15,6 +16,7 @@ import { colors, spacing } from "../../src/lib/theme";
 
 export default function DiscoverGroupsScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterGame, setFilterGame] = useState<string | null>(null);
   const [joinedGroups, setJoinedGroups] = useState<string[]>([]);
@@ -50,8 +52,8 @@ export default function DiscoverGroupsScreen() {
         placeholder="Search groups..."
         onChangeText={setSearchQuery}
         value={searchQuery}
-        style={styles.searchbar}
-        inputStyle={styles.searchInput}
+        style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+        inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textMuted}
         iconColor={colors.primary}
       />
@@ -101,7 +103,6 @@ export default function DiscoverGroupsScreen() {
 
 const styles = StyleSheet.create({
   searchbar: {
-    marginHorizontal: spacing.md,
     marginVertical: spacing.md,
     backgroundColor: colors.card,
   },

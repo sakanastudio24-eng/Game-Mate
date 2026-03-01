@@ -9,6 +9,7 @@ import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockCurrentUser } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // EditProfileScreen: Update user profile information
@@ -29,6 +30,7 @@ const avatars = ["🎮", "🎯", "🎪", "🧙", "⚔️", "🛡️", "🚀", "�
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [username, setUsername] = useState(mockCurrentUser.username);
   const [bio, setBio] = useState(mockCurrentUser.bio || "");
   const [avatar, setAvatar] = useState(mockCurrentUser.avatar || "🎮");
@@ -55,9 +57,9 @@ export default function EditProfileScreen() {
 
       {/* Avatar selector */}
       <Card style={styles.avatarCard}>
-        <Text style={styles.sectionTitle}>Profile Picture</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>Profile Picture</Text>
         <View style={styles.avatarDisplay}>
-          <Text style={styles.avatarLarge}>{avatar}</Text>
+          <Text style={[styles.avatarLarge, { fontSize: responsive.titleSize * 2 }]}>{avatar}</Text>
         </View>
 
         <View style={styles.avatarGrid}>
@@ -67,10 +69,15 @@ export default function EditProfileScreen() {
               onPress={() => setAvatar(ava)}
               style={[
                 styles.avatarOption,
+                {
+                  width: responsive.iconButtonSize + 14,
+                  height: responsive.iconButtonSize + 14,
+                  borderRadius: (responsive.iconButtonSize + 14) / 2,
+                },
                 avatar === ava && styles.avatarOptionSelected,
               ]}
             >
-              <Text style={styles.avatarOptionText}>{ava}</Text>
+              <Text style={[styles.avatarOptionText, { fontSize: responsive.titleSize - 2 }]}>{ava}</Text>
             </Pressable>
           ))}
         </View>
@@ -98,7 +105,9 @@ export default function EditProfileScreen() {
 
       {/* Games */}
       <Card style={styles.gameCard}>
-        <Text style={styles.sectionTitle}>Favorite Games (up to 5)</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>
+          Favorite Games (up to 5)
+        </Text>
         <View style={styles.gamesList}>
           {availableGames.map((game) => (
             <Chip

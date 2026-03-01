@@ -7,6 +7,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // SearchPlayersScreen: Find and add players
@@ -22,6 +23,7 @@ interface PlayerSearchResult {
 }
 
 export default function SearchPlayersScreen() {
+  const responsive = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [addedPlayers, setAddedPlayers] = useState<Set<string>>(new Set());
@@ -92,16 +94,20 @@ export default function SearchPlayersScreen() {
       <View style={styles.playerHeader}>
         <View style={styles.playerInfo}>
           <View style={styles.playerNameRow}>
-            <Text style={styles.playerName}>{player.name}</Text>
+            <Text style={[styles.playerName, { fontSize: responsive.bodySize + 2 }]}>
+              {player.name}
+            </Text>
             {player.onlineStatus && (
               <View
                 style={[styles.onlineBadge, { backgroundColor: colors.online }]}
               />
             )}
           </View>
-          <Text style={styles.playerRank}>{player.rank} Rank</Text>
+          <Text style={[styles.playerRank, { fontSize: responsive.bodySmallSize }]}>
+            {player.rank} Rank
+          </Text>
           {player.mutualFriends > 0 && (
-            <Text style={styles.mutualFriends}>
+            <Text style={[styles.mutualFriends, { fontSize: responsive.bodySmallSize }]}>
               {player.mutualFriends} mutual friends
             </Text>
           )}
@@ -131,13 +137,13 @@ export default function SearchPlayersScreen() {
         placeholder="Search by name..."
         onChangeText={setSearchQuery}
         value={searchQuery}
-        style={styles.searchbar}
-        inputStyle={styles.searchbarInput}
+        style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+        inputStyle={[styles.searchbarInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textSecondary}
       />
 
       <View style={styles.filtersContainer}>
-        <Text style={styles.filterLabel}>GAMES</Text>
+        <Text style={[styles.filterLabel, { fontSize: responsive.captionSize }]}>GAMES</Text>
         <View style={styles.chipGroup}>
           {allGenres.map((genre) => (
             <Chip
@@ -171,7 +177,7 @@ export default function SearchPlayersScreen() {
             size={48}
             color={colors.textSecondary}
           />
-          <Text style={styles.emptyText}>
+          <Text style={[styles.emptyText, { fontSize: responsive.bodySize }]}>
             {searchQuery || selectedGenres.length > 0
               ? "No players found"
               : "Search for players to get started"}
@@ -184,16 +190,14 @@ export default function SearchPlayersScreen() {
 
 const styles = StyleSheet.create({
   searchbar: {
-    margin: spacing.md,
+    marginVertical: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: 8,
   },
   searchbarInput: {
     fontSize: 14,
     color: colors.text,
   },
   filtersContainer: {
-    marginHorizontal: spacing.md,
     marginBottom: spacing.md,
   },
   filterLabel: {
@@ -222,7 +226,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   resultsList: {
-    paddingHorizontal: spacing.md,
     paddingBottom: spacing.lg,
   },
   playerCard: {

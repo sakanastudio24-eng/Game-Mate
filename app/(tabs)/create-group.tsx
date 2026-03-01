@@ -7,6 +7,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // CreateGroupScreen: Modal form to create a new group
@@ -25,6 +26,7 @@ const ranks = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Radiant"];
 
 export default function CreateGroupScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [groupName, setGroupName] = useState("");
   const [selectedGame, setSelectedGame] = useState("Valorant");
   const [mode, setMode] = useState<"ranked" | "casual">("ranked");
@@ -53,7 +55,7 @@ export default function CreateGroupScreen() {
       <Header title="Create Group" showBackButton />
 
       <Card style={styles.card}>
-        <Text style={styles.label}>Group Name *</Text>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Group Name *</Text>
         <Input
           label="e.g. Valorant Grinders"
           value={groupName}
@@ -62,12 +64,12 @@ export default function CreateGroupScreen() {
           fullWidth
         />
         {errors.groupName && (
-          <Text style={styles.error}>{errors.groupName}</Text>
+          <Text style={[styles.error, { fontSize: responsive.captionSize }]}>{errors.groupName}</Text>
         )}
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.label}>Game</Text>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Game</Text>
         <View style={styles.gameList}>
           {games.map((game) => (
             <Button
@@ -84,7 +86,7 @@ export default function CreateGroupScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.label}>Playing Style</Text>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Playing Style</Text>
         <SegmentedButtons
           value={mode}
           onValueChange={(value) => setMode(value as "ranked" | "casual")}
@@ -98,7 +100,7 @@ export default function CreateGroupScreen() {
 
       {mode === "ranked" && (
         <Card style={styles.card}>
-          <Text style={styles.label}>Minimum Rank</Text>
+          <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Minimum Rank</Text>
           <View style={styles.rankList}>
             {ranks.map((rank) => (
               <Button
@@ -116,7 +118,7 @@ export default function CreateGroupScreen() {
       )}
 
       <Card style={styles.card}>
-        <Text style={styles.label}>Microphone Required?</Text>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Microphone Required?</Text>
         <SegmentedButtons
           value={micRequired ? "yes" : "no"}
           onValueChange={(value) => setMicRequired(value === "yes")}
@@ -129,7 +131,7 @@ export default function CreateGroupScreen() {
       </Card>
 
       <Card style={styles.card}>
-        <Text style={styles.label}>Description *</Text>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Description *</Text>
         <Input
           label="What is your group about?"
           value={description}
@@ -140,7 +142,7 @@ export default function CreateGroupScreen() {
           fullWidth
         />
         {errors.description && (
-          <Text style={styles.error}>{errors.description}</Text>
+          <Text style={[styles.error, { fontSize: responsive.captionSize }]}>{errors.description}</Text>
         )}
       </Card>
 

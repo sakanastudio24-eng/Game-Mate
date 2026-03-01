@@ -7,6 +7,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockFriends } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // MessagesScreen: Conversation list
@@ -24,6 +25,7 @@ interface Conversation {
 
 export default function MessagesScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [searchQuery, setSearchQuery] = useState("");
 
   const conversations: Conversation[] = [
@@ -103,7 +105,7 @@ export default function MessagesScreen() {
             {conversation.participantName}
           </Text>
           <Text
-            style={styles.lastMessage}
+            style={[styles.lastMessage, { fontSize: responsive.bodySmallSize }]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -112,10 +114,14 @@ export default function MessagesScreen() {
         </View>
 
         <View style={styles.timestampContainer}>
-          <Text style={styles.timestamp}>{conversation.timestamp}</Text>
+          <Text style={[styles.timestamp, { fontSize: responsive.captionSize }]}>
+            {conversation.timestamp}
+          </Text>
           {conversation.unreadCount > 0 && (
             <View style={styles.unreadBadge}>
-              <Text style={styles.unreadText}>{conversation.unreadCount}</Text>
+              <Text style={[styles.unreadText, { fontSize: responsive.captionSize }]}>
+                {conversation.unreadCount}
+              </Text>
             </View>
           )}
         </View>
@@ -131,8 +137,8 @@ export default function MessagesScreen() {
         placeholder="Search conversations..."
         onChangeText={setSearchQuery}
         value={searchQuery}
-        style={styles.searchbar}
-        inputStyle={styles.searchbarInput}
+        style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+        inputStyle={[styles.searchbarInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textSecondary}
       />
 
@@ -169,16 +175,14 @@ export default function MessagesScreen() {
 
 const styles = StyleSheet.create({
   searchbar: {
-    margin: spacing.md,
+    marginVertical: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: 8,
   },
   searchbarInput: {
     fontSize: 14,
     color: colors.text,
   },
   conversationsList: {
-    paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
   conversationCard: {

@@ -7,6 +7,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockQRCode } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // QRCodeScreen: Show user's QR code for profile sharing
@@ -14,6 +15,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // Features: Show QR, copy link, download, customize color
 
 export default function QRCodeScreen() {
+  const responsive = useResponsive();
   const [activeTab, setActiveTab] = useState<"mycode" | "scan">("mycode");
   const [accentColor, setAccentColor] = useState(colors.primary);
 
@@ -38,12 +40,14 @@ export default function QRCodeScreen() {
             onPress={() => setActiveTab(tab as any)}
             style={[
               styles.tabButton,
+              { paddingVertical: Math.max(10, responsive.cardPadding - 2) },
               activeTab === tab && styles.tabButtonActive,
             ]}
           >
             <Text
               style={[
                 styles.tabText,
+                { fontSize: responsive.captionSize },
                 activeTab === tab && styles.tabTextActive,
               ]}
             >
@@ -58,7 +62,17 @@ export default function QRCodeScreen() {
           {/* QR Code Card */}
           <Card style={styles.qrCard}>
             <View style={styles.qrContainer}>
-              <View style={[styles.qrBox, { borderColor: accentColor }]}>
+              <View
+                style={[
+                  styles.qrBox,
+                  {
+                    borderColor: accentColor,
+                    borderRadius: responsive.cardRadius,
+                    width: responsive.isTablet ? 280 : 240,
+                    height: responsive.isTablet ? 280 : 240,
+                  },
+                ]}
+              >
                 {/* Placeholder QR code */}
                 <View style={styles.qrPlaceholder}>
                   <MaterialCommunityIcons
@@ -69,13 +83,19 @@ export default function QRCodeScreen() {
                 </View>
               </View>
 
-              <Text style={styles.qrLabel}>{mockQRCode.displayName}</Text>
-              <Text style={styles.qrUrl}>{mockQRCode.profileUrl}</Text>
+              <Text style={[styles.qrLabel, { fontSize: responsive.bodySize + 2 }]}>
+                {mockQRCode.displayName}
+              </Text>
+              <Text style={[styles.qrUrl, { fontSize: responsive.bodySmallSize }]}>
+                {mockQRCode.profileUrl}
+              </Text>
             </View>
 
             {/* Accent color picker */}
             <View style={styles.colorSection}>
-              <Text style={styles.colorLabel}>QR Accent Color</Text>
+              <Text style={[styles.colorLabel, { fontSize: responsive.captionSize }]}>
+                QR Accent Color
+              </Text>
               <View style={styles.colorGrid}>
                 {colors_list.map((color) => (
                   <Pressable
@@ -83,6 +103,11 @@ export default function QRCodeScreen() {
                     onPress={() => setAccentColor(color)}
                     style={[
                       styles.colorOption,
+                      {
+                        width: responsive.iconButtonSize + 8,
+                        height: responsive.iconButtonSize + 8,
+                        borderRadius: (responsive.iconButtonSize + 8) / 2,
+                      },
                       { backgroundColor: color },
                       accentColor === color && styles.colorOptionSelected,
                     ]}
@@ -142,7 +167,7 @@ export default function QRCodeScreen() {
               color={colors.textMuted}
             />
             <Text style={styles.scanText}>Camera Scanner</Text>
-            <Text style={styles.scanSubtext}>
+            <Text style={[styles.scanSubtext, { fontSize: responsive.bodySmallSize }]}>
               Point camera at a GameMate QR code to add them
             </Text>
           </View>

@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 interface RouteItem {
@@ -45,6 +46,7 @@ const ROUTES: RouteItem[] = [
 
 export default function ExploreScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -63,8 +65,8 @@ export default function ExploreScreen() {
         placeholder="Search routes..."
         value={query}
         onChangeText={setQuery}
-        style={styles.searchbar}
-        inputStyle={styles.searchInput}
+        style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+        inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textSecondary}
       />
 
@@ -75,13 +77,19 @@ export default function ExploreScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push(item.path as any)}
-            style={({ pressed }) => [styles.routeCard, pressed && styles.routeCardPressed]}
+            style={({ pressed }) => [
+              styles.routeCard,
+              { borderRadius: responsive.cardRadius, padding: responsive.cardPadding },
+              pressed && styles.routeCardPressed,
+            ]}
           >
             <View style={styles.routeTop}>
-              <Text style={styles.routeLabel}>{item.label}</Text>
-              <Text style={styles.routeGroup}>{item.group.toUpperCase()}</Text>
+              <Text style={[styles.routeLabel, { fontSize: responsive.bodySize }]}>{item.label}</Text>
+              <Text style={[styles.routeGroup, { fontSize: responsive.captionSize }]}>
+                {item.group.toUpperCase()}
+              </Text>
             </View>
-            <Text style={styles.routePath}>{item.path}</Text>
+            <Text style={[styles.routePath, { fontSize: responsive.bodySmallSize }]}>{item.path}</Text>
           </Pressable>
         )}
         ListEmptyComponent={
@@ -96,11 +104,9 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   searchbar: {
-    marginHorizontal: spacing.md,
     marginTop: spacing.md,
     marginBottom: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -109,14 +115,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   listContent: {
-    paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl,
   },
   routeCard: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.sm,
   },

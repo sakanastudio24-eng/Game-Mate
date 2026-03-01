@@ -8,6 +8,7 @@ import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockFriends, mockGroups } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // GroupDetailScreen: Shows group details, members, chat, events
@@ -16,6 +17,7 @@ import { colors, spacing } from "../../src/lib/theme";
 
 export default function GroupDetailScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const group = mockGroups.find((item) => item.id === groupId) ?? mockGroups[0];
   const initialMembers = Array.isArray(group.members) ? group.members : [];
@@ -63,10 +65,12 @@ export default function GroupDetailScreen() {
       <Card style={styles.headerCard}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.gameName}>{group.game}</Text>
-            <Text style={styles.description}>{group.description}</Text>
+            <Text style={[styles.gameName, { fontSize: responsive.bodySize + 2 }]}>{group.game}</Text>
+            <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>{group.description}</Text>
           </View>
-          <Text style={styles.memberCount}>{group.memberCount}</Text>
+          <Text style={[styles.memberCount, { fontSize: responsive.titleSize - 10 }]}>
+            {group.memberCount}
+          </Text>
         </View>
 
         <View style={styles.badges}>
@@ -99,11 +103,18 @@ export default function GroupDetailScreen() {
           onPress={handleJoinGroup}
           style={({ pressed }) => [
             styles.joinButton,
+            { borderRadius: responsive.cardRadius - 8 },
             isJoined && styles.joinedButton,
             pressed && styles.joinButtonPressed,
           ]}
         >
-          <Text style={[styles.joinButtonText, isJoined && styles.joinedButtonText]}>
+          <Text
+            style={[
+              styles.joinButtonText,
+              { fontSize: responsive.bodySmallSize },
+              isJoined && styles.joinedButtonText,
+            ]}
+          >
             {isJoined ? "Joined" : "Join Group"}
           </Text>
         </Pressable>
@@ -123,6 +134,7 @@ export default function GroupDetailScreen() {
             <Text
               style={[
                 styles.tabText,
+                { fontSize: responsive.captionSize },
                 activeTab === tab && styles.tabTextActive,
               ]}
             >
@@ -152,7 +164,7 @@ export default function GroupDetailScreen() {
               }}
             >
               <Text style={styles.memberAvatar}>👤</Text>
-              <Text style={styles.memberName}>{item}</Text>
+              <Text style={[styles.memberName, { fontSize: responsive.bodySize }]}>{item}</Text>
               {index === 0 && (
                 <Chip label="Admin" size="small" style={styles.adminBadge} />
               )}
@@ -171,11 +183,12 @@ export default function GroupDetailScreen() {
               <View
                 style={[
                   styles.messageItem,
+                  { borderRadius: responsive.cardRadius - 6 },
                   item.user === "You" && styles.messageItemOwn,
                 ]}
               >
-                <Text style={styles.messageUser}>{item.user}</Text>
-                <Text style={styles.messageText}>{item.text}</Text>
+                <Text style={[styles.messageUser, { fontSize: responsive.captionSize }]}>{item.user}</Text>
+                <Text style={[styles.messageText, { fontSize: responsive.bodySize }]}>{item.text}</Text>
               </View>
             )}
             scrollEnabled={false}
@@ -184,7 +197,13 @@ export default function GroupDetailScreen() {
 
           <View style={styles.composer}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  borderRadius: responsive.cardRadius,
+                  fontSize: responsive.bodySize,
+                },
+              ]}
               placeholder={isJoined ? "Message group..." : "Join group to message"}
               placeholderTextColor={colors.textMuted}
               value={chatMessage}
@@ -196,6 +215,11 @@ export default function GroupDetailScreen() {
               onPress={handleSendMessage}
               style={({ pressed }) => [
                 styles.sendButton,
+                {
+                  width: responsive.iconButtonSize,
+                  height: responsive.iconButtonSize,
+                  borderRadius: responsive.iconButtonSize / 2,
+                },
                 !isJoined && styles.sendButtonDisabled,
                 pressed && { opacity: 0.7 },
               ]}
@@ -213,8 +237,8 @@ export default function GroupDetailScreen() {
 
       {activeTab === "events" && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No events scheduled</Text>
-          <Text style={styles.emptySubtext}>
+          <Text style={[styles.emptyText, { fontSize: responsive.bodySize }]}>No events scheduled</Text>
+          <Text style={[styles.emptySubtext, { fontSize: responsive.bodySmallSize }]}>
             Upcoming events will appear here
           </Text>
         </View>

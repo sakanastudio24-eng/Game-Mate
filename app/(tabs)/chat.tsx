@@ -6,6 +6,7 @@ import { Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockFriends } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // ChatScreen: Direct messages with a friend
@@ -13,6 +14,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // State: messages (local), messageInput
 
 export default function ChatScreen() {
+  const responsive = useResponsive();
   const { userId } = useLocalSearchParams<{ userId?: string }>();
   const friend = mockFriends.find((item) => item.id === userId) ?? mockFriends[0];
   const [messages, setMessages] = useState<
@@ -79,6 +81,7 @@ export default function ChatScreen() {
             <View
               style={[
                 styles.messageBubble,
+                { borderRadius: responsive.cardRadius - 2 },
                 item.user === "You"
                   ? styles.messageBubbleOwn
                   : styles.messageBubbleOther,
@@ -87,12 +90,13 @@ export default function ChatScreen() {
               <Text
                 style={[
                   styles.messageText,
+                  { fontSize: responsive.bodySize, lineHeight: Math.round(responsive.bodySize * 1.4) },
                   item.user === "You" && styles.messageTextOwn,
                 ]}
               >
                 {item.text}
               </Text>
-              <Text style={styles.messageTime}>
+              <Text style={[styles.messageTime, { fontSize: responsive.captionSize }]}>
                 {getTimeAgo(item.timestamp)}
               </Text>
             </View>
@@ -105,7 +109,16 @@ export default function ChatScreen() {
 
       {/* Message composer */}
       <View style={styles.composer}>
-        <Pressable style={styles.attachButton}>
+        <Pressable
+          style={[
+            styles.attachButton,
+            {
+              width: responsive.iconButtonSize - 4,
+              height: responsive.iconButtonSize - 4,
+              borderRadius: (responsive.iconButtonSize - 4) / 2,
+            },
+          ]}
+        >
           <MaterialCommunityIcons
             name="plus"
             size={20}
@@ -114,7 +127,7 @@ export default function ChatScreen() {
         </Pressable>
 
         <TextInput
-          style={styles.input}
+          style={[styles.input, { borderRadius: responsive.cardRadius, fontSize: responsive.bodySize }]}
           placeholder="Message..."
           placeholderTextColor={colors.textMuted}
           value={messageInput}
@@ -127,6 +140,11 @@ export default function ChatScreen() {
           onPress={handleSendMessage}
           style={({ pressed }) => [
             styles.sendButton,
+            {
+              width: responsive.iconButtonSize - 4,
+              height: responsive.iconButtonSize - 4,
+              borderRadius: (responsive.iconButtonSize - 4) / 2,
+            },
             pressed && { opacity: 0.7 },
           ]}
         >

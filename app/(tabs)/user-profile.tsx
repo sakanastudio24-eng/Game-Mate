@@ -7,6 +7,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockFriends } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // UserProfileScreen: View another user's profile
@@ -15,6 +16,7 @@ import { colors, spacing } from "../../src/lib/theme";
 
 export default function UserProfileScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const { userId } = useLocalSearchParams<{ userId?: string }>();
   const user = mockFriends.find((item) => item.id === userId) ?? mockFriends[0];
   const [isFollowing, setIsFollowing] = useState(false);
@@ -26,9 +28,9 @@ export default function UserProfileScreen() {
       {/* User card */}
       <Card style={styles.userCard}>
         <View style={styles.header}>
-          <Text style={styles.avatar}>{user.avatar}</Text>
+          <Text style={[styles.avatar, { fontSize: responsive.titleSize + 20 }]}>{user.avatar}</Text>
           <View style={styles.info}>
-            <Text style={styles.name}>{user.username}</Text>
+            <Text style={[styles.name, { fontSize: responsive.sectionTitleSize }]}>{user.username}</Text>
             <View
               style={[
                 styles.statusBadge,
@@ -38,7 +40,7 @@ export default function UserProfileScreen() {
                 },
               ]}
             />
-            <Text style={styles.status}>
+            <Text style={[styles.status, { fontSize: responsive.bodySmallSize }]}>
               {user.status === "online" ? "Online" : "Offline"}
             </Text>
           </View>
@@ -46,8 +48,8 @@ export default function UserProfileScreen() {
 
         {user.currentGame && (
           <View style={styles.gameRow}>
-            <Text style={styles.gameLabel}>Playing</Text>
-            <Text style={styles.gameName}>{user.currentGame}</Text>
+            <Text style={[styles.gameLabel, { fontSize: responsive.bodySmallSize }]}>Playing</Text>
+            <Text style={[styles.gameName, { fontSize: responsive.bodySmallSize }]}>{user.currentGame}</Text>
           </View>
         )}
 
@@ -71,7 +73,7 @@ export default function UserProfileScreen() {
 
       {/* Games */}
       <Card>
-        <Text style={styles.sectionTitle}>Games</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>Games</Text>
         <View style={styles.gamesList}>
           {user.gamesPlayed.map((game, idx) => (
             <View key={idx} style={styles.gameTag}>
@@ -84,12 +86,12 @@ export default function UserProfileScreen() {
       {/* Stats */}
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Groups Joined</Text>
-          <Text style={styles.statValue}>{user.groupsJoined}</Text>
+          <Text style={[styles.statLabel, { fontSize: responsive.captionSize }]}>Groups Joined</Text>
+          <Text style={[styles.statValue, { fontSize: responsive.sectionTitleSize }]}>{user.groupsJoined}</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statLabel}>Level</Text>
-          <Text style={styles.statValue}>{user.level || "—"}</Text>
+          <Text style={[styles.statLabel, { fontSize: responsive.captionSize }]}>Level</Text>
+          <Text style={[styles.statValue, { fontSize: responsive.sectionTitleSize }]}>{user.level || "—"}</Text>
         </View>
       </View>
     </Screen>

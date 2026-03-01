@@ -62,7 +62,7 @@ export default function CreateGroupScreen() {
         <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Group Name *</Text>
         <Input
           label="Group Name"
-          placeholder="e.g. Valorant Grinders"
+          placeholder="e.g. Diamond Valorant Night Squad"
           accessibilityLabel="Group name"
           value={groupName}
           onChangeText={setGroupName}

@@ -1,8 +1,19 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useCallback, useRef, useState } from "react";
-import { Alert, FlatList, Image, Modal, Pressable, Share, StyleSheet, View } from "react-native";
-import { Text } from "react-native-paper";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  Share,
+  StyleSheet,
+  View,
+} from "react-native";
+import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
@@ -11,6 +22,12 @@ import { colors, spacing } from "../../src/lib/theme";
 
 interface FeedEntry extends NewsFeedItem {
   feedId: string;
+}
+
+interface CommentItem {
+  id: string;
+  user: string;
+  message: string;
 }
 
 const INITIAL_LOOP_COUNT = 3;
@@ -37,7 +54,7 @@ function compactNumber(value: number): string {
   return String(value);
 }
 
-function buildCommentPreview(item: FeedEntry): Array<{ id: string; user: string; message: string }> {
+function buildCommentPreview(item: FeedEntry): CommentItem[] {
   return [
     {
       id: `${item.feedId}-c1`,
@@ -67,19 +84,28 @@ export default function NewsScreen() {
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [activePostMenu, setActivePostMenu] = useState<FeedEntry | null>(null);
   const [commentsTarget, setCommentsTarget] = useState<FeedEntry | null>(null);
+  const [commentThreads, setCommentThreads] = useState<Record<string, CommentItem[]>>({});
+  const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
+  const [commentDraft, setCommentDraft] = useState("");
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
   const appendLockRef = useRef(false);
+  const commentsListRef = useRef<FlatList<CommentItem> | null>(null);
 
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
   const bottomSafeInset = Math.max(insets.bottom, responsive.safeBottomInset);
   const horizontalPadding = responsive.horizontalPadding;
   const itemHeight = Math.max(viewportHeight, 1);
-  const actionRailBottom = bottomSafeInset + 18;
+  const actionRailBottom = bottomSafeInset + 74;
   const actionRailRight = horizontalPadding + Math.max(16, Math.round(responsive.width * 0.05));
   const bottomMetaOffset = bottomSafeInset + 10;
+
+  const activeComments = useMemo(() => {
+    if (!commentsTarget) return [];
+    return commentThreads[commentsTarget.feedId] ?? buildCommentPreview(commentsTarget);
+  }, [commentThreads, commentsTarget]);
 
   const isLiked = useCallback(
     (feedId: string) => likedIds.includes(feedId),
@@ -117,7 +143,47 @@ export default function NewsScreen() {
   }, []);
 
   const openChat = (item: FeedEntry) => {
+    setCommentDraft("");
     setCommentsTarget(item);
+    setCommentThreads((prev) => {
+      if (prev[item.feedId]) return prev;
+      return {
+        ...prev,
+        [item.feedId]: buildCommentPreview(item),
+      };
+    });
+  };
+
+  const closeCommentsDrawer = () => {
+    setCommentDraft("");
+    setCommentsTarget(null);
+  };
+
+  const handleSubmitComment = () => {
+    if (!commentsTarget) return;
+    const nextComment = commentDraft.trim();
+    if (!nextComment) return;
+
+    const feedId = commentsTarget.feedId;
+    const newThreadComment: CommentItem = {
+      id: `${feedId}-u-${Date.now()}`,
+      user: "You",
+      message: nextComment,
+    };
+
+    setCommentThreads((prev) => ({
+      ...prev,
+      [feedId]: [...(prev[feedId] ?? buildCommentPreview(commentsTarget)), newThreadComment],
+    }));
+    setReplyCounts((prev) => ({
+      ...prev,
+      [feedId]: (prev[feedId] ?? 0) + 1,
+    }));
+    setCommentDraft("");
+
+    requestAnimationFrame(() => {
+      commentsListRef.current?.scrollToEnd({ animated: true });
+    });
   };
 
   const handleSystemShare = async (message: string) => {
@@ -232,7 +298,9 @@ export default function NewsScreen() {
                   style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
                 >
                   <MaterialCommunityIcons name="message-outline" size={32} color={colors.text} />
-                  <Text style={styles.railCount}>{compactNumber(item.comments)}</Text>
+                  <Text style={styles.railCount}>
+                    {compactNumber(item.comments + (replyCounts[item.feedId] ?? 0))}
+                  </Text>
                 </Pressable>
 
                 <Pressable
@@ -281,12 +349,15 @@ export default function NewsScreen() {
         visible={commentsTarget !== null}
         transparent
         animationType="slide"
-        onRequestClose={() => setCommentsTarget(null)}
+        onRequestClose={closeCommentsDrawer}
       >
-        <View style={styles.drawerRoot}>
+        <KeyboardAvoidingView
+          style={styles.drawerRoot}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
           <Pressable
             style={styles.drawerScrim}
-            onPress={() => setCommentsTarget(null)}
+            onPress={closeCommentsDrawer}
             accessibilityRole="button"
             accessibilityLabel="Close comments drawer"
           />
@@ -294,42 +365,54 @@ export default function NewsScreen() {
             <View style={styles.drawerHandle} />
             <Text style={styles.drawerTitle}>Comments</Text>
             <Text style={styles.drawerSubtitle}>{commentsTarget?.title}</Text>
-            <View style={styles.drawerList}>
-              {commentsTarget
-                ? buildCommentPreview(commentsTarget).map((comment) => (
-                    <View key={comment.id} style={styles.drawerComment}>
-                      <Text style={styles.drawerUser}>{comment.user}</Text>
-                      <Text style={styles.drawerMessage}>{comment.message}</Text>
-                    </View>
-                  ))
-                : null}
+            <View style={styles.drawerListWrap}>
+              <FlatList
+                ref={commentsListRef}
+                data={activeComments}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.drawerListContent}
+                showsVerticalScrollIndicator
+                renderItem={({ item }) => (
+                  <View style={styles.drawerComment}>
+                    <Text style={styles.drawerUser}>{item.user}</Text>
+                    <Text style={styles.drawerMessage}>{item.message}</Text>
+                  </View>
+                )}
+              />
             </View>
-            <View style={styles.drawerActions}>
+            <View style={styles.drawerComposer}>
+              <TextInput
+                value={commentDraft}
+                onChangeText={setCommentDraft}
+                placeholder="Reply to this post..."
+                accessibilityLabel="Write a reply"
+                mode="flat"
+                style={styles.drawerInput}
+                contentStyle={styles.drawerInputContent}
+                textColor={colors.text}
+                placeholderTextColor={colors.textSecondary}
+                underlineColor={colors.border}
+                activeUnderlineColor={colors.primary}
+                returnKeyType="send"
+                onSubmitEditing={handleSubmitComment}
+                blurOnSubmit={false}
+              />
               <Pressable
-                onPress={() => {
-                  setCommentsTarget(null);
-                  Alert.alert("Reply", "Reply composer is next in the chat workflow.");
-                }}
+                onPress={handleSubmitComment}
                 accessibilityRole="button"
-                accessibilityLabel="Reply to post"
-                style={({ pressed }) => [styles.drawerButton, pressed && styles.pressed]}
+                accessibilityLabel="Send reply"
+                disabled={!commentDraft.trim()}
+                style={({ pressed }) => [
+                  styles.drawerSendButton,
+                  !commentDraft.trim() && styles.drawerSendButtonDisabled,
+                  pressed && styles.pressed,
+                ]}
               >
-                <Text style={styles.drawerButtonText}>Reply</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => {
-                  setCommentsTarget(null);
-                  router.push("/(tabs)/messages");
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Open full chat"
-                style={({ pressed }) => [styles.drawerButtonPrimary, pressed && styles.pressed]}
-              >
-                <Text style={styles.drawerButtonPrimaryText}>Open Chat</Text>
+                <MaterialCommunityIcons name="send" size={20} color="#1A1A1A" />
               </Pressable>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <ActionSheet
@@ -527,9 +610,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     borderTopWidth: 1,
     borderColor: colors.border,
+    height: "78%",
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
   },
   drawerHandle: {
     width: 44,
@@ -550,12 +634,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
     marginBottom: spacing.sm,
   },
-  drawerList: {
+  drawerListWrap: {
+    flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
     overflow: "hidden",
     backgroundColor: "#262626",
+  },
+  drawerListContent: {
+    paddingBottom: spacing.sm,
   },
   drawerComment: {
     paddingHorizontal: spacing.md,
@@ -574,40 +662,37 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 20,
   },
-  drawerActions: {
+  drawerComposer: {
     flexDirection: "row",
+    alignItems: "center",
     marginTop: spacing.md,
     gap: spacing.sm,
   },
-  drawerButton: {
+  drawerInput: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 12,
+    minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 12,
     backgroundColor: "#242424",
   },
-  drawerButtonPrimary: {
-    flex: 1,
+  drawerInputContent: {
+    fontSize: 14,
     minHeight: 52,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+  },
+  drawerSendButton: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     borderWidth: 1,
     borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.primary,
   },
-  drawerButtonText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  drawerButtonPrimaryText: {
-    color: "#1A1A1A",
-    fontSize: 15,
-    fontWeight: "800",
+  drawerSendButtonDisabled: {
+    opacity: 0.5,
   },
   pressed: {
     opacity: 0.72,

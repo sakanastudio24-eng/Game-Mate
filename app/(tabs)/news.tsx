@@ -6,6 +6,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   View,
@@ -47,7 +48,10 @@ export default function NewsScreen() {
   const [visibleCount, setVisibleCount] = useState(initialLoadCount);
   const [activePostMenu, setActivePostMenu] = useState<NewsFeedItem | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
+  const [categoryRowWidth, setCategoryRowWidth] = useState(0);
+  const [categoryContentWidth, setCategoryContentWidth] = useState(0);
   const mediaHeight = responsive.isSmallPhone ? 184 : responsive.isLargePhone ? 224 : 200;
+  const centeredCategoryPadding = Math.max(0, (categoryRowWidth - categoryContentWidth) / 2);
 
   const filteredItems = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
@@ -176,7 +180,19 @@ export default function NewsScreen() {
                 iconColor={colors.textMuted}
               />
 
-              <View style={styles.pillsRow}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                onLayout={(event) => setCategoryRowWidth(event.nativeEvent.layout.width)}
+                onContentSizeChange={(width) => setCategoryContentWidth(width)}
+                contentContainerStyle={[
+                  styles.pillsRow,
+                  {
+                    minWidth: "100%",
+                    paddingHorizontal: centeredCategoryPadding,
+                  },
+                ]}
+              >
                 {categories.map((category, index) => {
                   const isActive = category.id === activeCategory;
                   return (
@@ -192,14 +208,17 @@ export default function NewsScreen() {
                         { minHeight: responsive.buttonHeightSmall },
                         isActive ? styles.pillActive : undefined,
                       ]}
-                    >
-                      <Text style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}>
+                      >
+                      <Text
+                        numberOfLines={1}
+                        style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}
+                      >
                         {category.label}
                       </Text>
                     </Pressable>
                   );
                 })}
-              </View>
+              </ScrollView>
             </View>
           </AnimatedEntrance>
         }
@@ -536,11 +555,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingBottom: spacing.sm,
     alignItems: "center",
-    justifyContent: "center",
   },
   pill: {
-    flex: 1,
-    paddingHorizontal: 16,
+    minWidth: 112,
+    paddingHorizontal: 18,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,

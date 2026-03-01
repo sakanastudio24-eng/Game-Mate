@@ -1,8 +1,9 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
-import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
+import { Alert, FlatList, Pressable, Share, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
+import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
@@ -24,6 +25,7 @@ export default function GroupDetailScreen() {
   const [activeTab, setActiveTab] = useState<"home" | "events" | "chat" | "members">(
     "home",
   );
+  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const onlineCount = Math.max(1, Math.min(group.memberCount, Math.round(group.memberCount * 0.55)));
   const homeEvents = [
@@ -65,9 +67,44 @@ export default function GroupDetailScreen() {
     }
   };
 
+  const handleShareGroup = async () => {
+    try {
+      await Share.share({
+        message: `Join my group on GameMate: ${group.name} (${group.game})`,
+      });
+    } catch {
+      // no-op
+    }
+  };
+
+  const handleReportGroup = () => {
+    Alert.alert("Report Submitted", `Thanks. "${group.name}" was reported for review.`);
+  };
+
+  const handleLeaveGroup = () => {
+    Alert.alert("Leave Group", `Leave "${group.name}"?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Leave",
+        style: "destructive",
+        onPress: () => {
+          router.replace("/(tabs)/groups");
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen scrollable={false}>
-      <Header title={group.name} showBackButton />
+      <Header
+        title={group.name}
+        showBackButton
+        rightAction={{
+          icon: "cog-outline",
+          label: `${group.name} settings`,
+          onPress: () => setGroupSettingsOpen(true),
+        }}
+      />
 
       {/* Tab selector */}
       <View style={styles.tabSelector}>
@@ -300,6 +337,42 @@ export default function GroupDetailScreen() {
           </Text>
         </View>
       )}
+
+      <ActionSheet
+        visible={groupSettingsOpen}
+        title="Group Settings"
+        subtitle={group.name}
+        onClose={() => setGroupSettingsOpen(false)}
+        options={[
+          {
+            id: "notifications",
+            label: "Notifications",
+            icon: "bell-outline",
+            onPress: () => router.push("/(tabs)/notification-settings" as any),
+          },
+          {
+            id: "share",
+            label: "Share",
+            icon: "share-variant-outline",
+            onPress: () => {
+              void handleShareGroup();
+            },
+          },
+          {
+            id: "report",
+            label: "Report",
+            icon: "flag-outline",
+            onPress: handleReportGroup,
+          },
+          {
+            id: "leave",
+            label: "Leave Group",
+            icon: "exit-run",
+            destructive: true,
+            onPress: handleLeaveGroup,
+          },
+        ]}
+      />
     </Screen>
   );
 }

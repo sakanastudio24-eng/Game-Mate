@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useEffect, useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
@@ -22,6 +22,7 @@ export default function GroupsScreen() {
 
   const initialVisible = homeContentPrimed() ? GROUPS_PAGE_SIZE + 1 : GROUPS_PAGE_SIZE;
   const [joinedGroupIds, setJoinedGroupIds] = useState<string[]>([]);
+  const [deletedGroupIds, setDeletedGroupIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(initialVisible);
   const groupThumbSize = responsive.isSmallPhone ? 66 : responsive.isLargePhone ? 86 : 78;
@@ -35,8 +36,11 @@ export default function GroupsScreen() {
   }, [query]);
 
   const discoverableGroups = useMemo(
-    () => filteredGroups.filter((group) => !joinedGroupIds.includes(group.id)),
-    [filteredGroups, joinedGroupIds],
+    () =>
+      filteredGroups.filter(
+        (group) => !joinedGroupIds.includes(group.id) && !deletedGroupIds.includes(group.id),
+      ),
+    [deletedGroupIds, filteredGroups, joinedGroupIds],
   );
 
   useEffect(() => {
@@ -58,6 +62,38 @@ export default function GroupsScreen() {
 
   const loadMoreGroups = () => {
     setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, discoverableGroups.length));
+  };
+
+  const handleShareGroup = async (name: string, game: string) => {
+    try {
+      await Share.share({
+        message: `Check out this Game Mate group: ${name} (${game}).`,
+      });
+    } catch {
+      // no-op preview fallback
+    }
+  };
+
+  const handleDeleteGroup = (groupId: string) => {
+    setDeletedGroupIds((prev) => (prev.includes(groupId) ? prev : [...prev, groupId]));
+    setJoinedGroupIds((prev) => prev.filter((id) => id !== groupId));
+  };
+
+  const openGroupOptions = (groupId: string, groupName: string, game: string) => {
+    Alert.alert(groupName, "Choose an action", [
+      {
+        text: "Share",
+        onPress: () => {
+          void handleShareGroup(groupName, game);
+        },
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => handleDeleteGroup(groupId),
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   return (
@@ -227,7 +263,7 @@ export default function GroupsScreen() {
                   <Pressable
                     onPress={(event) => {
                       event.stopPropagation();
-                      router.push(`/(tabs)/group-detail?groupId=${group.id}`);
+                      openGroupOptions(group.id, group.name, group.game);
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={`More options for ${group.name}`}

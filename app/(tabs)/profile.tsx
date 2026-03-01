@@ -72,18 +72,52 @@ const games = [
   },
 ] as const;
 
+const videos = [
+  {
+    id: "v1",
+    title: "Ace Clutch in Overtime",
+    duration: "0:42",
+    views: "12.4K",
+    image: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=500&q=80",
+  },
+  {
+    id: "v2",
+    title: "Fast Rotate Breakdown",
+    duration: "1:08",
+    views: "9.1K",
+    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500&q=80",
+  },
+  {
+    id: "v3",
+    title: "Aim Routine Day 7",
+    duration: "0:55",
+    views: "6.3K",
+    image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=500&q=80",
+  },
+] as const;
+
 export default function ProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
+
   const [myGroups, setMyGroups] = useState(MY_GROUPS);
-  const [activeCollectionTab, setActiveCollectionTab] = useState<"games" | "groups">("games");
+  const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
+    "videos",
+  );
+
   const statCardWidth = responsive.isSmallPhone ? "48.5%" : "24%";
   const gameCardWidth = responsive.isSmallPhone ? "48.5%" : "31.5%";
+  const videoCardWidth = responsive.isSmallPhone ? "48.5%" : "31.5%";
 
   const statRows = [
-    { label: "Groups", value: String(myGroups.length), icon: "account-group-outline", color: colors.primary },
+    {
+      label: "Groups",
+      value: String(myGroups.length),
+      icon: "account-group-outline",
+      color: colors.primary,
+    },
     { label: "Events", value: "34", icon: "calendar-month-outline", color: "#66BAFF" },
     { label: "Wins", value: "156", icon: "trophy-outline", color: "#FFD700" },
     { label: "Hours", value: "2.4K", icon: "controller-classic-outline", color: "#4ADE80" },
@@ -104,60 +138,62 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const openCreateFlow = (type: "video" | "game") => {
+    router.push(`/(tabs)/create-collection?type=${type}`);
+  };
+
   return (
     <View style={styles.screen}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <AnimatedEntrance preset="screen">
           <View style={styles.cover}>
             <View style={styles.coverPattern} />
 
             <View
-            style={[
-              styles.headerActions,
-              { right: responsive.horizontalPadding, top: safeTop + responsive.headerTopSpacing },
-            ]}
-          >
-            <Pressable
-              onPress={() => router.push("/(tabs)/qr-code")}
-              accessibilityRole="button"
-              accessibilityLabel="Open QR code"
-              style={({ pressed }) => [
-                styles.headerIcon,
-                {
-                  minWidth: responsive.touchTargetMin,
-                  minHeight: responsive.touchTargetMin,
-                  width: responsive.iconButtonSize,
-                  height: responsive.iconButtonSize,
-                  borderRadius: responsive.iconButtonSize / 2,
-                },
-                pressed && styles.pressed,
+              style={[
+                styles.headerActions,
+                { right: responsive.horizontalPadding, top: safeTop + responsive.headerTopSpacing },
               ]}
-              hitSlop={4}
             >
-              <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/(tabs)/settings")}
-              accessibilityRole="button"
-              accessibilityLabel="Open settings"
-              style={({ pressed }) => [
-                styles.headerIcon,
-                {
-                  minWidth: responsive.touchTargetMin,
-                  minHeight: responsive.touchTargetMin,
-                  width: responsive.iconButtonSize,
-                  height: responsive.iconButtonSize,
-                  borderRadius: responsive.iconButtonSize / 2,
-                },
-                pressed && styles.pressed,
-              ]}
-              hitSlop={4}
-            >
-              <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
-            </Pressable>
+              <Pressable
+                onPress={() => router.push("/(tabs)/qr-code")}
+                accessibilityRole="button"
+                accessibilityLabel="Open QR code"
+                style={({ pressed }) => [
+                  styles.headerIcon,
+                  {
+                    minWidth: responsive.touchTargetMin,
+                    minHeight: responsive.touchTargetMin,
+                    width: responsive.iconButtonSize,
+                    height: responsive.iconButtonSize,
+                    borderRadius: responsive.iconButtonSize / 2,
+                  },
+                  pressed && styles.pressed,
+                ]}
+                hitSlop={4}
+              >
+                <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+              </Pressable>
+
+              <Pressable
+                onPress={() => router.push("/(tabs)/settings")}
+                accessibilityRole="button"
+                accessibilityLabel="Open settings"
+                style={({ pressed }) => [
+                  styles.headerIcon,
+                  {
+                    minWidth: responsive.touchTargetMin,
+                    minHeight: responsive.touchTargetMin,
+                    width: responsive.iconButtonSize,
+                    height: responsive.iconButtonSize,
+                    borderRadius: responsive.iconButtonSize / 2,
+                  },
+                  pressed && styles.pressed,
+                ]}
+                hitSlop={4}
+              >
+                <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
+              </Pressable>
             </View>
           </View>
         </AnimatedEntrance>
@@ -196,10 +232,12 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.statusRow}>
-              <MaterialCommunityIcons name="controller-classic-outline" size={15} color={colors.textSecondary} />
-              <Text style={[styles.statusText, { fontSize: responsive.bodySmallSize }]}>
-                Online · Playing Overwatch
-              </Text>
+              <MaterialCommunityIcons
+                name="controller-classic-outline"
+                size={15}
+                color={colors.textSecondary}
+              />
+              <Text style={[styles.statusText, { fontSize: responsive.bodySmallSize }]}>Online · Playing Overwatch</Text>
             </View>
 
             <Text
@@ -225,9 +263,7 @@ export default function ProfileScreen() {
               ]}
             >
               <MaterialCommunityIcons name="pencil-outline" size={16} color="#1A1A1A" />
-              <Text style={[styles.editButtonText, { fontSize: responsive.bodySize + 1 }]}>
-                Edit Profile
-              </Text>
+              <Text style={[styles.editButtonText, { fontSize: responsive.bodySize + 1 }]}>Edit Profile</Text>
             </Pressable>
           </View>
         </AnimatedEntrance>
@@ -244,10 +280,7 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <Text
-              accessibilityRole="header"
-              style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}
-            >
+            <Text accessibilityRole="header" style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
               Stats
             </Text>
             <View style={styles.statsGrid}>
@@ -276,37 +309,17 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <Text
-              accessibilityRole="header"
-              style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}
-            >
+            <Text accessibilityRole="header" style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
               Achievements
             </Text>
             <View style={styles.achievementsGrid}>
               {achievements.map((achievement) => (
-                <View
-                  key={achievement.name}
-                  style={[
-                    styles.achievementCard,
-                    { borderColor: `${achievement.color}66` },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.achievementIconWrap,
-                      { backgroundColor: `${achievement.color}22` },
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={achievement.icon as any}
-                      size={20}
-                      color={achievement.color}
-                    />
+                <View key={achievement.name} style={[styles.achievementCard, { borderColor: `${achievement.color}66` }]}>
+                  <View style={[styles.achievementIconWrap, { backgroundColor: `${achievement.color}22` }]}>
+                    <MaterialCommunityIcons name={achievement.icon as any} size={20} color={achievement.color} />
                   </View>
                   <Text style={styles.achievementName}>{achievement.name}</Text>
-                  <Text style={[styles.achievementRarity, { color: achievement.color }]}>
-                    {achievement.rarity}
-                  </Text>
+                  <Text style={[styles.achievementRarity, { color: achievement.color }]}>{achievement.rarity}</Text>
                 </View>
               ))}
             </View>
@@ -326,12 +339,11 @@ export default function ProfileScreen() {
             ]}
           >
             <View style={styles.collectionTabs}>
-              {(
-                [
-                  { id: "games", label: "Games" },
-                  { id: "groups", label: "Groups" },
-                ] as const
-              ).map((tab) => {
+              {([
+                { id: "videos", label: "Videos" },
+                { id: "games", label: "Games" },
+                { id: "groups", label: "Groups" },
+              ] as const).map((tab) => {
                 const isActive = activeCollectionTab === tab.id;
                 return (
                   <Pressable
@@ -358,8 +370,56 @@ export default function ProfileScreen() {
               })}
             </View>
 
-            {activeCollectionTab === "games" ? (
+            {activeCollectionTab === "videos" ? (
+              <View style={styles.videosGrid}>
+                <Pressable
+                  onPress={() => openCreateFlow("video")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add video"
+                  style={[styles.addCollectionCard, styles.addVideoCard, { width: videoCardWidth }]}
+                >
+                  <View style={styles.addCollectionIconWrap}>
+                    <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+                  </View>
+                  <Text style={styles.addCollectionTitle}>Add Video</Text>
+                  <Text style={styles.addCollectionSubtitle}>Create a new profile clip</Text>
+                </Pressable>
+
+                {videos.map((video) => (
+                  <Pressable
+                    key={video.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${video.title}, ${video.views} views`}
+                    style={[styles.videoCard, { width: videoCardWidth }]}
+                  >
+                    <Image source={{ uri: video.image }} style={styles.videoImage} />
+                    <View style={styles.videoDurationBadge}>
+                      <Text style={styles.videoDurationText}>{video.duration}</Text>
+                    </View>
+                    <View style={styles.videoOverlay}>
+                      <Text style={styles.videoTitle} numberOfLines={2}>
+                        {video.title}
+                      </Text>
+                      <Text style={styles.videoMeta}>{video.views} views</Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            ) : activeCollectionTab === "games" ? (
               <View style={styles.gamesGrid}>
+                <Pressable
+                  onPress={() => openCreateFlow("game")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add game"
+                  style={[styles.addCollectionCard, { width: gameCardWidth }]}
+                >
+                  <View style={styles.addCollectionIconWrap}>
+                    <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+                  </View>
+                  <Text style={styles.addCollectionTitle}>Add Game</Text>
+                  <Text style={styles.addCollectionSubtitle}>Track another game</Text>
+                </Pressable>
+
                 {games.map((game) => (
                   <View
                     key={game.name}
@@ -375,60 +435,74 @@ export default function ProfileScreen() {
                   </View>
                 ))}
               </View>
-            ) : myGroups.length === 0 ? (
-              <View style={styles.emptyGroups}>
-                <Text style={styles.emptyGroupsText}>No active groups yet.</Text>
-              </View>
             ) : (
-              myGroups.map((group) => (
+              <View>
                 <Pressable
-                  key={group.id}
-                  onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                  onPress={() => router.push("/(tabs)/create-group")}
                   accessibilityRole="button"
-                  accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
-                  accessibilityHint="Open group details"
-                  style={({ pressed }) => [styles.myGroupCard, pressed && styles.pressed]}
+                  accessibilityLabel="Add group"
+                  style={[styles.addCollectionCard, styles.addGroupCard]}
                 >
-                  <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
-
-                  <View style={styles.myGroupInfo}>
-                    <View style={styles.myGroupTopRow}>
-                      <Text style={styles.myGroupName}>{group.name}</Text>
-                      <Pressable
-                        onPress={(event) => {
-                          event.stopPropagation();
-                          openGroupOptions(group.id, group.name);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={`More options for ${group.name}`}
-                        style={({ pressed }) => [
-                          styles.groupOptionsButton,
-                          {
-                            minWidth: responsive.touchTargetMin,
-                            minHeight: responsive.touchTargetMin,
-                            borderRadius: responsive.touchTargetMin / 2,
-                          },
-                          pressed && styles.pressed,
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name="dots-vertical"
-                          size={20}
-                          color={colors.textSecondary}
-                        />
-                      </Pressable>
-                    </View>
-
-                    <Text style={styles.myGroupMeta}>
-                      {group.game} · {group.members} members · {group.online} online
-                    </Text>
+                  <View style={styles.addCollectionIconWrap}>
+                    <MaterialCommunityIcons name="plus" size={24} color={colors.primary} />
+                  </View>
+                  <View>
+                    <Text style={styles.addCollectionTitle}>Add Group</Text>
+                    <Text style={styles.addCollectionSubtitle}>Create a new squad</Text>
                   </View>
                 </Pressable>
-              ))
+
+                {myGroups.length === 0 ? (
+                  <View style={styles.emptyGroups}>
+                    <Text style={styles.emptyGroupsText}>No active groups yet.</Text>
+                  </View>
+                ) : (
+                  myGroups.map((group) => (
+                    <Pressable
+                      key={group.id}
+                      onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
+                      accessibilityHint="Open group details"
+                      style={({ pressed }) => [styles.myGroupCard, pressed && styles.pressed]}
+                    >
+                      <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
+
+                      <View style={styles.myGroupInfo}>
+                        <View style={styles.myGroupTopRow}>
+                          <Text style={styles.myGroupName}>{group.name}</Text>
+                          <Pressable
+                            onPress={(event) => {
+                              event.stopPropagation();
+                              openGroupOptions(group.id, group.name);
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel={`More options for ${group.name}`}
+                            style={({ pressed }) => [
+                              styles.groupOptionsButton,
+                              {
+                                minWidth: responsive.touchTargetMin,
+                                minHeight: responsive.touchTargetMin,
+                                borderRadius: responsive.touchTargetMin / 2,
+                              },
+                              pressed && styles.pressed,
+                            ]}
+                          >
+                            <MaterialCommunityIcons name="dots-vertical" size={20} color={colors.textSecondary} />
+                          </Pressable>
+                        </View>
+
+                        <Text style={styles.myGroupMeta}>
+                          {group.game} · {group.members} members · {group.online} online
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))
+                )}
+              </View>
             )}
           </View>
         </AnimatedEntrance>
-
       </ScrollView>
     </View>
   );
@@ -549,9 +623,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   statCard: {
-    width: "24%",
     marginBottom: 12,
     alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 14,
+    borderColor: colors.border,
+    paddingVertical: 10,
+    backgroundColor: "#242424",
   },
   statIconWrap: {
     width: 32,
@@ -580,78 +658,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-  },
-  myGroupCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#242424",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: spacing.sm,
-  },
-  myGroupThumb: {
-    width: 62,
-    height: 62,
-    borderRadius: 12,
-    marginRight: spacing.md,
-  },
-  myGroupInfo: {
-    flex: 1,
-  },
-  myGroupTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  myGroupName: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 14,
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  myGroupMeta: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 3,
-    marginBottom: spacing.sm,
-  },
-  groupLeaveButton: {
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  groupOptionsButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  groupLeaveButtonText: {
-    color: colors.textSecondary,
-    fontWeight: "700",
-    fontSize: 11,
-  },
-  emptyGroups: {
-    backgroundColor: "#242424",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-  },
-  emptyGroupsText: {
-    color: colors.textSecondary,
-    fontSize: 12,
   },
   achievementCard: {
     width: "48.5%",
@@ -710,13 +716,103 @@ const styles = StyleSheet.create({
   collectionTabTextActive: {
     color: "#1A1A1A",
   },
+  videosGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
   gamesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
+  addCollectionCard: {
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: "#242424",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+  },
+  addVideoCard: {
+    aspectRatio: 0.68,
+  },
+  addGroupCard: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  addCollectionIconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1F1F1F",
+    marginBottom: spacing.xs,
+  },
+  addCollectionTitle: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  addCollectionSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    textAlign: "center",
+    marginTop: 2,
+  },
+  videoCard: {
+    marginBottom: 8,
+    aspectRatio: 0.68,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  videoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  videoDurationBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  videoDurationText: {
+    color: colors.text,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  videoOverlay: {
+    position: "absolute",
+    left: 8,
+    right: 8,
+    bottom: 8,
+  },
+  videoTitle: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  videoMeta: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    marginTop: 2,
+  },
   gameCard: {
-    width: "31.5%",
     marginBottom: 8,
   },
   gameImage: {
@@ -739,6 +835,62 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 10,
     marginTop: 1,
+  },
+  myGroupCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: spacing.sm,
+  },
+  myGroupThumb: {
+    width: 62,
+    height: 62,
+    borderRadius: 12,
+    marginRight: spacing.md,
+  },
+  myGroupInfo: {
+    flex: 1,
+  },
+  myGroupTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  myGroupName: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 14,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  myGroupMeta: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 3,
+    marginBottom: spacing.sm,
+  },
+  groupOptionsButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyGroups: {
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  emptyGroupsText: {
+    color: colors.textSecondary,
+    fontSize: 12,
   },
   pressed: {
     opacity: 0.85,

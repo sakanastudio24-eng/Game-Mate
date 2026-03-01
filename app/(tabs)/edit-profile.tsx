@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -7,6 +6,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
+import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
@@ -29,7 +29,7 @@ const availableGames = [
 const avatars = ["🎮", "🎯", "🎪", "🧙", "⚔️", "🛡️", "🚀", "🔥"];
 
 export default function EditProfileScreen() {
-  const router = useRouter();
+  const safeBack = useSafeBackNavigation();
   const responsive = useResponsive();
   const [username, setUsername] = useState(mockCurrentUser.username);
   const [bio, setBio] = useState(mockCurrentUser.bio || "");
@@ -48,7 +48,7 @@ export default function EditProfileScreen() {
 
   const handleSave = () => {
     // Mock: close screen until API wiring is added in a later phase.
-    router.back();
+    safeBack();
   };
 
   return (
@@ -139,7 +139,7 @@ export default function EditProfileScreen() {
           Save Changes
         </Button>
 
-        <Button variant="secondary" fullWidth size="large" onPress={() => router.back()}>
+        <Button variant="secondary" fullWidth size="large" onPress={safeBack}>
           Cancel
         </Button>
       </View>

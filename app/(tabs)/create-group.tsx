@@ -1,4 +1,3 @@
-import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SegmentedButtons, Text } from "react-native-paper";
@@ -6,6 +5,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
+import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { Screen } from "../../src/components/ui/Screen";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -25,7 +25,7 @@ const games = [
 const ranks = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Radiant"];
 
 export default function CreateGroupScreen() {
-  const router = useRouter();
+  const safeBack = useSafeBackNavigation();
   const responsive = useResponsive();
   const [groupName, setGroupName] = useState("");
   const [selectedGame, setSelectedGame] = useState("Valorant");
@@ -50,7 +50,7 @@ export default function CreateGroupScreen() {
   const handleCreate = () => {
     if (validateForm()) {
       // Backend: POST /api/groups with form data.
-      router.back();
+      safeBack();
     }
   };
 

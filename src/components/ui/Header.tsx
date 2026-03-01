@@ -1,8 +1,8 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeBackNavigation } from "../../lib/navigation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResponsive } from "../../lib/responsive";
 import { colors, spacing, typography } from "../../lib/theme";
@@ -43,7 +43,7 @@ export function Header({
   rightIcon2,
   onRightPress2,
 }: HeaderProps) {
-  const router = useRouter();
+  const safeBack = useSafeBackNavigation();
   const insets = useSafeAreaInsets();
   const responsive = useResponsive();
   const resolvedRightIcon = rightAction?.icon ?? rightIcon;
@@ -56,7 +56,7 @@ export function Header({
       onBack();
       return;
     }
-    router.back();
+    safeBack();
   };
 
   return (

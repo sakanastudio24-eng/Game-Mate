@@ -42,8 +42,15 @@ export interface AIApiError {
   };
 }
 
+interface RequestOptions {
+  signal?: AbortSignal;
+  forceRefresh?: boolean;
+}
+
 const MAX_GROUPS = 50;
 const MAX_TEXT_CHARS = 500;
+const RECOMMENDATIONS_TTL_MS = 30_000;
+const TAGS_TTL_MS = 60_000;
 
 const rankOrder: Record<string, number> = {
   iron: 1,
@@ -56,6 +63,51 @@ const rankOrder: Record<string, number> = {
   immortal: 8,
   radiant: 9,
 };
+
+const recommendationsCache = new Map<
+  string,
+  { expiresAt: number; value: AIRecommendationsResponse }
+>();
+const recommendationsInFlight = new Map<string, Promise<AIRecommendationsResponse>>();
+
+const tagsCache = new Map<string, { expiresAt: number; value: AISuggestedTagsResponse }>();
+const tagsInFlight = new Map<string, Promise<AISuggestedTagsResponse>>();
+
+function createAbortError(): Error {
+  const error = new Error("The request was aborted");
+  (error as Error & { name?: string }).name = "AbortError";
+  return error;
+}
+
+export function isAbortError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === "AbortError" || /aborted/i.test(error.message))
+  );
+}
+
+function withAbort<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(createAbortError());
+
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => {
+      reject(createAbortError());
+    };
+
+    signal.addEventListener("abort", abort, { once: true });
+
+    promise
+      .then((value) => {
+        signal.removeEventListener("abort", abort);
+        resolve(value);
+      })
+      .catch((error) => {
+        signal.removeEventListener("abort", abort);
+        reject(error);
+      });
+  });
+}
 
 function normalizeTag(tag: string): string {
   return tag.trim().toLowerCase();
@@ -191,49 +243,97 @@ function fallbackRecommendations(input: AIRecommendationsRequest): AIRecommendat
 
 export async function getRecommendations(
   input: AIRecommendationsRequest,
+  options: RequestOptions = {},
 ): Promise<AIRecommendationsResponse> {
+  const { signal, forceRefresh } = options;
   const sanitized = sanitizeRequest(input);
   const apiBase = getApiBase();
+  const cacheKey = JSON.stringify(sanitized);
+  const now = Date.now();
 
-  if (!apiBase) {
-    return fallbackRecommendations(sanitized);
+  if (!forceRefresh) {
+    const cached = recommendationsCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
+    }
   }
 
+  const inFlight = recommendationsInFlight.get(cacheKey);
+  if (inFlight) {
+    return withAbort(inFlight, signal);
+  }
+
+  const requestPromise = (async () => {
+    if (!apiBase) {
+      const local = fallbackRecommendations(sanitized);
+      recommendationsCache.set(cacheKey, {
+        expiresAt: Date.now() + RECOMMENDATIONS_TTL_MS,
+        value: local,
+      });
+      return local;
+    }
+
+    try {
+      const response = await fetch(`${apiBase}/api/ai/recommendations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sanitized),
+        signal,
+      });
+
+      if (!response.ok) {
+        const errBody = (await response.json().catch(() => null)) as AIApiError | null;
+        throw new Error(errBody?.error?.message || `AI recommendations failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as AIRecommendationsResponse;
+      if (!Array.isArray(data.results)) {
+        throw new Error("Invalid recommendations response shape");
+      }
+
+      const value = {
+        results: data.results
+          .filter((item) => item.groupId && typeof item.score === "number")
+          .map((item) => ({
+            groupId: String(item.groupId),
+            score: Math.max(0, Math.min(100, Math.round(item.score))),
+            reasons: Array.isArray(item.reasons) ? item.reasons.slice(0, 3) : [],
+          }))
+          .sort((a, b) => b.score - a.score),
+      };
+
+      recommendationsCache.set(cacheKey, {
+        expiresAt: Date.now() + RECOMMENDATIONS_TTL_MS,
+        value,
+      });
+      return value;
+    } catch (error) {
+      if (isAbortError(error)) {
+        throw error;
+      }
+      const fallback = fallbackRecommendations(sanitized);
+      recommendationsCache.set(cacheKey, {
+        expiresAt: Date.now() + RECOMMENDATIONS_TTL_MS,
+        value: fallback,
+      });
+      return fallback;
+    }
+  })();
+
+  recommendationsInFlight.set(cacheKey, requestPromise);
+
   try {
-    const response = await fetch(`${apiBase}/api/ai/recommendations`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(sanitized),
-    });
-
-    if (!response.ok) {
-      const errBody = (await response.json().catch(() => null)) as AIApiError | null;
-      throw new Error(errBody?.error?.message || `AI recommendations failed (${response.status})`);
+    return await withAbort(requestPromise, signal);
+  } finally {
+    if (recommendationsInFlight.get(cacheKey) === requestPromise) {
+      recommendationsInFlight.delete(cacheKey);
     }
-
-    const data = (await response.json()) as AIRecommendationsResponse;
-    if (!Array.isArray(data.results)) {
-      throw new Error("Invalid recommendations response shape");
-    }
-
-    return {
-      results: data.results
-        .filter((item) => item.groupId && typeof item.score === "number")
-        .map((item) => ({
-          groupId: String(item.groupId),
-          score: Math.max(0, Math.min(100, Math.round(item.score))),
-          reasons: Array.isArray(item.reasons) ? item.reasons.slice(0, 3) : [],
-        }))
-        .sort((a, b) => b.score - a.score),
-    };
-  } catch {
-    return fallbackRecommendations(sanitized);
   }
 }
 
-export async function getSuggestedTags(text: string): Promise<AISuggestedTagsResponse> {
+function localSuggestedTags(text: string): AISuggestedTagsResponse {
   const cleaned = clampText(text).toLowerCase();
   const tokens = cleaned
     .replace(/[^a-z0-9\s]/g, " ")
@@ -266,6 +366,75 @@ export async function getSuggestedTags(text: string): Promise<AISuggestedTagsRes
   }
 
   return { tags: [...tagSet] };
+}
+
+export async function getSuggestedTags(
+  text: string,
+  options: RequestOptions = {},
+): Promise<AISuggestedTagsResponse> {
+  const { signal, forceRefresh } = options;
+  const cleaned = clampText(text).toLowerCase();
+  const apiBase = getApiBase();
+  const cacheKey = cleaned;
+  const now = Date.now();
+
+  if (!forceRefresh) {
+    const cached = tagsCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return cached.value;
+    }
+  }
+
+  const inFlight = tagsInFlight.get(cacheKey);
+  if (inFlight) {
+    return withAbort(inFlight, signal);
+  }
+
+  const requestPromise = (async () => {
+    if (!apiBase) {
+      const local = localSuggestedTags(cleaned);
+      tagsCache.set(cacheKey, { expiresAt: Date.now() + TAGS_TTL_MS, value: local });
+      return local;
+    }
+
+    try {
+      const response = await fetch(`${apiBase}/api/ai/suggested-tags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: cleaned }),
+        signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Suggested tags failed (${response.status})`);
+      }
+
+      const data = (await response.json()) as AISuggestedTagsResponse;
+      const tags = Array.isArray(data.tags)
+        ? data.tags
+            .map((tag) => normalizeTag(String(tag)))
+            .filter(Boolean)
+            .slice(0, 6)
+        : [];
+      const value = tags.length > 0 ? { tags } : localSuggestedTags(cleaned);
+      tagsCache.set(cacheKey, { expiresAt: Date.now() + TAGS_TTL_MS, value });
+      return value;
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      const local = localSuggestedTags(cleaned);
+      tagsCache.set(cacheKey, { expiresAt: Date.now() + TAGS_TTL_MS, value: local });
+      return local;
+    }
+  })();
+
+  tagsInFlight.set(cacheKey, requestPromise);
+  try {
+    return await withAbort(requestPromise, signal);
+  } finally {
+    if (tagsInFlight.get(cacheKey) === requestPromise) {
+      tagsInFlight.delete(cacheKey);
+    }
+  }
 }
 
 export async function draftIntroMessage(

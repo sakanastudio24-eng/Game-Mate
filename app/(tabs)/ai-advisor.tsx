@@ -1,10 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
-import { getSuggestedTags } from "../../src/ai/advisorClient";
+import { getSuggestedTags, isAbortError } from "../../src/ai/advisorClient";
 import { EmptyState } from "../../src/components/ui/EmptyState";
 import { FilterChipOption, FilterChips } from "../../src/components/ui/FilterChips";
 import { Header } from "../../src/components/ui/Header";
@@ -75,6 +75,23 @@ function normalizeTokens(value: string): string[] {
     .filter(Boolean);
 }
 
+function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(new Error("Aborted"));
+    };
+
+    if (signal) {
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+  });
+}
+
 export default function AIAdvisorScreen() {
   const router = useRouter();
   const responsive = useResponsive();
@@ -87,6 +104,8 @@ export default function AIAdvisorScreen() {
   const [error, setError] = useState<string | null>(null);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [pageCount, setPageCount] = useState(1);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const forceRefreshRef = useRef(false);
 
   const {
     value: recentSearches,
@@ -174,29 +193,44 @@ export default function AIAdvisorScreen() {
     [setRecentSearches],
   );
 
-  const refreshSearch = useCallback(async () => {
+  useEffect(() => {
+    const controller = new AbortController();
+    const forceRefresh = forceRefreshRef.current;
+    forceRefreshRef.current = false;
     setLoading(true);
     setError(null);
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      if (!debouncedQuery.trim()) {
-        setSuggestedTags([]);
-      } else {
-        const response = await getSuggestedTags(debouncedQuery);
-        setSuggestedTags(response.tags);
-      }
-    } catch {
-      setError("Unable to refresh video search results.");
-      setSuggestedTags([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [debouncedQuery]);
+    const run = async () => {
+      try {
+        await abortableDelay(200, controller.signal);
 
-  useEffect(() => {
-    void refreshSearch();
-  }, [refreshSearch]);
+        if (!debouncedQuery.trim()) {
+          setSuggestedTags([]);
+          return;
+        }
+
+        const response = await getSuggestedTags(debouncedQuery, {
+          signal: controller.signal,
+          forceRefresh,
+        });
+        setSuggestedTags(response.tags);
+      } catch (err) {
+        if (isAbortError(err)) return;
+        setError("Unable to refresh video search results.");
+        setSuggestedTags([]);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void run();
+
+    return () => {
+      controller.abort();
+    };
+  }, [debouncedQuery, refreshTick]);
 
   useEffect(() => {
     if (!debouncedQuery.trim()) return;
@@ -410,7 +444,10 @@ export default function AIAdvisorScreen() {
         <View style={styles.searchMetaRow}>
           <Text style={styles.resultLabel}>Top {TOP_RESULTS_LIMIT} Video Results</Text>
           <Pressable
-            onPress={() => void refreshSearch()}
+            onPress={() => {
+              forceRefreshRef.current = true;
+              setRefreshTick((prev) => prev + 1);
+            }}
             accessibilityRole="button"
             accessibilityLabel="Refresh video results"
             style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}

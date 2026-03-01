@@ -218,6 +218,14 @@ Common fixes:
 - Clear build cache: `npx eas build --platform android --clear-cache`
 - Check app.json for valid configuration
 
+### Expo Go Runtime Overlay Can Cause Device Lockups
+
+When using Expo Go performance monitor overlays or draw-over-app UI on Android, some devices can enter a temporary stuck state when entering/exiting the app (keyboard input blocked, app swipe-away feels frozen).
+
+Recommended practice:
+- Turn overlay/performance monitor off before backgrounding or swiping away the app.
+- If it happens, press Home, fully close Expo Go, then restart with `npx expo start -c`.
+
 ### Keystore Issues
 
 EAS manages keystores automatically on first build. Don't delete or share `keystore.json` if it appears locally.

@@ -258,6 +258,16 @@ lsof -n -iTCP:8081 -sTCP:LISTEN
 npx expo start -c
 ```
 
+### Expo Go Overlay Caution (Android)
+
+- Avoid leaving Expo Go performance overlays active while switching apps or swiping the app away.
+- On some Android devices, overlay/draw-over-app behavior can cause temporary input and gesture lockups (keyboard does not type, app switch swipe appears stuck).
+- If this occurs:
+  1. Press Home and close Expo Go from recent apps.
+  2. Disable the overlay/performance monitor display.
+  3. Restart Metro with `npx expo start -c`.
+  4. Reopen the app cleanly from Expo Go.
+
 ## 11) Platform Validation Note
 
 - Android is the primary validated platform in this environment.

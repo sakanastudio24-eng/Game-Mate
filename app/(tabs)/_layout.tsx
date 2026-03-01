@@ -77,6 +77,7 @@ export default function TabLayout() {
       <Tabs.Screen name="account-settings" options={{ href: null }} />
       <Tabs.Screen name="chat" options={{ href: null }} />
       <Tabs.Screen name="create-group" options={{ href: null }} />
+      <Tabs.Screen name="create-collection" options={{ href: null }} />
       <Tabs.Screen name="discover-groups" options={{ href: null }} />
       <Tabs.Screen name="edit-profile" options={{ href: null }} />
       <Tabs.Screen name="group-detail" options={{ href: null }} />

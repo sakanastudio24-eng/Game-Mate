@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useRef, useState } from "react";
-import { Alert, FlatList, Image, Pressable, Share, StyleSheet, View } from "react-native";
+import { Alert, FlatList, Image, Modal, Pressable, Share, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
@@ -37,6 +37,26 @@ function compactNumber(value: number): string {
   return String(value);
 }
 
+function buildCommentPreview(item: FeedEntry): Array<{ id: string; user: string; message: string }> {
+  return [
+    {
+      id: `${item.feedId}-c1`,
+      user: "Nova",
+      message: `This ${item.type === "video" ? "clip" : "post"} is clean. Need more like this.`,
+    },
+    {
+      id: `${item.feedId}-c2`,
+      user: "RiftKing",
+      message: "Queueing this with my group tonight.",
+    },
+    {
+      id: `${item.feedId}-c3`,
+      user: "Echo",
+      message: "Drop your setup details in the next one.",
+    },
+  ];
+}
+
 export default function NewsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
@@ -46,6 +66,7 @@ export default function NewsScreen() {
   const [likedIds, setLikedIds] = useState<string[]>([]);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [activePostMenu, setActivePostMenu] = useState<FeedEntry | null>(null);
+  const [commentsTarget, setCommentsTarget] = useState<FeedEntry | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
@@ -53,9 +74,11 @@ export default function NewsScreen() {
   const appendLockRef = useRef(false);
 
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
-  const tabClearance = Math.max(insets.bottom, responsive.safeBottomInset) + responsive.tabBarBaseHeight;
+  const bottomSafeInset = Math.max(insets.bottom, responsive.safeBottomInset);
   const horizontalPadding = responsive.horizontalPadding;
   const itemHeight = Math.max(viewportHeight, 1);
+  const actionRailBottom = bottomSafeInset + 22;
+  const bottomMetaOffset = bottomSafeInset + 10;
 
   const isLiked = useCallback(
     (feedId: string) => likedIds.includes(feedId),
@@ -93,8 +116,7 @@ export default function NewsScreen() {
   }, []);
 
   const openChat = (item: FeedEntry) => {
-    router.push("/(tabs)/messages");
-    Alert.alert("Comments", `Opening comments for "${item.title}".`);
+    setCommentsTarget(item);
   };
 
   const handleSystemShare = async (message: string) => {
@@ -183,7 +205,7 @@ export default function NewsScreen() {
                   styles.actionRail,
                   {
                     right: horizontalPadding,
-                    bottom: tabClearance + spacing.xxl + 36,
+                    bottom: actionRailBottom,
                   },
                 ]}
               >
@@ -196,7 +218,7 @@ export default function NewsScreen() {
                 >
                   <MaterialCommunityIcons
                     name={liked ? "heart" : "heart-outline"}
-                    size={26}
+                    size={32}
                     color={liked ? colors.destructive : colors.text}
                   />
                   <Text style={styles.railCount}>{compactNumber(item.likes + (liked ? 1 : 0))}</Text>
@@ -208,7 +230,7 @@ export default function NewsScreen() {
                   accessibilityLabel={`Open comments for ${item.title}`}
                   style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
                 >
-                  <MaterialCommunityIcons name="message-outline" size={26} color={colors.text} />
+                  <MaterialCommunityIcons name="message-outline" size={32} color={colors.text} />
                   <Text style={styles.railCount}>{compactNumber(item.comments)}</Text>
                 </Pressable>
 
@@ -218,7 +240,7 @@ export default function NewsScreen() {
                   accessibilityLabel={`More options for ${item.title}`}
                   style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
                 >
-                  <MaterialCommunityIcons name="dots-horizontal" size={26} color={colors.text} />
+                  <MaterialCommunityIcons name="dots-horizontal" size={32} color={colors.text} />
                 </Pressable>
               </View>
 
@@ -226,9 +248,9 @@ export default function NewsScreen() {
                 style={[
                   styles.bottomMeta,
                   {
-                    bottom: tabClearance + spacing.md,
+                    bottom: bottomMetaOffset,
                     left: horizontalPadding,
-                    right: horizontalPadding + 76,
+                    right: horizontalPadding + 90,
                   },
                 ]}
               >
@@ -253,6 +275,61 @@ export default function NewsScreen() {
           );
         }}
       />
+
+      <Modal
+        visible={commentsTarget !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setCommentsTarget(null)}
+      >
+        <View style={styles.drawerRoot}>
+          <Pressable
+            style={styles.drawerScrim}
+            onPress={() => setCommentsTarget(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Close comments drawer"
+          />
+          <View style={styles.drawerSheet}>
+            <View style={styles.drawerHandle} />
+            <Text style={styles.drawerTitle}>Comments</Text>
+            <Text style={styles.drawerSubtitle}>{commentsTarget?.title}</Text>
+            <View style={styles.drawerList}>
+              {commentsTarget
+                ? buildCommentPreview(commentsTarget).map((comment) => (
+                    <View key={comment.id} style={styles.drawerComment}>
+                      <Text style={styles.drawerUser}>{comment.user}</Text>
+                      <Text style={styles.drawerMessage}>{comment.message}</Text>
+                    </View>
+                  ))
+                : null}
+            </View>
+            <View style={styles.drawerActions}>
+              <Pressable
+                onPress={() => {
+                  setCommentsTarget(null);
+                  Alert.alert("Reply", "Reply composer is next in the chat workflow.");
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Reply to post"
+                style={({ pressed }) => [styles.drawerButton, pressed && styles.pressed]}
+              >
+                <Text style={styles.drawerButtonText}>Reply</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setCommentsTarget(null);
+                  router.push("/(tabs)/messages");
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Open full chat"
+                style={({ pressed }) => [styles.drawerButtonPrimary, pressed && styles.pressed]}
+              >
+                <Text style={styles.drawerButtonPrimaryText}>Open Chat</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ActionSheet
         visible={activePostMenu !== null}
@@ -380,16 +457,19 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   railButton: {
-    minWidth: 48,
-    minHeight: 48,
+    minWidth: 60,
+    minHeight: 60,
     alignItems: "center",
     justifyContent: "center",
   },
   railCount: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: "700",
     marginTop: 2,
+    textShadowColor: "rgba(0,0,0,0.45)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   bottomMeta: {
     position: "absolute",
@@ -428,9 +508,105 @@ const styles = StyleSheet.create({
   },
   description: {
     color: colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
     marginTop: spacing.xs,
+  },
+  drawerRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  drawerScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.42)",
+  },
+  drawerSheet: {
+    backgroundColor: "#1F1F1F",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+  drawerHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#5A5A5A",
+    alignSelf: "center",
+    marginBottom: spacing.sm,
+  },
+  drawerTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  drawerSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+    marginBottom: spacing.sm,
+  },
+  drawerList: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#262626",
+  },
+  drawerComment: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm + 2,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  drawerUser: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  drawerMessage: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginTop: 2,
+    lineHeight: 20,
+  },
+  drawerActions: {
+    flexDirection: "row",
+    marginTop: spacing.md,
+    gap: spacing.sm,
+  },
+  drawerButton: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#242424",
+  },
+  drawerButtonPrimary: {
+    flex: 1,
+    minHeight: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+  },
+  drawerButtonText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  drawerButtonPrimaryText: {
+    color: "#1A1A1A",
+    fontSize: 15,
+    fontWeight: "800",
   },
   pressed: {
     opacity: 0.72,

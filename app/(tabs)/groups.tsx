@@ -25,7 +25,7 @@ import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { RecentSearchList } from "../../src/components/ui/RecentSearchList";
 import { Skeleton } from "../../src/components/ui/Skeleton";
-import { Toast } from "../../src/components/ui/Toast";
+import { useToast } from "../../src/components/ui/ToastProvider";
 import {
   GROUPS_PAGE_SIZE,
   homeContentPrimed,
@@ -41,13 +41,6 @@ type AISwipeItem = {
   group: (typeof SUGGESTED_GROUPS)[number];
   score: number;
   reasons: string[];
-};
-
-type GroupsToastState = {
-  visible: boolean;
-  message: string;
-  actionLabel?: string;
-  onAction?: () => void;
 };
 
 const SWIPE_ACTION_THRESHOLD = 90;
@@ -85,6 +78,7 @@ function buildAiProfile(): AIUserProfile {
 export default function GroupsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
@@ -107,10 +101,6 @@ export default function GroupsScreen() {
     value: lastOpenedGroup,
     setValue: setLastOpenedGroup,
   } = useLocalCache<{ id?: string; name?: string }>("groups:last-opened", {});
-  const [toastState, setToastState] = useState<GroupsToastState>({
-    visible: false,
-    message: "",
-  });
   const [queryInput, setQueryInput] = useState("");
   const query = useDebouncedValue(queryInput, 260);
   const [visibleCount, setVisibleCount] = useState(initialVisible);
@@ -164,20 +154,6 @@ export default function GroupsScreen() {
   );
 
   const totalOnline = SUGGESTED_GROUPS.reduce((total, group) => total + group.online, 0);
-
-  const showToast = (next: Omit<GroupsToastState, "visible">) => {
-    setToastState({
-      ...next,
-      visible: true,
-    });
-  };
-
-  const dismissToast = () => {
-    setToastState((previous) => ({
-      ...previous,
-      visible: false,
-    }));
-  };
 
   const toggleJoin = (id: string, groupName: string) => {
     const wasJoined = joinedGroupIds.includes(id);
@@ -804,24 +780,6 @@ export default function GroupsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-
-      <Toast
-        visible={toastState.visible}
-        message={toastState.message}
-        icon="check-circle-outline"
-        action={
-          toastState.actionLabel && toastState.onAction
-            ? {
-                label: toastState.actionLabel,
-                onPress: () => {
-                  toastState.onAction?.();
-                  dismissToast();
-                },
-              }
-            : undefined
-        }
-        onDismiss={dismissToast}
-      />
 
       <ActionSheet
         visible={activeGroupMenu !== null}

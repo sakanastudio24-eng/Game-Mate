@@ -16,7 +16,7 @@ import {
 import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
-import { Toast } from "../../src/components/ui/Toast";
+import { useToast } from "../../src/components/ui/ToastProvider";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
@@ -34,13 +34,6 @@ interface CommentItem {
   avatar: string;
   message: string;
 }
-
-type NewsToastState = {
-  visible: boolean;
-  message: string;
-  actionLabel?: string;
-  onAction?: () => void;
-};
 
 const INITIAL_LOOP_COUNT = 3;
 const COMMENT_AVATARS: Record<string, string> = {
@@ -105,6 +98,7 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 export default function NewsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const initialFeed = useMemo(() => createInitialFeed(), []);
 
@@ -126,11 +120,6 @@ export default function NewsScreen() {
     isSelected: isLiked,
     toggle: toggleOptimisticLike,
   } = useOptimisticToggle([]);
-
-  const [toastState, setToastState] = useState<NewsToastState>({
-    visible: false,
-    message: "",
-  });
   const [activePostMenu, setActivePostMenu] = useState<FeedEntry | null>(null);
   const [commentsTarget, setCommentsTarget] = useState<FeedEntry | null>(null);
   const [commentThreads, setCommentThreads] = useState<Record<string, CommentItem[]>>({});
@@ -164,20 +153,6 @@ export default function NewsScreen() {
   useEffect(() => {
     setLikedIds(likedCache);
   }, [likedCache, setLikedIds]);
-
-  const showToast = (next: Omit<NewsToastState, "visible">) => {
-    setToastState({
-      ...next,
-      visible: true,
-    });
-  };
-
-  const dismissToast = () => {
-    setToastState((previous) => ({
-      ...previous,
-      visible: false,
-    }));
-  };
 
   const toggleLike = (feedId: string) => {
     const wasLiked = likedIds.includes(feedId);
@@ -518,24 +493,6 @@ export default function NewsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
-      <Toast
-        visible={toastState.visible}
-        message={toastState.message}
-        icon="thumb-up-outline"
-        action={
-          toastState.actionLabel && toastState.onAction
-            ? {
-                label: toastState.actionLabel,
-                onPress: () => {
-                  toastState.onAction?.();
-                  dismissToast();
-                },
-              }
-            : undefined
-        }
-        onDismiss={dismissToast}
-      />
 
       <ActionSheet
         visible={activePostMenu !== null}

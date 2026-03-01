@@ -87,6 +87,7 @@ When using Expo Go performance overlays (draw-over-app), some Android devices ca
 - [Mobile Workflow Notes](docs/MOBILE_WORKFLOW_NOTES.md)
 - [Frontend Checklist Status](docs/FRONTEND_CHECKLIST_STATUS.md)
 - [Frontend Handoff Checklist](docs/FRONTEND_HANDOFF_CHECKLIST.md)
+- [Frontend Scope](docs/FRONTEND_SCOPE.md)
 - [Frontend Audit (2026-03-01)](docs/FRONTEND_AUDIT_2026-03-01.md)
 - [Navigation Flows](docs/FLOWS.md)
 - [Backend Contracts](docs/FLOWS_BACKEND.md)

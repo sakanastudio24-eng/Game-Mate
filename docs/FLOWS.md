@@ -175,6 +175,21 @@ Routes:
 - `/(tabs)/help`
 - `/(tabs)/explore`
 
+Profile settings danger flow:
+1. Open `/(tabs)/settings`.
+2. Scroll to bottom Danger Zone.
+3. Tap `Delete Account`.
+4. Confirmation dialog asks `Are you sure?`.
+5. Confirm delete -> preview flow signs out to onboarding route.
+
+Notification presets/time-sheet flow:
+1. Open `/(tabs)/notification-settings`.
+2. Pick a preset (`Minimal`, `Balanced`, `All Alerts`).
+3. Choose delivery flow (`Instant`, `30m Batch`, `Hourly Digest`).
+4. Configure time sheet preset (`Always On`, `Night Focus`, `Day Focus`, `Weekend Focus`).
+5. Optionally toggle active days in time sheet chip row.
+6. Toggle granular notification categories below presets.
+
 Expected back behavior:
 - All settings sub-pages return to previous settings context via safe back helper.
 

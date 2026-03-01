@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing, typography } from "../../lib/theme";
 
 // Header component with title, optional back button, and action buttons
@@ -42,13 +43,14 @@ export function Header({
   onRightPress2,
 }: HeaderProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const resolvedRightIcon = rightAction?.icon ?? rightIcon;
   const resolvedRightPress = rightAction?.onPress ?? onRightPress;
   const resolvedRightIcon2 = rightAction2?.icon ?? rightIcon2;
   const resolvedRightPress2 = rightAction2?.onPress ?? onRightPress2;
 
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, { paddingTop: spacing.md + insets.top }]}>
       <View style={styles.leftSection}>
         {showBackButton && (
           <Pressable onPress={onBack ?? (() => router.back())} style={styles.backButton}>

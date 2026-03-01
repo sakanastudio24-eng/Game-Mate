@@ -11,7 +11,9 @@ import {
   View,
 } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResponsive } from "../src/lib/responsive";
+import { primeHomeContentCache } from "../src/lib/content-data";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
 
 type Step = "welcome" | "email" | "birthdate" | "preferences";
@@ -63,6 +65,7 @@ const SOCIAL_AUTH = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>("welcome");
   const [email, setEmail] = useState("");
   const [birthdate, setBirthdate] = useState("02/24/1999");
@@ -110,6 +113,7 @@ export default function OnboardingScreen() {
   }, [acceptTerms, email, playStyle, selectedGenres.length, step]);
 
   const finishOnboarding = async () => {
+    primeHomeContentCache();
     await setCompletedOnboarding(true);
     router.replace("/(tabs)/news");
   };
@@ -149,13 +153,14 @@ export default function OnboardingScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View
-        style={[
-          styles.inner,
-          {
-            paddingHorizontal: responsive.horizontalPadding,
-            maxWidth: responsive.contentMaxWidth,
-            alignSelf: "center",
+        <View
+          style={[
+            styles.inner,
+            {
+              paddingTop: insets.top + 20,
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
             width: "100%",
           },
         ]}
@@ -415,7 +420,7 @@ const styles = StyleSheet.create({
   },
   content: {
     minHeight: "100%",
-    paddingTop: 48,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   inner: {

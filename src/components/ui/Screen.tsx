@@ -7,6 +7,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing } from "../../lib/theme";
 
 // Screen wrapper component for consistent padding and layout
@@ -25,6 +26,7 @@ export function Screen({
   style,
   padded = true,
 }: ScreenProps) {
+  const insets = useSafeAreaInsets();
   const entry = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -48,7 +50,12 @@ export function Screen({
     ],
   };
 
-  const containerStyle = [styles.container, padded && styles.padded, style];
+  const containerStyle = [
+    styles.container,
+    padded && styles.padded,
+    { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+    style,
+  ];
 
   if (scrollable) {
     return (

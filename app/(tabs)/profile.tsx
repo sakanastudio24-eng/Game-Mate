@@ -539,12 +539,10 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -6,
+    justifyContent: "space-between",
   },
   statCard: {
-    width: "25%",
-    paddingHorizontal: 6,
+    width: "24%",
     marginBottom: 12,
     alignItems: "center",
   },
@@ -574,7 +572,7 @@ const styles = StyleSheet.create({
   achievementsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -6,
+    justifyContent: "space-between",
   },
   myGroupCard: {
     flexDirection: "row",
@@ -649,8 +647,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   achievementCard: {
-    width: "50%",
-    paddingHorizontal: 6,
+    width: "48.5%",
     marginBottom: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -709,11 +706,10 @@ const styles = StyleSheet.create({
   gamesGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -4,
+    justifyContent: "space-between",
   },
   gameCard: {
-    width: "33.33%",
-    paddingHorizontal: 4,
+    width: "31.5%",
     marginBottom: 8,
   },
   gameImage: {

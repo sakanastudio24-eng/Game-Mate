@@ -229,6 +229,12 @@ export default function SettingsScreen() {
           titleStyle={styles.listTitle}
           onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
+
+        <List.Item
+          title="Site Map (Preview)"
+          titleStyle={styles.listTitle}
+          onPress={() => router.push("/(tabs)/explore" as any)}
+        />
       </Card>
 
       {/* Logout button */}

@@ -3,6 +3,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
@@ -81,10 +82,14 @@ const games = [
 export default function ProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + insets.bottom }]}
+      >
         <AnimatedEntrance>
           <View style={styles.cover}>
             <View style={styles.coverPattern} />
@@ -92,7 +97,7 @@ export default function ProfileScreen() {
             <View
               style={[
                 styles.headerActions,
-                { right: responsive.horizontalPadding },
+                { right: responsive.horizontalPadding, top: insets.top + 12 },
               ]}
             >
               <Pressable

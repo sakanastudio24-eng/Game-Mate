@@ -3,6 +3,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
 import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -162,6 +163,7 @@ const initialRequests: RequestItem[] = [
 export default function SocialScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
@@ -178,6 +180,22 @@ export default function SocialScreen() {
     return offlineFriends.filter((friend) => friend.name.toLowerCase().includes(q));
   }, [search]);
 
+  const filteredMessages = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return messageItems;
+    return messageItems.filter((message) =>
+      [message.user, message.message].join(" ").toLowerCase().includes(q),
+    );
+  }, [search]);
+
+  const filteredRequests = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return requests;
+    return requests.filter((request) =>
+      [request.name, request.games.join(" ")].join(" ").toLowerCase().includes(q),
+    );
+  }, [requests, search]);
+
   const handleAcceptRequest = (requestId: string) => {
     setRequests((prev) => prev.filter((request) => request.id !== requestId));
   };
@@ -186,6 +204,13 @@ export default function SocialScreen() {
     setRequests((prev) => prev.filter((request) => request.id !== requestId));
   };
 
+  const searchPlaceholder =
+    activeTab === "friends"
+      ? "Search friends..."
+      : activeTab === "messages"
+        ? "Search messages..."
+        : "Search requests...";
+
   return (
     <View style={styles.screen}>
       <AnimatedEntrance>
@@ -193,6 +218,7 @@ export default function SocialScreen() {
           style={[
             styles.headerWrap,
             {
+              paddingTop: insets.top + spacing.md,
               paddingHorizontal: responsive.horizontalPadding,
               maxWidth: responsive.contentMaxWidth,
               alignSelf: "center",
@@ -242,6 +268,16 @@ export default function SocialScreen() {
               );
             })}
           </View>
+
+          <Searchbar
+            placeholder={searchPlaceholder}
+            value={search}
+            onChangeText={setSearch}
+            style={styles.searchbar}
+            inputStyle={styles.searchInput}
+            iconColor={colors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
+          />
         </View>
       </AnimatedEntrance>
 
@@ -250,34 +286,19 @@ export default function SocialScreen() {
           data={[...filteredOnline, ...filteredOffline]}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
-            <AnimatedEntrance delay={90}>
-              <View
-                style={[
-                  styles.searchWrap,
-                  {
-                    paddingHorizontal: responsive.horizontalPadding,
-                    maxWidth: responsive.contentMaxWidth,
-                    alignSelf: "center",
-                    width: "100%",
-                  },
-                ]}
-              >
-                <Searchbar
-                  placeholder="Search friends..."
-                  value={search}
-                  onChangeText={setSearch}
-                  style={styles.searchbar}
-                  inputStyle={styles.searchInput}
-                  iconColor={colors.textSecondary}
-                  placeholderTextColor={colors.textSecondary}
-                />
-
-                <View style={styles.sectionLabelRow}>
-                  <Text style={styles.sectionLabel}>Online</Text>
-                  <Text style={styles.sectionCount}>{filteredOnline.length}</Text>
-                </View>
+            <View
+              style={{
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              }}
+            >
+              <View style={styles.sectionLabelRow}>
+                <Text style={styles.sectionLabel}>Online</Text>
+                <Text style={styles.sectionCount}>{filteredOnline.length}</Text>
               </View>
-            </AnimatedEntrance>
+            </View>
           }
           renderItem={({ item, index }) => {
             const isOnline = item.online;
@@ -285,7 +306,7 @@ export default function SocialScreen() {
             const showOfflineTitle = !isOnline && index === firstOfflineIndex;
 
             return (
-              <AnimatedEntrance delay={120 + index * 50}>
+              <AnimatedEntrance delay={90 + index * 50}>
                 <View
                   style={{
                     paddingHorizontal: responsive.horizontalPadding,
@@ -339,14 +360,14 @@ export default function SocialScreen() {
               </AnimatedEntrance>
             );
           }}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
 
       {activeTab === "messages" && (
         <FlatList
-          data={messageItems}
+          data={filteredMessages}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
             <AnimatedEntrance delay={100 + index * 70}>
@@ -386,14 +407,20 @@ export default function SocialScreen() {
               </View>
             </AnimatedEntrance>
           )}
-          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No messages found</Text>
+              <Text style={styles.emptyCopy}>Try another search keyword.</Text>
+            </View>
+          }
+          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
 
       {activeTab === "requests" && (
         <FlatList
-          data={requests}
+          data={filteredRequests}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
             <AnimatedEntrance delay={100 + index * 70}>
@@ -442,7 +469,7 @@ export default function SocialScreen() {
               <Text style={styles.emptyCopy}>New friend invites will appear here.</Text>
             </View>
           }
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -485,6 +512,7 @@ const styles = StyleSheet.create({
   },
   tabRow: {
     flexDirection: "row",
+    marginBottom: spacing.md,
   },
   tabButton: {
     flex: 1,
@@ -508,15 +536,12 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: "#1A1A1A",
   },
-  searchWrap: {
-    marginBottom: spacing.sm,
-  },
   searchbar: {
     backgroundColor: "#242424",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   searchInput: {
     color: colors.text,

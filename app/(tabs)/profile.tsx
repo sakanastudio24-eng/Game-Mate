@@ -80,6 +80,7 @@ export default function ProfileScreen() {
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
   const [myGroups, setMyGroups] = useState(MY_GROUPS);
+  const [activeCollectionTab, setActiveCollectionTab] = useState<"games" | "groups">("games");
 
   const statRows = [
     { label: "Groups", value: String(myGroups.length), icon: "account-group-outline", color: colors.primary },
@@ -231,7 +232,9 @@ export default function ProfileScreen() {
             <View style={styles.statsGrid}>
               {statRows.map((stat) => (
                 <View key={stat.label} style={styles.statCard}>
-                  <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
+                  <View style={styles.statIconWrap}>
+                    <MaterialCommunityIcons name={stat.icon as any} size={18} color={stat.color} />
+                  </View>
                   <Text style={styles.statValue}>{stat.value}</Text>
                   <Text style={styles.statLabel}>{stat.label}</Text>
                 </View>
@@ -252,69 +255,6 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <View style={styles.gamesHeader}>
-              <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
-                My Groups
-              </Text>
-              <Text style={styles.gamesCount}>{myGroups.length} groups</Text>
-            </View>
-
-            {myGroups.length === 0 ? (
-              <View style={styles.emptyGroups}>
-                <Text style={styles.emptyGroupsText}>No active groups yet.</Text>
-              </View>
-            ) : (
-              myGroups.map((group) => (
-                <View key={group.id} style={styles.myGroupCard}>
-                  <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
-
-                  <View style={styles.myGroupInfo}>
-                    <Text style={styles.myGroupName}>{group.name}</Text>
-                    <Text style={styles.myGroupMeta}>
-                      {group.game} · {group.members} members · {group.online} online
-                    </Text>
-                  </View>
-
-                  <View style={styles.myGroupActions}>
-                    <Pressable
-                      onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
-                      style={({ pressed }) => [
-                        styles.groupOpenButton,
-                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.groupOpenButtonText}>Open</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => leaveGroup(group.id)}
-                      style={({ pressed }) => [
-                        styles.groupLeaveButton,
-                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.groupLeaveButtonText}>Leave</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              ))
-            )}
-          </View>
-        </AnimatedEntrance>
-
-        <AnimatedEntrance delay={240}>
-          <View
-            style={[
-              styles.section,
-              {
-                paddingHorizontal: responsive.horizontalPadding,
-                maxWidth: responsive.contentMaxWidth,
-                alignSelf: "center",
-                width: "100%",
-              },
-            ]}
-          >
             <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
               Achievements
             </Text>
@@ -324,7 +264,7 @@ export default function ProfileScreen() {
                   key={achievement.name}
                   style={[
                     styles.achievementCard,
-                    { borderColor: `${achievement.color}44` },
+                    { borderColor: `${achievement.color}66` },
                   ]}
                 >
                   <View
@@ -335,7 +275,7 @@ export default function ProfileScreen() {
                   >
                     <MaterialCommunityIcons
                       name={achievement.icon as any}
-                      size={22}
+                      size={20}
                       color={achievement.color}
                     />
                   </View>
@@ -349,7 +289,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={300}>
+        <AnimatedEntrance delay={260}>
           <View
             style={[
               styles.section,
@@ -361,28 +301,112 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <View style={styles.gamesHeader}>
-              <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
-                My Games
-              </Text>
-              <Text style={styles.gamesCount}>{games.length} games</Text>
+            <View style={styles.collectionTabs}>
+              {(
+                [
+                  { id: "games", label: "Games" },
+                  { id: "groups", label: "Groups" },
+                ] as const
+              ).map((tab) => {
+                const isActive = activeCollectionTab === tab.id;
+                return (
+                  <Pressable
+                    key={tab.id}
+                    onPress={() => setActiveCollectionTab(tab.id)}
+                    style={({ pressed }) => [
+                      styles.collectionTabButton,
+                      {
+                        minHeight: responsive.buttonHeightSmall,
+                        borderRadius: responsive.cardRadius - 6,
+                      },
+                      isActive && styles.collectionTabButtonActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={[styles.collectionTabText, isActive && styles.collectionTabTextActive]}>
+                      {tab.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
-            <View style={styles.gamesGrid}>
-              {games.map((game) => (
-                <View key={game.name} style={styles.gameCard}>
-                  <Image source={{ uri: game.image }} style={styles.gameImage} />
-                  <View style={styles.gameOverlay}>
-                    <Text style={styles.gameName}>{game.name}</Text>
-                    <Text style={styles.gameHours}>{game.hours}h</Text>
+            {activeCollectionTab === "games" ? (
+              <View style={styles.gamesGrid}>
+                {games.map((game) => (
+                  <View key={game.name} style={styles.gameCard}>
+                    <Image source={{ uri: game.image }} style={styles.gameImage} />
+                    <View style={styles.gameOverlay}>
+                      <Text style={styles.gameName}>{game.name}</Text>
+                      <Text style={styles.gameHours}>{game.hours}h</Text>
+                    </View>
                   </View>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            ) : myGroups.length === 0 ? (
+              <View style={styles.emptyGroups}>
+                <Text style={styles.emptyGroupsText}>No active groups yet.</Text>
+              </View>
+            ) : (
+              myGroups.map((group) => (
+                <Pressable
+                  key={group.id}
+                  onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                  style={({ pressed }) => [styles.myGroupCard, pressed && styles.pressed]}
+                >
+                  <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
+
+                  <View style={styles.myGroupInfo}>
+                    <View style={styles.myGroupTopRow}>
+                      <Text style={styles.myGroupName}>{group.name}</Text>
+                      <Pressable
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          router.push(`/(tabs)/group-detail?groupId=${group.id}`);
+                        }}
+                        style={({ pressed }) => [
+                          styles.groupOptionsButton,
+                          {
+                            minWidth: responsive.touchTargetMin,
+                            minHeight: responsive.touchTargetMin,
+                            borderRadius: responsive.touchTargetMin / 2,
+                          },
+                          pressed && styles.pressed,
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name="dots-vertical"
+                          size={20}
+                          color={colors.textSecondary}
+                        />
+                      </Pressable>
+                    </View>
+
+                    <Text style={styles.myGroupMeta}>
+                      {group.game} · {group.members} members · {group.online} online
+                    </Text>
+
+                    <Pressable
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        leaveGroup(group.id);
+                      }}
+                      style={({ pressed }) => [
+                        styles.groupLeaveButton,
+                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.groupLeaveButtonText}>Leave</Text>
+                    </Pressable>
+                  </View>
+                </Pressable>
+              ))
+            )}
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={360}>
+        <AnimatedEntrance delay={320}>
           <View
             style={[
               styles.accountMeta,
@@ -515,18 +539,29 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -4,
+    marginHorizontal: -6,
   },
   statCard: {
     width: "25%",
-    paddingHorizontal: 4,
-    marginBottom: 8,
+    paddingHorizontal: 6,
+    marginBottom: 12,
+    alignItems: "center",
+  },
+  statIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 999,
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
   },
   statValue: {
     color: colors.text,
     fontWeight: "800",
     fontSize: 20,
-    marginTop: 6,
+    marginTop: 7,
     textAlign: "center",
   },
   statLabel: {
@@ -538,11 +573,11 @@ const styles = StyleSheet.create({
   achievementsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -4,
+    marginHorizontal: -6,
   },
   myGroupCard: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: "#242424",
     borderWidth: 1,
     borderColor: colors.border,
@@ -558,41 +593,40 @@ const styles = StyleSheet.create({
   },
   myGroupInfo: {
     flex: 1,
-    marginRight: spacing.sm,
+  },
+  myGroupTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   myGroupName: {
     color: colors.text,
     fontWeight: "800",
     fontSize: 14,
+    flex: 1,
+    marginRight: spacing.sm,
   },
   myGroupMeta: {
     color: colors.textSecondary,
     fontSize: 11,
     marginTop: 3,
-  },
-  myGroupActions: {
-    gap: 6,
-  },
-  groupOpenButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  groupOpenButtonText: {
-    color: "#1A1A1A",
-    fontWeight: "800",
-    fontSize: 11,
+    marginBottom: spacing.sm,
   },
   groupLeaveButton: {
+    alignSelf: "flex-start",
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#2A2A2A",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groupOptionsButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -615,8 +649,15 @@ const styles = StyleSheet.create({
   },
   achievementCard: {
     width: "50%",
-    paddingHorizontal: 4,
-    marginBottom: 8,
+    paddingHorizontal: 6,
+    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderRadius: 16,
+    minHeight: 112,
+    paddingVertical: 12,
+    backgroundColor: "#242424",
   },
   achievementIconWrap: {
     width: 42,
@@ -630,21 +671,39 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: "700",
     fontSize: 13,
+    textAlign: "center",
   },
   achievementRarity: {
     fontSize: 11,
     marginTop: 2,
     textTransform: "uppercase",
+    textAlign: "center",
   },
-  gamesHeader: {
+  collectionTabs: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
-  gamesCount: {
+  collectionTabButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#242424",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  collectionTabButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  collectionTabText: {
     color: colors.textSecondary,
-    fontSize: 12,
-    marginBottom: spacing.sm,
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  collectionTabTextActive: {
+    color: "#1A1A1A",
   },
   gamesGrid: {
     flexDirection: "row",

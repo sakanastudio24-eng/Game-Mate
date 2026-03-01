@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Image as ExpoImage } from "expo-image";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
-  Image,
+  FlatList,
   Modal,
   PanResponder,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   View,
@@ -42,6 +42,7 @@ type AISwipeItem = {
   score: number;
   reasons: string[];
 };
+type SuggestedGroup = (typeof SUGGESTED_GROUPS)[number];
 
 const SWIPE_ACTION_THRESHOLD = 90;
 
@@ -74,6 +75,145 @@ function buildAiProfile(): AIUserProfile {
     tags: ["casual", "teamplay"],
   };
 }
+
+interface GroupDiscoverCardProps {
+  group: SuggestedGroup;
+  index: number;
+  isJoined: boolean;
+  groupThumbSize: number;
+  horizontalPadding: number;
+  contentMaxWidth: number;
+  cardRadius: number;
+  cardPadding: number;
+  touchTargetMin: number;
+  buttonHeightSmall: number;
+  onOpenGroupDetail: (groupId: string, groupName: string) => void;
+  onToggleJoin: (groupId: string, groupName: string) => void;
+  onOpenGroupOptions: (groupId: string, groupName: string, game: string) => void;
+}
+
+const GroupDiscoverCard = memo(function GroupDiscoverCard({
+  group,
+  index,
+  isJoined,
+  groupThumbSize,
+  horizontalPadding,
+  contentMaxWidth,
+  cardRadius,
+  cardPadding,
+  touchTargetMin,
+  buttonHeightSmall,
+  onOpenGroupDetail,
+  onToggleJoin,
+  onOpenGroupOptions,
+}: GroupDiscoverCardProps) {
+  const handleOpen = useCallback(() => {
+    onOpenGroupDetail(group.id, group.name);
+  }, [group.id, group.name, onOpenGroupDetail]);
+
+  const handleJoinToggle = useCallback(
+    (event: any) => {
+      event.stopPropagation();
+      onToggleJoin(group.id, group.name);
+    },
+    [group.id, group.name, onToggleJoin],
+  );
+
+  const handleOpenOptions = useCallback(
+    (event: any) => {
+      event.stopPropagation();
+      onOpenGroupOptions(group.id, group.name, group.game);
+    },
+    [group.game, group.id, group.name, onOpenGroupOptions],
+  );
+
+  return (
+    <AnimatedEntrance preset="card" delay={80} staggerIndex={index}>
+      <View
+        style={{
+          paddingHorizontal: horizontalPadding,
+          maxWidth: contentMaxWidth,
+          alignSelf: "center",
+          width: "100%",
+        }}
+      >
+        <Pressable
+          onPress={handleOpen}
+          accessibilityRole="button"
+          accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
+          accessibilityHint="Open group details"
+          style={[
+            styles.groupCard,
+            {
+              borderRadius: cardRadius,
+              padding: cardPadding,
+              width: "100%",
+            },
+            styles.cardPressable,
+          ]}
+        >
+          <View style={styles.groupRow}>
+            <ExpoImage
+              source={{ uri: group.thumbnail }}
+              style={[styles.groupThumb, { width: groupThumbSize, height: groupThumbSize }]}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
+
+            <View style={styles.groupInfo}>
+              <Text style={styles.groupName}>{group.name}</Text>
+              <Text style={styles.groupGame}>{group.game}</Text>
+              <Text style={styles.groupMeta}>
+                {group.members} members · {group.online} online
+              </Text>
+            </View>
+
+            <Pressable
+              onPress={handleOpenOptions}
+              accessibilityRole="button"
+              accessibilityLabel={`More options for ${group.name}`}
+              style={({ pressed }) => [
+                styles.groupOptionsButton,
+                {
+                  minWidth: touchTargetMin,
+                  minHeight: touchTargetMin,
+                  borderRadius: touchTargetMin / 2,
+                },
+                pressed && styles.pressed,
+              ]}
+              hitSlop={4}
+            >
+              <MaterialCommunityIcons
+                name="dots-vertical"
+                size={20}
+                color={colors.textSecondary}
+              />
+            </Pressable>
+          </View>
+
+          <View style={styles.groupActionRow}>
+            <Pressable
+              onPress={handleJoinToggle}
+              accessibilityRole="button"
+              accessibilityLabel={isJoined ? `Leave ${group.name}` : `Join ${group.name}`}
+              accessibilityState={{ selected: isJoined }}
+              style={({ pressed }) => [
+                styles.groupJoinButton,
+                { minHeight: buttonHeightSmall },
+                isJoined && styles.groupJoinedButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={[styles.groupJoinButtonText, isJoined && styles.groupJoinedButtonText]}>
+                {isJoined ? "Joined" : "Join"}
+              </Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </View>
+    </AnimatedEntrance>
+  );
+});
 
 export default function GroupsScreen() {
   const router = useRouter();
@@ -155,7 +295,7 @@ export default function GroupsScreen() {
 
   const totalOnline = SUGGESTED_GROUPS.reduce((total, group) => total + group.online, 0);
 
-  const toggleJoin = (id: string, groupName: string) => {
+  const toggleJoin = useCallback((id: string, groupName: string) => {
     const wasJoined = joinedGroupIds.includes(id);
     setJoinedGroupIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
@@ -170,9 +310,9 @@ export default function GroupsScreen() {
         },
       });
     }
-  };
+  }, [joinedGroupIds, setJoinedGroupIds, showToast]);
 
-  const joinGroup = (id: string, groupName: string) => {
+  const joinGroup = useCallback((id: string, groupName: string) => {
     const wasJoined = joinedGroupIds.includes(id);
     setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     if (!wasJoined) {
@@ -184,11 +324,11 @@ export default function GroupsScreen() {
         },
       });
     }
-  };
+  }, [joinedGroupIds, setJoinedGroupIds, showToast]);
 
-  const loadMoreGroups = () => {
+  const loadMoreGroups = useCallback(() => {
     setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, discoverableGroups.length));
-  };
+  }, [discoverableGroups.length]);
 
   const handleShareGroupToContacts = async (message: string) => {
     try {
@@ -200,34 +340,34 @@ export default function GroupsScreen() {
     }
   };
 
-  const handleDeleteGroup = (groupId: string) => {
+  const handleDeleteGroup = useCallback((groupId: string) => {
     setDeletedGroupIds((prev) => (prev.includes(groupId) ? prev : [...prev, groupId]));
     setJoinedGroupIds((prev) => prev.filter((id) => id !== groupId));
-  };
+  }, [setDeletedGroupIds, setJoinedGroupIds]);
 
-  const openGroupDetail = (groupId: string, groupName: string) => {
+  const openGroupDetail = useCallback((groupId: string, groupName: string) => {
     setLastOpenedGroup({
       id: groupId,
       name: groupName,
     });
     router.push(`/(tabs)/group-detail?groupId=${groupId}`);
-  };
+  }, [router, setLastOpenedGroup]);
 
-  const openGroupOptions = (groupId: string, groupName: string, game: string) => {
+  const openGroupOptions = useCallback((groupId: string, groupName: string, game: string) => {
     setActiveGroupMenu({
       id: groupId,
       name: groupName,
       game,
     });
-  };
+  }, []);
 
-  const openShareDrawer = (title: string, message: string) => {
+  const openShareDrawer = useCallback((title: string, message: string) => {
     setShareTarget({ title, message });
-  };
+  }, []);
 
-  const handleShareToFriends = (title: string, message: string) => {
+  const handleShareToFriends = useCallback((title: string, message: string) => {
     openShareDrawer(title, message);
-  };
+  }, [openShareDrawer]);
 
   const handleShareToFriendDrawer = () => {
     if (!shareTarget) return;
@@ -235,11 +375,11 @@ export default function GroupsScreen() {
     Alert.alert("Friend Drawer", `Choose a friend in Messages to share "${shareTarget.title}".`);
   };
 
-  const handleReportGroup = (groupName: string) => {
+  const handleReportGroup = useCallback((groupName: string) => {
     Alert.alert("Report Submitted", `Thanks. "${groupName}" was reported for review.`);
-  };
+  }, []);
 
-  const openAiSwipe = async () => {
+  const openAiSwipe = useCallback(async () => {
     setAiSwipeVisible(true);
     setAiSwipeLoading(true);
     setAiSwipeError(null);
@@ -279,9 +419,9 @@ export default function GroupsScreen() {
     } finally {
       setAiSwipeLoading(false);
     }
-  };
+  }, [discoverableGroups]);
 
-  const handleSwipeLeft = () => {
+  const handleSwipeLeft = useCallback(() => {
     const current = aiSwipeItems[0];
     if (!current) return;
     Animated.timing(swipeX, {
@@ -292,9 +432,9 @@ export default function GroupsScreen() {
       setAiSwipeItems((prev) => prev.slice(1));
       swipeX.setValue(0);
     });
-  };
+  }, [aiSwipeItems, responsive.width, swipeX]);
 
-  const handleSwipeRight = () => {
+  const handleSwipeRight = useCallback(() => {
     const current = aiSwipeItems[0];
     if (!current) return;
     Animated.timing(swipeX, {
@@ -306,63 +446,11 @@ export default function GroupsScreen() {
       setAiSwipeItems((prev) => prev.slice(1));
       swipeX.setValue(0);
     });
-  };
+  }, [aiSwipeItems, joinGroup, responsive.width, swipeX]);
 
-  const activeAiItem = aiSwipeItems[0] ?? null;
-  const rightGlowOpacity = swipeX.interpolate({
-    inputRange: [0, SWIPE_ACTION_THRESHOLD * 0.5, SWIPE_ACTION_THRESHOLD * 2],
-    outputRange: [0, 0.16, 0.42],
-    extrapolate: "clamp",
-  });
-  const leftGlowOpacity = swipeX.interpolate({
-    inputRange: [-SWIPE_ACTION_THRESHOLD * 2, -SWIPE_ACTION_THRESHOLD * 0.5, 0],
-    outputRange: [0.42, 0.16, 0],
-    extrapolate: "clamp",
-  });
-  const cardRotation = swipeX.interpolate({
-    inputRange: [-180, 0, 180],
-    outputRange: ["-8deg", "0deg", "8deg"],
-    extrapolate: "clamp",
-  });
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gesture) =>
-          Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 8,
-        onPanResponderMove: (_, gesture) => {
-          swipeX.setValue(gesture.dx);
-        },
-        onPanResponderRelease: (_, gesture) => {
-          if (gesture.dx >= SWIPE_ACTION_THRESHOLD) {
-            handleSwipeRight();
-            return;
-          }
-          if (gesture.dx <= -SWIPE_ACTION_THRESHOLD) {
-            handleSwipeLeft();
-            return;
-          }
-          Animated.spring(swipeX, {
-            toValue: 0,
-            useNativeDriver: true,
-            bounciness: 6,
-          }).start();
-        },
-      }),
-    [handleSwipeLeft, handleSwipeRight, swipeX],
-  );
-
-  useEffect(() => {
-    if (!aiSwipeVisible || !activeAiItem) {
-      swipeX.setValue(0);
-    }
-  }, [activeAiItem, aiSwipeVisible, swipeX]);
-
-  return (
-    <View style={styles.screen}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
-      >
+  const listHeader = useMemo(
+    () => (
+      <>
         <AnimatedEntrance preset="screen">
           <View
             style={[
@@ -522,109 +610,35 @@ export default function GroupsScreen() {
             </View>
           </View>
         </AnimatedEntrance>
+      </>
+    ),
+    [
+      clearRecentSearches,
+      discoverableGroups.length,
+      lastOpenedGroup.id,
+      lastOpenedGroup.name,
+      openAiSwipe,
+      openGroupDetail,
+      queryInput,
+      recentSearches,
+      responsive.bodySize,
+      responsive.buttonHeightSmall,
+      responsive.contentMaxWidth,
+      responsive.headerTitleSize,
+      responsive.horizontalPadding,
+      responsive.iconButtonSize,
+      responsive.searchRadius,
+      responsive.sectionTitleSize,
+      responsive.touchTargetMin,
+      router,
+      safeTop,
+      totalOnline,
+    ],
+  );
 
-        {visibleGroups.map((group, index) => {
-          const isJoined = joinedGroupIds.includes(group.id);
-          return (
-            <AnimatedEntrance key={group.id} preset="card" delay={80} staggerIndex={index}>
-              <View
-                style={{
-                  paddingHorizontal: responsive.horizontalPadding,
-                  maxWidth: responsive.contentMaxWidth,
-                  alignSelf: "center",
-                  width: "100%",
-                }}
-              >
-                <Pressable
-                  onPress={() => openGroupDetail(group.id, group.name)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
-                  accessibilityHint="Open group details"
-                  style={[
-                    styles.groupCard,
-                    {
-                      borderRadius: responsive.cardRadius,
-                      padding: responsive.cardPadding,
-                      width: "100%",
-                    },
-                    styles.cardPressable,
-                  ]}
-                >
-                  <View style={styles.groupRow}>
-                    <Image
-                      source={{ uri: group.thumbnail }}
-                      style={[
-                        styles.groupThumb,
-                        { width: groupThumbSize, height: groupThumbSize },
-                      ]}
-                    />
-
-                    <View style={styles.groupInfo}>
-                      <Text style={styles.groupName}>{group.name}</Text>
-                      <Text style={styles.groupGame}>{group.game}</Text>
-                      <Text style={styles.groupMeta}>
-                        {group.members} members · {group.online} online
-                      </Text>
-                    </View>
-
-                    <Pressable
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        openGroupOptions(group.id, group.name, group.game);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={`More options for ${group.name}`}
-                      style={({ pressed }) => [
-                        styles.groupOptionsButton,
-                        {
-                          minWidth: responsive.touchTargetMin,
-                          minHeight: responsive.touchTargetMin,
-                          borderRadius: responsive.touchTargetMin / 2,
-                        },
-                        pressed && styles.pressed,
-                      ]}
-                      hitSlop={4}
-                    >
-                      <MaterialCommunityIcons
-                        name="dots-vertical"
-                        size={20}
-                        color={colors.textSecondary}
-                      />
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.groupActionRow}>
-                    <Pressable
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        toggleJoin(group.id, group.name);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={isJoined ? `Leave ${group.name}` : `Join ${group.name}`}
-                      accessibilityState={{ selected: isJoined }}
-                      style={({ pressed }) => [
-                        styles.groupJoinButton,
-                        { minHeight: responsive.buttonHeightSmall },
-                        isJoined && styles.groupJoinedButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.groupJoinButtonText,
-                          isJoined && styles.groupJoinedButtonText,
-                        ]}
-                      >
-                        {isJoined ? "Joined" : "Join"}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </Pressable>
-              </View>
-            </AnimatedEntrance>
-          );
-        })}
-
+  const listFooter = useMemo(
+    () => (
+      <>
         {discoverableGroups.length > visibleCount ? (
           <View
             style={{
@@ -666,7 +680,116 @@ export default function GroupsScreen() {
             </View>
           </View>
         ) : null}
-      </ScrollView>
+      </>
+    ),
+    [
+      discoverableGroups.length,
+      loadMoreGroups,
+      responsive.buttonHeightMedium,
+      responsive.contentMaxWidth,
+      responsive.horizontalPadding,
+      visibleCount,
+    ],
+  );
+
+  const renderGroupItem = useCallback(
+    ({ item, index }: { item: SuggestedGroup; index: number }) => (
+      <GroupDiscoverCard
+        group={item}
+        index={index}
+        isJoined={joinedGroupIds.includes(item.id)}
+        groupThumbSize={groupThumbSize}
+        horizontalPadding={responsive.horizontalPadding}
+        contentMaxWidth={responsive.contentMaxWidth}
+        cardRadius={responsive.cardRadius}
+        cardPadding={responsive.cardPadding}
+        touchTargetMin={responsive.touchTargetMin}
+        buttonHeightSmall={responsive.buttonHeightSmall}
+        onOpenGroupDetail={openGroupDetail}
+        onToggleJoin={toggleJoin}
+        onOpenGroupOptions={openGroupOptions}
+      />
+    ),
+    [
+      groupThumbSize,
+      joinedGroupIds,
+      openGroupDetail,
+      openGroupOptions,
+      responsive.buttonHeightSmall,
+      responsive.cardPadding,
+      responsive.cardRadius,
+      responsive.contentMaxWidth,
+      responsive.horizontalPadding,
+      responsive.touchTargetMin,
+      toggleJoin,
+    ],
+  );
+
+  const activeAiItem = aiSwipeItems[0] ?? null;
+  const rightGlowOpacity = swipeX.interpolate({
+    inputRange: [0, SWIPE_ACTION_THRESHOLD * 0.5, SWIPE_ACTION_THRESHOLD * 2],
+    outputRange: [0, 0.16, 0.42],
+    extrapolate: "clamp",
+  });
+  const leftGlowOpacity = swipeX.interpolate({
+    inputRange: [-SWIPE_ACTION_THRESHOLD * 2, -SWIPE_ACTION_THRESHOLD * 0.5, 0],
+    outputRange: [0.42, 0.16, 0],
+    extrapolate: "clamp",
+  });
+  const cardRotation = swipeX.interpolate({
+    inputRange: [-180, 0, 180],
+    outputRange: ["-8deg", "0deg", "8deg"],
+    extrapolate: "clamp",
+  });
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 8,
+        onPanResponderMove: (_, gesture) => {
+          swipeX.setValue(gesture.dx);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          if (gesture.dx >= SWIPE_ACTION_THRESHOLD) {
+            handleSwipeRight();
+            return;
+          }
+          if (gesture.dx <= -SWIPE_ACTION_THRESHOLD) {
+            handleSwipeLeft();
+            return;
+          }
+          Animated.spring(swipeX, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 6,
+          }).start();
+        },
+      }),
+    [handleSwipeLeft, handleSwipeRight, swipeX],
+  );
+
+  useEffect(() => {
+    if (!aiSwipeVisible || !activeAiItem) {
+      swipeX.setValue(0);
+    }
+  }, [activeAiItem, aiSwipeVisible, swipeX]);
+
+  return (
+    <View style={styles.screen}>
+      <FlatList
+        data={visibleGroups}
+        keyExtractor={(item) => item.id}
+        renderItem={renderGroupItem}
+        ListHeaderComponent={listHeader}
+        ListFooterComponent={listFooter}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
+        removeClippedSubviews
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={7}
+        updateCellsBatchingPeriod={50}
+      />
 
       <Modal
         visible={aiSwipeVisible}
@@ -731,7 +854,12 @@ export default function GroupsScreen() {
                 ]}
                 {...panResponder.panHandlers}
               >
-                <Image source={{ uri: activeAiItem.group.thumbnail }} style={styles.aiGroupImage} />
+                <ExpoImage
+                  source={{ uri: activeAiItem.group.thumbnail }}
+                  style={styles.aiGroupImage}
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                />
                 <View style={styles.aiTitleRow}>
                   <Text style={styles.aiGroupName}>{activeAiItem.group.name}</Text>
                   <View style={styles.aiScorePill}>

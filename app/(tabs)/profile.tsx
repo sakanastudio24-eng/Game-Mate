@@ -1,7 +1,8 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Image as ExpoImage } from "expo-image";
 import React, { useState } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
@@ -270,7 +271,12 @@ export default function ProfileScreen() {
             ]}
           >
             <View style={styles.avatarRing}>
-              <Image source={{ uri: CURRENT_USER_AVATAR }} style={styles.avatar} />
+              <ExpoImage
+                source={{ uri: CURRENT_USER_AVATAR }}
+                style={styles.avatar}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
             </View>
             <View style={[styles.onlineDot, { backgroundColor: activeStatus.color }]} />
 
@@ -516,7 +522,12 @@ export default function ProfileScreen() {
                     accessibilityLabel={`${video.title}, ${video.views} views. Open preview`}
                     style={[styles.videoCard, { width: videoCardWidth }]}
                   >
-                    <Image source={{ uri: video.image }} style={styles.videoImage} />
+                    <ExpoImage
+                      source={{ uri: video.image }}
+                      style={styles.videoImage}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                    />
                     <View style={styles.videoDurationBadge}>
                       <Text style={styles.videoDurationText}>{video.duration}</Text>
                     </View>
@@ -552,7 +563,12 @@ export default function ProfileScreen() {
                     accessibilityLabel={`${game.name}, ${game.hours} hours played`}
                     style={[styles.gameCard, { width: gameCardWidth }]}
                   >
-                    <Image source={{ uri: game.image }} style={styles.gameImage} />
+                    <ExpoImage
+                      source={{ uri: game.image }}
+                      style={styles.gameImage}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
+                    />
                     <View style={styles.gameOverlay}>
                       <Text style={styles.gameName}>{game.name}</Text>
                       <Text style={styles.gameHours}>{game.hours}h</Text>
@@ -591,7 +607,12 @@ export default function ProfileScreen() {
                       accessibilityHint="Open group details"
                       style={({ pressed }) => [styles.myGroupCard, pressed && styles.pressed]}
                     >
-                      <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
+                      <ExpoImage
+                        source={{ uri: group.thumbnail }}
+                        style={styles.myGroupThumb}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                      />
 
                       <View style={styles.myGroupInfo}>
                         <View style={styles.myGroupTopRow}>

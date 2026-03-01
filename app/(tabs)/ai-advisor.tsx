@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { getSuggestedTags } from "../../src/ai/advisorClient";
 import { EmptyState } from "../../src/components/ui/EmptyState";
@@ -493,6 +494,7 @@ export default function AIAdvisorScreen() {
           initialNumToRender={4}
           maxToRenderPerBatch={6}
           windowSize={6}
+          updateCellsBatchingPeriod={50}
           onEndReachedThreshold={0.45}
           onEndReached={handleEndReached}
           removeClippedSubviews
@@ -511,9 +513,11 @@ export default function AIAdvisorScreen() {
                 style={({ pressed }) => [styles.videoCard, pressed && styles.pressed]}
               >
                 <View style={styles.mediaWrap}>
-                  <Image
+                  <ExpoImage
                     source={{ uri: item.video.thumbnail }}
                     style={styles.media}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
                     accessibilityLabel={`${item.video.title} thumbnail`}
                   />
 

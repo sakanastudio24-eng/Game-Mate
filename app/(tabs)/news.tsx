@@ -1,10 +1,10 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
-  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -300,6 +300,7 @@ export default function NewsScreen() {
         initialNumToRender={3}
         maxToRenderPerBatch={3}
         windowSize={4}
+        updateCellsBatchingPeriod={50}
         removeClippedSubviews
         getItemLayout={(_, index) => ({
           length: itemHeight,
@@ -311,10 +312,11 @@ export default function NewsScreen() {
 
           return (
             <View style={[styles.feedItem, { height: itemHeight }]}>
-              <Image
+              <ExpoImage
                 source={{ uri: item.thumbnail }}
                 style={styles.media}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
                 accessibilityLabel={`${item.title} preview image`}
               />
 
@@ -417,9 +419,11 @@ export default function NewsScreen() {
                 ]}
               >
                 <View style={styles.authorRow}>
-                  <Image
+                  <ExpoImage
                     source={{ uri: AUTHOR_AVATARS[item.author] }}
                     style={styles.avatar}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
                     accessibilityLabel={`${item.author} avatar`}
                   />
                   <View style={styles.authorText}>
@@ -468,12 +472,15 @@ export default function NewsScreen() {
                 initialNumToRender={8}
                 maxToRenderPerBatch={10}
                 windowSize={5}
+                updateCellsBatchingPeriod={50}
                 removeClippedSubviews
                 renderItem={({ item }) => (
                   <View style={styles.drawerComment}>
-                    <Image
+                    <ExpoImage
                       source={{ uri: item.avatar }}
                       style={styles.drawerCommentAvatar}
+                      contentFit="cover"
+                      cachePolicy="memory-disk"
                       accessibilityLabel={`${item.user} profile picture`}
                     />
                     <View style={styles.drawerCommentBody}>

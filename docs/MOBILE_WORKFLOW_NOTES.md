@@ -262,3 +262,50 @@ npx expo start -c
 
 - Android is the primary validated platform in this environment.
 - iOS has not been fully tested in this environment due limited capability.
+
+## 12) Performance Checklist Audit Snapshot (2026-03-01)
+
+Scope audited: current Expo Router app under `app/` and shared modules under `src/`.
+
+1. Stop re-render storms: **Partial**
+- Good: `useMemo` and `useCallback` are used broadly in feed/groups/social/search.
+- Gap: no `React.memo` usage yet on heavy reusable rows/cards.
+- Gap: frequent inline style arrays/objects in render paths can still churn child props.
+
+2. Lists (FlatList-first): **Partial**
+- Good: main feed/search/social/messages use `FlatList`.
+- Good: key feed/search lists include `keyExtractor`, `removeClippedSubviews`, `windowSize`, `initialNumToRender`, `maxToRenderPerBatch`.
+- Gap: `updateCellsBatchingPeriod` is not set on list screens.
+- Gap: some long, card-heavy views still use `ScrollView` + map patterns.
+
+3. Images performance: **Partial**
+- Good: seeded media URLs are already size-constrained (`?w=...` style).
+- Gap: app still uses React Native `Image` components; `expo-image` is installed but not adopted.
+
+4. Animation threading: **Good**
+- Current animated paths use RN `Animated` with `useNativeDriver: true` on timing/spring flows.
+- Motion accessibility (`Reduce Motion`) support is present.
+
+5. Navigation/screen weight: **Partial**
+- Good: tab navigator is structured for lazy behavior and hidden routes.
+- Gap: several large route files still bundle heavy UI logic in single screens.
+
+6. Data fetching/cache/dedupe: **Partial**
+- Good: debounced search exists; local cache hook exists.
+- Gap: no query-layer dedupe/cache (TanStack Query pattern) yet.
+- Gap: no request cancellation (`AbortController`) for stale in-flight searches.
+
+7. Expensive effects during typing/scrolling: **Partial**
+- Good: many expensive derivations are memoized.
+- Gap: no `InteractionManager.runAfterInteractions()` usage for deferred non-urgent work.
+
+8. Fonts/shadows/overlays cost: **Mostly good**
+- Shadows are limited to a small set of surfaces; no widespread heavy shadow stacks.
+- Overlay usage is present for feed readability and modal scrims; keep this bounded to avoid overdraw.
+
+Priority action order:
+1. Migrate feed/search/group media from `Image` to `expo-image`.
+2. Convert large `ScrollView` card collections to `FlatList`.
+3. Add `updateCellsBatchingPeriod` tuning on core lists.
+4. Memoize heavy row/card components with stable props.
+5. Add request cancellation and query dedupe layer for upcoming backend expansion.

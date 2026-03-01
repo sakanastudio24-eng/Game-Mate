@@ -2,6 +2,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useEffect, useRef } from "react";
 import { Animated, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useResponsive } from "../../lib/responsive";
 import { colors, spacing } from "../../lib/theme";
 
 export interface ToastAction {
@@ -26,8 +28,14 @@ export function Toast({
   action,
   onDismiss,
 }: ToastProps) {
+  const insets = useSafeAreaInsets();
+  const responsive = useResponsive();
   const translateY = useRef(new Animated.Value(24)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const toastBottomOffset =
+    Math.max(insets.bottom, responsive.safeBottomInset) +
+    responsive.tabBarBaseHeight +
+    spacing.sm;
 
   useEffect(() => {
     if (!visible) return;
@@ -74,6 +82,7 @@ export function Toast({
         {
           opacity,
           transform: [{ translateY }],
+          bottom: toastBottomOffset,
         },
       ]}
       pointerEvents="box-none"

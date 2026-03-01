@@ -168,7 +168,7 @@ export default function OnboardingScreen() {
     if (birthdate.length === 0) return "Use 8 digits only (MMDDYYYY)";
     if (birthdate.length < 8) return "Date of birth must be 8 digits (MMDDYYYY).";
     if (!isValidBirthdate) return "Enter a valid date in MMDDYYYY format before today.";
-    return "Date format looks good.";
+    return "You look good to go.";
   }, [birthdate.length, isValidBirthdate]);
 
   const canContinue = useMemo(() => {
@@ -402,6 +402,7 @@ export default function OnboardingScreen() {
                 style={[
                   styles.birthdateHint,
                   birthdate.length === 8 && !isValidBirthdate ? styles.birthdateHintError : undefined,
+                  birthdate.length === 8 && isValidBirthdate ? styles.birthdateHintSuccess : undefined,
                 ]}
               >
                 {birthdateHintMessage}
@@ -759,6 +760,9 @@ const styles = StyleSheet.create({
   },
   birthdateHintError: {
     color: colors.destructive,
+  },
+  birthdateHintSuccess: {
+    color: colors.online,
   },
   input: {
     backgroundColor: "#E8E8E8",

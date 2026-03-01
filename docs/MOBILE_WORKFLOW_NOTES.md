@@ -100,3 +100,73 @@ Use this checklist before calling the preview build "ready":
 4. Build hardening
 - Add CI gate for `expo export:embed` and TypeScript.
 - Add dependency drift check against Expo SDK lock.
+
+## 5) Component Usage Pattern Notes (Pivot-Panel-Inspired, Mobile Adaptation)
+
+Reference review date: 2026-02-28
+
+Reviewed docs:
+- https://mui.com/x/react-data-grid/components/pivot-panel/
+- https://mui.com/x/react-data-grid/components/usage/
+- https://mui.com/x/react-data-grid/pivoting/
+
+Key takeaways from the reference pattern:
+1. Trigger-first composition
+- The Pivot Panel docs currently expose the trigger as the primary customizable part.
+- Mobile mapping: keep entry points small and explicit (icon trigger in header/section actions), and move complexity into a panel/sheet.
+
+2. Controlled vs uncontrolled state
+- The Pivoting docs separate default `initialState` from controlled props (`pivotModel`, `pivotActive`, `pivotPanelOpen`).
+- Mobile mapping: preserve a simple local default state for preview, but keep a controlled state shape ready for backend sync.
+
+3. Accessibility requirement for icon triggers
+- MUI requires text label or `aria-label` for trigger buttons.
+- Mobile mapping: icon-only buttons must still carry `accessibilityLabel` and stable `accessibilityRole`.
+
+4. Composable render/slot behavior
+- Components usage emphasizes replacing trigger render while preserving behavior.
+- Mobile mapping: keep trigger icon/button and panel body decoupled so each can be replaced without breaking open/close behavior.
+
+## 6) Optimization Notes Applied to GameMate
+
+1. Search and swipe entry points
+- Feed search entry is icon-first and routes to a recommendation search surface.
+- Group swipe entry uses a card icon, opening a focused swipe panel.
+
+2. Panel interaction model
+- Panel open/close is explicit state.
+- Recommendation content remains independent from trigger visuals.
+- Error/retry states are handled in-panel without leaving context.
+
+3. Gesture-driven decisions
+- Group card supports horizontal swipe with direct actions:
+  - right swipe -> join
+  - left swipe -> pass
+- Side-screen glow feedback is mapped to intent:
+  - right side green
+  - left side red
+
+4. Data contract stability
+- Recommendation request/response types are centralized in `src/ai/advisorClient.ts`.
+- Frontend uses backend-first fetch with local scoring fallback.
+
+## 7) Optimization Backlog (Component Architecture)
+
+1. Introduce a shared `PanelTrigger` primitive
+- One component for icon trigger semantics, labels, and pressed states.
+- Use across feed search, group swipe, and future settings panels.
+
+2. Normalize panel state models
+- Create shared state contracts:
+  - `panelOpen`
+  - `panelMode`
+  - `panelData`
+- This keeps route-level flows predictable and easier to test.
+
+3. Add mobile panel performance guards
+- Avoid heavy image decoding before panel open.
+- Preload next swipe card image when current card settles.
+
+4. Extend accessibility checks
+- Add explicit QA checklist for icon-only triggers and gesture alternatives.
+- Ensure every swipe action has button alternatives (join/pass).

@@ -44,6 +44,14 @@ Comments flow:
 Related routes:
 - `/(tabs)/messages` (opened by share-to-friends flow)
 - `/(tabs)/qr-code` (from header actions on other tabs)
+- `/(tabs)/ai-advisor` (search/recommendation surface from feed header search icon)
+
+Recommendations search flow:
+1. Tap feed header search icon.
+2. Route to `/(tabs)/ai-advisor` with source + optional query seed.
+3. Render loading/error/empty/result states in place.
+4. Tap result card -> `/(tabs)/group-detail?groupId=...`.
+5. Back returns to feed context via safe back helper.
 
 ## Groups Flow
 
@@ -55,6 +63,17 @@ Routes:
 - `/(tabs)/discover-groups`
 - `/(tabs)/group-detail?groupId=...`
 - `/(tabs)/messages` (group sharing/chat handoff)
+
+Group swiper flow:
+1. Tap card icon next to Create in Groups header.
+2. Open Group Swipe modal.
+3. Swipe current card:
+- Right swipe -> join current group -> advance to next card.
+- Left swipe -> pass current group -> advance to next card.
+4. Side-screen intent feedback while dragging:
+- Right side glow = green.
+- Left side glow = red.
+5. Button fallback remains available for non-gesture users (Join/Pass).
 
 Expected back behavior:
 - Create/discover/detail return to the previous screen in the real stack path.
@@ -108,6 +127,7 @@ Entry:
 Routes:
 - `/(tabs)/account-settings`
 - `/(tabs)/notification-settings`
+- `/(tabs)/platform-connections`
 - `/(tabs)/privacy-settings`
 - `/(tabs)/privacy-detail`
 - `/(tabs)/help`
@@ -119,9 +139,10 @@ Expected back behavior:
 ## Hidden/Utility Routes
 
 Registered in tab layout with `href: null`:
-- `index`, `explore`, `account-settings`, `chat`, `create-group`, `create-collection`,
-  `discover-groups`, `edit-profile`, `group-detail`, `help`, `matchmaking`, `messages`,
-  `notification-settings`, `notifications`, `privacy-detail`, `privacy-settings`, `qr-code`,
-  `search-players`, `settings`, `user-profile`, `video-preview`.
+- `index`, `explore`, `account-settings`, `ai-advisor`, `chat`, `create-group`,
+  `create-collection`, `discover-groups`, `edit-profile`, `group-detail`, `help`,
+  `matchmaking`, `messages`, `notification-settings`, `notifications`, `platform-connections`,
+  `privacy-detail`, `privacy-settings`, `qr-code`, `search-players`, `settings`, `user-profile`,
+  `video-preview`.
 
 These are reachable by programmatic navigation and preserve tab shell context.

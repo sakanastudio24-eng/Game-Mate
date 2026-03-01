@@ -6,11 +6,18 @@ export function useSafeBackNavigation(fallback: Href = "/(tabs)/news") {
   const navigation = useNavigation();
 
   return useCallback(() => {
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-      return;
+    let currentNav: any = navigation;
+
+    // Walk up navigation parents so back works across nested layouts (tabs -> stack).
+    while (currentNav) {
+      if (typeof currentNav.canGoBack === "function" && currentNav.canGoBack()) {
+        currentNav.goBack();
+        return;
+      }
+      currentNav =
+        typeof currentNav.getParent === "function" ? currentNav.getParent() : undefined;
     }
 
-    router.replace(fallback);
+    router.push(fallback);
   }, [fallback, navigation, router]);
 }

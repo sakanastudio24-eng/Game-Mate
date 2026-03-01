@@ -51,6 +51,14 @@ const PLAY_STYLES = [
   },
 ] as const;
 
+const PLATFORM_OPTIONS = [
+  { id: "playstation", label: "PlayStation", icon: "sony-playstation" },
+  { id: "computer", label: "Computer", icon: "monitor" },
+  { id: "phone", label: "Phone", icon: "cellphone" },
+  { id: "switch", label: "Switch", icon: "nintendo-switch" },
+  { id: "none", label: "None", icon: "close-circle-outline" },
+] as const;
+
 const SOCIAL_AUTH = [
   { id: "google", label: "Continue with Google", icon: "google" },
   { id: "steam", label: "Continue with Steam", icon: "steam" },
@@ -75,6 +83,7 @@ export default function OnboardingScreen() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [playStyle, setPlayStyle] = useState("");
+  const [platform, setPlatform] = useState("");
 
   const stepTransition = useRef(new Animated.Value(1)).current;
 
@@ -111,8 +120,8 @@ export default function OnboardingScreen() {
     if (step === "welcome") return true;
     if (step === "email") return email.includes("@");
     if (step === "birthdate") return acceptTerms;
-    return selectedGenres.length > 0 && playStyle.length > 0;
-  }, [acceptTerms, email, playStyle, selectedGenres.length, step]);
+    return selectedGenres.length > 0 && playStyle.length > 0 && platform.length > 0;
+  }, [acceptTerms, email, platform.length, playStyle, selectedGenres.length, step]);
 
   const finishOnboarding = async () => {
     primeHomeContentCache();
@@ -388,6 +397,40 @@ export default function OnboardingScreen() {
                           <MaterialCommunityIcons name="check" size={16} color="#FF9F66" />
                         </View>
                       )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Text style={[styles.stepTitle, styles.platformTitle]}>Where Do You Play?</Text>
+              <Text style={styles.stepCopy}>Choose your primary platform</Text>
+
+              <View style={styles.platformGrid}>
+                {PLATFORM_OPTIONS.map((item) => {
+                  const selected = platform === item.id;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => setPlatform(item.id)}
+                      style={({ pressed }) => [
+                        styles.platformChip,
+                        selected ? styles.platformChipSelected : undefined,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <MaterialCommunityIcons
+                        name={item.icon as any}
+                        size={20}
+                        color={selected ? "#1A1A1A" : "#555"}
+                      />
+                      <Text
+                        style={[
+                          styles.platformChipLabel,
+                          selected ? styles.platformChipLabelSelected : undefined,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -712,6 +755,36 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
     alignItems: "center",
     justifyContent: "center",
+  },
+  platformTitle: {
+    marginTop: 6,
+  },
+  platformGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  platformChip: {
+    width: "48.5%",
+    backgroundColor: "#E8E8E8",
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  platformChipSelected: {
+    backgroundColor: "#FF9F66",
+  },
+  platformChipLabel: {
+    color: "#333",
+    fontWeight: "800",
+    fontSize: 13,
+    marginLeft: 6,
+  },
+  platformChipLabelSelected: {
+    color: "#1A1A1A",
   },
   footer: {
     alignItems: "center",

@@ -71,5 +71,5 @@ Last updated: 2026-03-01
 ## Canonical Handoff
 
 - Delivery checklist: `docs/FRONTEND_HANDOFF_CHECKLIST.md`
-- Runtime/build status: `BUILD_STATUS.md`
+- Runtime/build status: `docs/BUILD_STATUS.md`
 - Navigation contracts: `docs/FLOWS.md`

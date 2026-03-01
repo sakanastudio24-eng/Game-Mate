@@ -96,4 +96,4 @@ Backend QA should confirm:
 
 Reference contracts:
 - `docs/FLOWS_BACKEND.md`
-- `BUILD_STATUS.md`
+- `docs/BUILD_STATUS.md`

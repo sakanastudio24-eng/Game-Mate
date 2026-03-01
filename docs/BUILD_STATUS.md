@@ -14,7 +14,7 @@ Platform status:
 - iOS: not tested due to limited capability in current environment
 
 Primary build reference:
-- `ANDROID_BUILD_GUIDE.md` (Android-first workflow)
+- `docs/ANDROID_BUILD_GUIDE.md` (Android-first workflow)
 
 ## 2) Frontend Concerns Status
 

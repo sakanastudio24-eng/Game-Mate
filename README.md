@@ -82,9 +82,11 @@ When using Expo Go performance overlays (draw-over-app), some Android devices ca
 
 ## Documentation Index
 
-- [Build Status](BUILD_STATUS.md)
-- [Android Build Guide](ANDROID_BUILD_GUIDE.md)
+- [Build Status](docs/BUILD_STATUS.md)
+- [Android Build Guide](docs/ANDROID_BUILD_GUIDE.md)
 - [Mobile Workflow Notes](docs/MOBILE_WORKFLOW_NOTES.md)
+- [Guidelines](docs/GUIDELINES.md)
+- [Attributions](docs/ATTRIBUTIONS.md)
 - [Frontend Checklist Status](docs/FRONTEND_CHECKLIST_STATUS.md)
 - [Frontend Handoff Checklist](docs/FRONTEND_HANDOFF_CHECKLIST.md)
 - [Frontend Scope](docs/FRONTEND_SCOPE.md)

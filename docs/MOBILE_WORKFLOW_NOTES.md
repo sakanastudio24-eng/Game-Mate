@@ -234,7 +234,7 @@ When any user-facing mobile flow changes, update these docs in the same pass:
 4. `docs/AI_HANDOFF.md`
 - Keep AI/search/autocomplete request+response contracts current.
 
-5. `BUILD_STATUS.md`
+5. `docs/BUILD_STATUS.md`
 - Keep Android status accurate and note iOS validation gaps clearly.
 
 6. `docs/FRONTEND_CHECKLIST_STATUS.md`
@@ -346,5 +346,5 @@ Scope audited: current Expo Router app under `app/` and shared modules under `sr
 - Keep this checklist in sync with:
   1. `README.md`
   2. `docs/FLOWS.md`
-  3. `BUILD_STATUS.md`
+  3. `docs/BUILD_STATUS.md`
   4. `docs/FRONTEND_CHECKLIST_STATUS.md`

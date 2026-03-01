@@ -107,4 +107,4 @@ Use this as the release/handoff checklist for frontend scope before backend inte
 - [x] `docs/FLOWS.md` updated
 - [x] `docs/MOBILE_WORKFLOW_NOTES.md` updated
 - [x] `docs/FRONTEND_CHECKLIST_STATUS.md` updated
-- [x] `BUILD_STATUS.md` updated
+- [x] `docs/BUILD_STATUS.md` updated

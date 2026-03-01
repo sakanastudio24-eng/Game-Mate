@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, ViewStyle } from "react-native";
+import { useReducedMotionPreference } from "../../lib/accessibility";
 import { useResponsive } from "../../lib/responsive";
 
 interface AnimatedEntranceProps {
@@ -22,6 +23,7 @@ export function AnimatedEntrance({
   style,
 }: AnimatedEntranceProps) {
   const responsive = useResponsive();
+  const reduceMotion = useReducedMotionPreference();
   const progress = useRef(new Animated.Value(0)).current;
   const resolvedDuration =
     duration ??
@@ -41,6 +43,11 @@ export function AnimatedEntrance({
   const scaleFrom = preset === "card" ? 0.985 : 0.993;
 
   useEffect(() => {
+    if (reduceMotion) {
+      progress.setValue(1);
+      return;
+    }
+
     progress.setValue(0);
     Animated.timing(progress, {
       toValue: 1,
@@ -49,7 +56,7 @@ export function AnimatedEntrance({
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [progress, resolvedDelay, resolvedDuration]);
+  }, [progress, reduceMotion, resolvedDelay, resolvedDuration]);
 
   return (
     <Animated.View
@@ -61,13 +68,13 @@ export function AnimatedEntrance({
             {
               translateY: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [resolvedOffsetY, 0],
+                outputRange: [reduceMotion ? 0 : resolvedOffsetY, 0],
               }),
             },
             {
               scale: progress.interpolate({
                 inputRange: [0, 1],
-                outputRange: [scaleFrom, 1],
+                outputRange: [reduceMotion ? 1 : scaleFrom, 1],
               }),
             },
           ],

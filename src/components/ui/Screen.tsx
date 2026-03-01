@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useReducedMotionPreference } from "../../lib/accessibility";
 import { useResponsive } from "../../lib/responsive";
 import { colors } from "../../lib/theme";
 
@@ -29,16 +30,22 @@ export function Screen({
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
   const responsive = useResponsive();
+  const reduceMotion = useReducedMotionPreference();
   const entry = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      entry.setValue(1);
+      return;
+    }
+
     Animated.timing(entry, {
       toValue: 1,
       duration: responsive.motionBase,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [entry, responsive.motionBase]);
+  }, [entry, reduceMotion, responsive.motionBase]);
 
   const animatedStyle = {
     opacity: entry,
@@ -46,13 +53,13 @@ export function Screen({
       {
         translateY: entry.interpolate({
           inputRange: [0, 1],
-          outputRange: [responsive.screenEntranceOffset, 0],
+          outputRange: [reduceMotion ? 0 : responsive.screenEntranceOffset, 0],
         }),
       },
       {
         scale: entry.interpolate({
           inputRange: [0, 1],
-          outputRange: [0.995, 1],
+          outputRange: [reduceMotion ? 1 : 0.995, 1],
         }),
       },
     ],

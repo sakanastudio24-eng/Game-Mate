@@ -29,6 +29,8 @@ export function Button({
   fullWidth = false,
   contentStyle: contentStyleProp,
   labelStyle: labelStyleProp,
+  accessibilityRole,
+  accessibilityLabel,
   style,
   ...props
 }: ButtonProps) {
@@ -67,9 +69,18 @@ export function Button({
     },
     contentStyleProp,
   ];
+  const resolvedA11yLabel =
+    accessibilityLabel ??
+    (typeof label === "string"
+      ? label
+      : typeof children === "string"
+        ? children
+        : undefined);
 
   return (
     <PaperButton
+      accessibilityRole={accessibilityRole ?? "button"}
+      accessibilityLabel={resolvedA11yLabel}
       mode={resolvedMode}
       textColor={
         resolvedMode === "contained" ? colors.background : colors.primary

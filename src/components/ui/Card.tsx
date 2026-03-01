@@ -17,9 +17,17 @@ interface CardProps {
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
   variant?: "default" | "elevated";
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
-export function Card({ children, style, onPress }: CardProps) {
+export function Card({
+  children,
+  style,
+  onPress,
+  accessibilityLabel,
+  accessibilityHint,
+}: CardProps) {
   const responsive = useResponsive();
   const sharedStyle = [
     styles.card,
@@ -32,7 +40,13 @@ export function Card({ children, style, onPress }: CardProps) {
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [sharedStyle, pressed && styles.pressed]}>
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+        style={({ pressed }) => [sharedStyle, pressed && styles.pressed]}
+      >
         {children}
       </Pressable>
     );

@@ -73,6 +73,8 @@ export function Header({
         {showBackButton && (
           <Pressable
             onPress={handleBackPress}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
             style={[
               styles.backButton,
               {
@@ -91,7 +93,12 @@ export function Header({
           </Pressable>
         )}
         <View style={styles.titleSection}>
-          <Text style={[styles.title, { fontSize: responsive.headerTitleSize }]}>{title}</Text>
+          <Text
+            accessibilityRole="header"
+            style={[styles.title, { fontSize: responsive.headerTitleSize }]}
+          >
+            {title}
+          </Text>
           {subtitle && <Text style={[styles.subtitle, { fontSize: responsive.captionSize }]}>{subtitle}</Text>}
         </View>
       </View>
@@ -100,6 +107,13 @@ export function Header({
         {resolvedRightIcon && (
           <Pressable
             onPress={resolvedRightPress}
+            accessibilityRole="button"
+            accessibilityLabel={
+              rightAction?.label ??
+              (typeof resolvedRightIcon === "string"
+                ? resolvedRightIcon.replace(/-/g, " ")
+                : "Header action")
+            }
             style={[
               styles.iconButton,
               {
@@ -122,6 +136,13 @@ export function Header({
         {resolvedRightIcon2 && (
           <Pressable
             onPress={resolvedRightPress2}
+            accessibilityRole="button"
+            accessibilityLabel={
+              rightAction2?.label ??
+              (typeof resolvedRightIcon2 === "string"
+                ? resolvedRightIcon2.replace(/-/g, " ")
+                : "Secondary header action")
+            }
             style={[
               styles.iconButton,
               {

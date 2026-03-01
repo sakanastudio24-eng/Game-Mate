@@ -28,10 +28,19 @@ export function Chip({
   const responsive = useResponsive();
   const isSmall = size === "small";
   const baseHeight = isSmall ? Math.max(28, responsive.iconButtonSize - 12) : Math.max(34, responsive.iconButtonSize - 6);
+  const resolvedA11yLabel =
+    props.accessibilityLabel ??
+    (typeof label === "string"
+      ? label
+      : typeof children === "string"
+        ? children
+        : undefined);
 
   return (
     <PaperChip
       onPress={onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={resolvedA11yLabel}
       selected={selected}
       mode={selected ? "flat" : "outlined"}
       selectedColor={colors.text}

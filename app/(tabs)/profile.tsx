@@ -79,6 +79,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
+  const listBottomPadding = safeBottom + responsive.tabBarBaseHeight + spacing.sm;
   const [myGroups, setMyGroups] = useState(MY_GROUPS);
   const [activeCollectionTab, setActiveCollectionTab] = useState<"games" | "groups">("games");
 
@@ -97,7 +98,7 @@ export default function ProfileScreen() {
     <View style={styles.screen}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: listBottomPadding }]}
       >
         <AnimatedEntrance>
           <View style={styles.cover}>
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingBottom: 110,
+    paddingBottom: spacing.md,
   },
   cover: {
     height: 160,

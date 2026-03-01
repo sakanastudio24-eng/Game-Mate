@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
@@ -169,8 +169,11 @@ export default function SocialScreen() {
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
+  const [tabRowWidth, setTabRowWidth] = useState(0);
+  const [tabContentWidth, setTabContentWidth] = useState(0);
   const profileAvatarSize = responsive.isSmallPhone ? 48 : responsive.isLargePhone ? 58 : 54;
   const actionCircleSize = Math.max(responsive.touchTargetMin, 42);
+  const centeredTabPadding = Math.max(0, (tabRowWidth - tabContentWidth) / 2);
 
   const filteredOnline = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -281,14 +284,26 @@ export default function SocialScreen() {
             </View>
           </View>
 
-          <View style={styles.tabRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            onLayout={(event) => setTabRowWidth(event.nativeEvent.layout.width)}
+            onContentSizeChange={(width) => setTabContentWidth(width)}
+            contentContainerStyle={[
+              styles.tabRow,
+              {
+                minWidth: "100%",
+                paddingHorizontal: centeredTabPadding,
+              },
+            ]}
+          >
             {(
               [
                 { id: "friends", label: "Friends" },
                 { id: "messages", label: "Messages" },
                 { id: "requests", label: `Requests (${requests.length})` },
               ] as const
-            ).map((tab) => {
+            ).map((tab, index) => {
               const selected = activeTab === tab.id;
               return (
                 <Pressable
@@ -299,6 +314,7 @@ export default function SocialScreen() {
                   accessibilityState={{ selected }}
                   style={[
                     styles.tabButton,
+                    index > 0 ? styles.tabButtonSpacing : undefined,
                     {
                       borderRadius: responsive.cardRadius - 6,
                       paddingVertical: Math.max(9, responsive.cardPadding - 2),
@@ -319,7 +335,7 @@ export default function SocialScreen() {
                 </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
 
           <Searchbar
             placeholder={searchPlaceholder}
@@ -653,17 +669,20 @@ const styles = StyleSheet.create({
   tabRow: {
     flexDirection: "row",
     marginBottom: spacing.md,
-    justifyContent: "center",
-    columnGap: 8,
+    alignItems: "center",
   },
   tabButton: {
-    flex: 1,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
     borderRadius: 12,
     paddingVertical: 10,
+    paddingHorizontal: 18,
+    minWidth: 112,
     alignItems: "center",
+  },
+  tabButtonSpacing: {
+    marginLeft: 8,
   },
   tabButtonActive: {
     backgroundColor: colors.primary,

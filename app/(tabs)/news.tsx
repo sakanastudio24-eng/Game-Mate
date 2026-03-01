@@ -48,7 +48,10 @@ export default function NewsScreen() {
   const [visibleCount, setVisibleCount] = useState(initialLoadCount);
   const [activePostMenu, setActivePostMenu] = useState<NewsFeedItem | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
+  const [categoryRowWidth, setCategoryRowWidth] = useState(0);
+  const [categoryContentWidth, setCategoryContentWidth] = useState(0);
   const mediaHeight = responsive.isSmallPhone ? 184 : responsive.isLargePhone ? 224 : 200;
+  const centeredCategoryPadding = Math.max(0, (categoryRowWidth - categoryContentWidth) / 2);
 
   const filteredItems = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
@@ -180,9 +183,17 @@ export default function NewsScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={[styles.pillsRow, { minWidth: "100%", flexGrow: 1 }]}
+                onLayout={(event) => setCategoryRowWidth(event.nativeEvent.layout.width)}
+                onContentSizeChange={(width) => setCategoryContentWidth(width)}
+                contentContainerStyle={[
+                  styles.pillsRow,
+                  {
+                    minWidth: "100%",
+                    paddingHorizontal: centeredCategoryPadding,
+                  },
+                ]}
               >
-                {categories.map((category, index) => {
+                {categories.map((category) => {
                   const isActive = category.id === activeCategory;
                   return (
                     <Pressable
@@ -193,7 +204,6 @@ export default function NewsScreen() {
                       accessibilityState={{ selected: isActive }}
                       style={[
                         styles.pill,
-                        index > 0 && styles.pillSpacing,
                         { minHeight: responsive.buttonHeightSmall },
                         isActive ? styles.pillActive : undefined,
                       ]}
@@ -539,8 +549,8 @@ const styles = StyleSheet.create({
   },
   pillsRow: {
     paddingBottom: spacing.sm,
-    justifyContent: "center",
     alignItems: "center",
+    columnGap: spacing.sm,
   },
   pill: {
     paddingHorizontal: 16,
@@ -549,9 +559,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
-  },
-  pillSpacing: {
-    marginLeft: spacing.sm,
   },
   pillActive: {
     backgroundColor: colors.primary,

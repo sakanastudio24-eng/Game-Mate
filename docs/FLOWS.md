@@ -9,7 +9,13 @@ All in-app back buttons use `useSafeBackNavigation()` from `src/lib/navigation.t
 Behavior:
 1. Try `goBack()` on current navigator.
 2. If unavailable, walk parent navigators and go back on the first one that can.
-3. Only if no navigator can go back, route to fallback (`/(tabs)/news` by default).
+3. Only if no navigator can go back, route to route-aware fallback by pathname:
+- settings children -> `/(tabs)/settings`
+- settings root -> `/(tabs)/profile`
+- group children -> `/(tabs)/groups`
+- social children -> `/(tabs)/social`
+- profile children -> `/(tabs)/profile`
+- feed/search/video children -> `/(tabs)/news`
 
 This ensures the user returns to the previous page instead of hard-jumping to home in normal flows.
 

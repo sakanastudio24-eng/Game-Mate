@@ -37,8 +37,12 @@ export default function CreateGroupScreen() {
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    if (!groupName.trim()) newErrors.groupName = "Group name required";
-    if (!description.trim()) newErrors.description = "Description required";
+    if (!groupName.trim()) {
+      newErrors.groupName = "Enter a group name so players can identify your group.";
+    }
+    if (!description.trim()) {
+      newErrors.description = "Add a short description so players know what this group is for.";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -57,15 +61,15 @@ export default function CreateGroupScreen() {
       <Card style={styles.card}>
         <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Group Name *</Text>
         <Input
-          label="e.g. Valorant Grinders"
+          label="Group Name"
+          placeholder="e.g. Valorant Grinders"
+          accessibilityLabel="Group name"
           value={groupName}
           onChangeText={setGroupName}
           error={!!errors.groupName}
+          errorText={errors.groupName}
           fullWidth
         />
-        {errors.groupName && (
-          <Text style={[styles.error, { fontSize: responsive.captionSize }]}>{errors.groupName}</Text>
-        )}
       </Card>
 
       <Card style={styles.card}>
@@ -133,17 +137,17 @@ export default function CreateGroupScreen() {
       <Card style={styles.card}>
         <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Description *</Text>
         <Input
-          label="What is your group about?"
+          label="Description"
+          placeholder="What is your group about?"
+          accessibilityLabel="Group description"
           value={description}
           onChangeText={setDescription}
           error={!!errors.description}
+          errorText={errors.description}
           multiline
           numberOfLines={4}
           fullWidth
         />
-        {errors.description && (
-          <Text style={[styles.error, { fontSize: responsive.captionSize }]}>{errors.description}</Text>
-        )}
       </Card>
 
       <Button

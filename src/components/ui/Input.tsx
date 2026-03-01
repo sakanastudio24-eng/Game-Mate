@@ -25,6 +25,7 @@ export function Input({
   const responsive = useResponsive();
   const resolvedA11yLabel =
     props.accessibilityLabel ?? (typeof label === "string" ? label : undefined);
+  const resolvedA11yHint = props.accessibilityHint ?? (error && errorText ? errorText : undefined);
 
   return (
     <View style={fullWidth ? { width: "100%" as const } : undefined}>
@@ -37,6 +38,8 @@ export function Input({
         activeOutlineColor={error ? colors.destructive : colors.primary}
         textColor={colors.text}
         accessibilityLabel={resolvedA11yLabel}
+        accessibilityHint={resolvedA11yHint}
+        maxFontSizeMultiplier={1.6}
         contentStyle={{ fontSize: responsive.bodySize }}
         style={[
           {

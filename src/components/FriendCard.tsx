@@ -29,6 +29,9 @@ export function FriendCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={`${friend.username}. ${friend.status === "online" ? "Online" : "Offline"}`}
+      accessibilityHint={onPress ? "Open profile" : undefined}
       style={({ pressed }) => [
         styles.card,
         {
@@ -77,6 +80,9 @@ export function FriendCard({
           event.stopPropagation();
           onFollow?.();
         }}
+        accessibilityRole="button"
+        accessibilityLabel={isFollowing ? `Unfollow ${friend.username}` : `Follow ${friend.username}`}
+        accessibilityState={{ selected: isFollowing }}
         style={({ pressed }) => [
           styles.button,
           {

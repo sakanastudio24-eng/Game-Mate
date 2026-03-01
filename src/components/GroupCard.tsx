@@ -28,6 +28,9 @@ export function GroupCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={`${group.name}, ${group.game}, ${group.memberCount} members`}
+      accessibilityHint={onPress ? "Open group details" : undefined}
       style={({ pressed }) => [
         styles.card,
         {
@@ -101,6 +104,9 @@ export function GroupCard({
           event.stopPropagation();
           onJoin?.();
         }}
+        accessibilityRole="button"
+        accessibilityLabel={isJoined ? `${group.name} joined` : `Join ${group.name}`}
+        accessibilityState={{ selected: isJoined }}
         style={({ pressed }) => [
           styles.joinButton,
           {

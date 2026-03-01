@@ -86,6 +86,9 @@ export function PostCard({
       {/* Interaction buttons */}
       <View style={styles.actions}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isLiked ? "Unlike post" : "Like post"}
+          accessibilityState={{ selected: isLiked }}
           style={({ pressed }) => [
             styles.actionButton,
             {
@@ -113,6 +116,9 @@ export function PostCard({
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Comments unavailable in preview"
+          accessibilityState={{ disabled: true }}
           style={[
             styles.actionButton,
             {
@@ -133,6 +139,9 @@ export function PostCard({
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isSaved ? "Unsave post" : "Save post"}
+          accessibilityState={{ selected: isSaved }}
           style={({ pressed }) => [
             styles.actionButton,
             {
@@ -151,6 +160,9 @@ export function PostCard({
         </Pressable>
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Share unavailable in preview"
+          accessibilityState={{ disabled: true }}
           style={[
             styles.actionButton,
             {

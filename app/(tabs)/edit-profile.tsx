@@ -57,7 +57,12 @@ export default function EditProfileScreen() {
 
       {/* Avatar selector */}
       <Card style={styles.avatarCard}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>Profile Picture</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}
+        >
+          Profile Picture
+        </Text>
         <View style={styles.avatarDisplay}>
           <Text style={[styles.avatarLarge, { fontSize: responsive.titleSize * 2 }]}>{avatar}</Text>
         </View>
@@ -67,6 +72,9 @@ export default function EditProfileScreen() {
             <Pressable
               key={ava}
               onPress={() => setAvatar(ava)}
+              accessibilityRole="button"
+              accessibilityLabel={`Select avatar ${ava}`}
+              accessibilityState={{ selected: avatar === ava }}
               style={[
                 styles.avatarOption,
                 {
@@ -86,6 +94,7 @@ export default function EditProfileScreen() {
       {/* Username */}
       <Input
         label="Username"
+        accessibilityLabel="Username"
         value={username}
         onChangeText={setUsername}
         placeholder="Your username"
@@ -95,6 +104,7 @@ export default function EditProfileScreen() {
       {/* Bio */}
       <Input
         label="Bio"
+        accessibilityLabel="Bio"
         value={bio}
         onChangeText={setBio}
         placeholder="Tell us about yourself"
@@ -105,7 +115,10 @@ export default function EditProfileScreen() {
 
       {/* Games */}
       <Card style={styles.gameCard}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}
+        >
           Favorite Games (up to 5)
         </Text>
         <View style={styles.gamesList}>

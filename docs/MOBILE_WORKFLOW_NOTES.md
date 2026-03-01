@@ -208,3 +208,57 @@ Key takeaways from the reference pattern:
 4. Extend accessibility checks
 - Add explicit QA checklist for icon-only triggers and gesture alternatives.
 - Ensure every swipe action has button alternatives (join/pass).
+
+## 8) Documentation Sync Contract (Required Per Feature Pass)
+
+When any user-facing mobile flow changes, update these docs in the same pass:
+
+1. `README.md`
+- Keep runtime stack, tab names, and feature highlights current.
+
+2. `docs/FLOWS.md`
+- Keep route names, back behavior, and per-screen flow sequence accurate.
+
+3. `docs/FLOWS_BACKEND.md`
+- Keep endpoint matrix, payload shape, limits, and rate limits current.
+
+4. `docs/AI_HANDOFF.md`
+- Keep AI/search/autocomplete request+response contracts current.
+
+5. `BUILD_STATUS.md`
+- Keep Android status accurate and note iOS validation gaps clearly.
+
+6. `docs/FRONTEND_CHECKLIST_STATUS.md`
+- Keep component/hook checklist truthfully marked complete/partial/missing.
+
+## 9) Offline Cache Guarantee Rule
+
+- `useLocalCache` provides persistence only when `@react-native-async-storage/async-storage` is installed.
+- If AsyncStorage is missing, cache falls back to memory-only and is not durable across cold restarts.
+- Before declaring "guaranteed persistent offline cache", verify:
+  1. `node_modules/@react-native-async-storage/async-storage` exists
+  2. app restart preserves feed/groups/search snapshots
+  3. no AsyncStorage missing warning appears in logs
+
+## 10) Kill Instance + Port Recovery (Expo/Metro)
+
+Use these when runtime instances hang or wrong Metro roots are running:
+
+```bash
+# Find running Expo/Metro processes
+pgrep -af "expo|metro|react-native"
+
+# Stop them
+pkill -f "expo|metro|react-native"
+
+# Check port ownership
+lsof -n -iTCP:8081 -sTCP:LISTEN
+
+# Restart clean
+npx expo start -c
+```
+
+## 11) Platform Validation Note
+
+- Android is the primary validated platform in this environment.
+- iOS has not been fully tested in this environment due limited capability.

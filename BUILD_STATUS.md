@@ -53,6 +53,7 @@ Open follow-ups:
 - Migrate additional list-heavy screens to skeleton loading when API wiring starts (messages, notifications, discover)
 - Add visual regression checks for safe-area + skeleton states across device classes
 - Complete AsyncStorage dependency install in online environment (`@react-native-async-storage/async-storage` is declared but package install failed in offline sandbox)
+- Wire backend autocomplete to replace local suggestion fallback on `/(tabs)/ai-advisor`
 
 ## 3) Backend Endpoint Inventory (All v1 Endpoints)
 
@@ -93,7 +94,9 @@ Canonical contract: `docs/FLOWS_BACKEND.md`
 
 ### Recommendations (Search + Swipe)
 - `POST /api/ai/recommendations`
+- `POST /api/ai/video-recommendations`
 - `POST /api/ai/suggested-tags`
+- `GET /api/ai/autocomplete`
 - `POST /api/ai/draft-intro`
 
 ### Social

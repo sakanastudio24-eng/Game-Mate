@@ -92,6 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen name="search-players" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="user-profile" options={{ href: null }} />
+      <Tabs.Screen name="video-preview" options={{ href: null }} />
     </Tabs>
   );
 }

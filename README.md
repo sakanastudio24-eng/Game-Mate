@@ -235,6 +235,11 @@ npm run start
 npx expo export:embed --eager --platform android --dev false
 ```
 
+### Platform Test Status
+
+- Android: actively validated and documented in `ANDROID_BUILD_GUIDE.md`.
+- iOS: not tested due to limited capability in the current environment.
+
 ---
 
 ## Xcode / SwiftUI Migration Notes

@@ -1,5 +1,8 @@
 # GameMate Android Build & Deployment Guide
 
+> Scope note: This guide is Android-only.  
+> iOS has **not** been tested in this project due to limited capability.
+
 ## Current Status
 
 ✅ **Tab Navigation Fixed** - All 5 main tabs now properly wired (News, Groups, Social, Messages, Profile)  
@@ -117,6 +120,8 @@ Once complete:
 ---
 
 ## Building for Both Platforms (iOS + Android)
+
+This command is listed for reference only. Current project validation is Android-first, and iOS is not tested.
 
 ```bash
 # Build both simultaneously
@@ -304,7 +309,7 @@ All work is backed up to https://github.com/sakanastudio24-eng/Game-Mate
 # Development
 npm start                  # Start dev server
 npm run android           # Run on Android
-npm run ios             # Run on iOS
+npm run ios               # Run on iOS (not tested in this project)
 
 # Building
 npx eas build --platform android           # Cloud build
@@ -313,7 +318,7 @@ npx eas build --platform all               # iOS + Android
 
 # Testing
 npx expo run:android      # Run on emulator
-npx expo run:ios         # Run on iPhone simulator
+npx expo run:ios          # Run on iPhone simulator (not tested in this project)
 
 # Submitting
 npx eas submit --platform android --build-id <ID>

@@ -7,6 +7,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // SettingsScreen: User preferences and account settings
@@ -15,6 +16,7 @@ import { colors, spacing } from "../../src/lib/theme";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [notifications, setNotifications] = useState({
     push: true,
     email: false,
@@ -42,7 +44,7 @@ export default function SettingsScreen() {
 
       {/* Account section */}
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Account</Text>
 
         <List.Item
           title="Change Email"
@@ -54,7 +56,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
 
@@ -68,7 +70,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
 
@@ -82,14 +84,14 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/account-settings" as any)}
         />
       </Card>
 
       {/* Notifications section */}
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Notifications</Text>
 
         <List.Item
           title="Push Notifications"
@@ -100,7 +102,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleNotification("push")}
         />
 
@@ -113,7 +115,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleNotification("email")}
         />
 
@@ -126,7 +128,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleNotification("mentions")}
         />
 
@@ -139,14 +141,14 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleNotification("groupUpdates")}
         />
       </Card>
 
       {/* Privacy section */}
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Privacy & Security</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Privacy & Security</Text>
 
         <List.Item
           title="Public Profile"
@@ -158,7 +160,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => togglePrivacy("profilePublic")}
         />
 
@@ -171,7 +173,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => togglePrivacy("showOnlineStatus")}
         />
 
@@ -184,7 +186,7 @@ export default function SettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => togglePrivacy("allowMessages")}
         />
 
@@ -197,42 +199,42 @@ export default function SettingsScreen() {
               color={colors.destructive}
             />
           )}
-          titleStyle={[styles.listTitle, { color: colors.destructive }]}
+          titleStyle={[styles.listTitle, { color: colors.destructive, fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
       </Card>
 
       {/* App section */}
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>App</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>App</Text>
 
         <List.Item
           title="About"
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/help" as any)}
         />
 
         <List.Item
           title="Version"
           description="1.0.0 (Build 1)"
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
         />
 
         <List.Item
           title="Terms of Service"
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/help" as any)}
         />
 
         <List.Item
           title="Privacy Policy"
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
 
         <List.Item
           title="Site Map (Preview)"
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/explore" as any)}
         />
       </Card>

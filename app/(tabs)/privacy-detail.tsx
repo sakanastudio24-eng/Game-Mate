@@ -4,6 +4,7 @@ import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Switch, Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 interface BlockedUser {
@@ -13,6 +14,7 @@ interface BlockedUser {
 }
 
 export default function PrivacyDetailScreen() {
+  const responsive = useResponsive();
   const [profilePublic, setProfilePublic] = useState(true);
   const [allowFriendRequests, setAllowFriendRequests] = useState(true);
   const [allowGroupInvites, setAllowGroupInvites] = useState(true);
@@ -34,7 +36,7 @@ export default function PrivacyDetailScreen() {
       <Header title="Privacy Settings" showBackButton />
 
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionLabel}>Profile Visibility</Text>
+        <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Profile Visibility</Text>
         <SettingRow
           name="Public Profile"
           description="Others can view your profile"
@@ -68,7 +70,7 @@ export default function PrivacyDetailScreen() {
       </View>
 
       <View style={styles.sectionContainer}>
-        <Text style={styles.sectionLabel}>Data & Analytics</Text>
+        <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Data & Analytics</Text>
         <SettingRow
           name="Allow Analytics"
           description="Help us improve with usage analytics"
@@ -79,10 +81,12 @@ export default function PrivacyDetailScreen() {
 
       <View style={styles.sectionContainer}>
         <View style={styles.blockedHeader}>
-          <Text style={styles.sectionLabel}>Blocked Users</Text>
+          <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Blocked Users</Text>
           {blockedUsers.length > 0 && (
             <View style={styles.badgeCount}>
-              <Text style={styles.badgeCountText}>{blockedUsers.length}</Text>
+              <Text style={[styles.badgeCountText, { fontSize: responsive.captionSize }]}>
+                {blockedUsers.length}
+              </Text>
             </View>
           )}
         </View>
@@ -95,8 +99,12 @@ export default function PrivacyDetailScreen() {
             renderItem={({ item }) => (
               <View style={styles.blockedUserItem}>
                 <View style={styles.blockedUserInfo}>
-                  <Text style={styles.blockedUserAvatar}>{item.avatar}</Text>
-                  <Text style={styles.blockedUserName}>{item.username}</Text>
+                  <Text style={[styles.blockedUserAvatar, { fontSize: responsive.sectionTitleSize }]}>
+                    {item.avatar}
+                  </Text>
+                  <Text style={[styles.blockedUserName, { fontSize: responsive.bodySize + 1 }]}>
+                    {item.username}
+                  </Text>
                 </View>
                 <Pressable onPress={() => handleUnblock(item.id)}>
                   <MaterialCommunityIcons
@@ -110,7 +118,7 @@ export default function PrivacyDetailScreen() {
           />
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No blocked users</Text>
+            <Text style={[styles.emptyText, { fontSize: responsive.bodySize }]}>No blocked users</Text>
           </View>
         )}
       </View>
@@ -129,11 +137,12 @@ function SettingRow({
   value: boolean;
   onValueChange: (value: boolean) => void;
 }) {
+  const responsive = useResponsive();
   return (
     <View style={styles.settingItem}>
       <View style={styles.settingContent}>
-        <Text style={styles.settingName}>{name}</Text>
-        <Text style={styles.settingDesc}>{description}</Text>
+        <Text style={[styles.settingName, { fontSize: responsive.bodySize + 1 }]}>{name}</Text>
+        <Text style={[styles.settingDesc, { fontSize: responsive.bodySmallSize }]}>{description}</Text>
       </View>
       <Switch value={value} onValueChange={onValueChange} color={colors.primary} />
     </View>

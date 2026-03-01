@@ -5,6 +5,7 @@ import { Divider, List, Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // HelpScreen: FAQ, support, and documentation
@@ -17,6 +18,7 @@ interface FAQItem {
 }
 
 export default function HelpScreen() {
+  const responsive = useResponsive();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const faqs: FAQItem[] = [
@@ -63,19 +65,21 @@ export default function HelpScreen() {
       <Header title="Help & Support" showBackButton />
 
       <View style={styles.introContainer}>
-        <Text style={styles.introText}>
+        <Text style={[styles.introText, { fontSize: responsive.bodySize }]}>
           Find answers to common questions and get support
         </Text>
       </View>
 
       <Card style={styles.faqContainer}>
-        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>
+          Frequently Asked Questions
+        </Text>
 
         {faqs.map((item, idx) => (
           <View key={idx}>
             <List.Item
               title={item.question}
-              titleStyle={styles.questionText}
+              titleStyle={[styles.questionText, { fontSize: responsive.bodySize }]}
               left={() => (
                 <MaterialCommunityIcons
                   name={item.icon as any}
@@ -97,7 +101,9 @@ export default function HelpScreen() {
 
             {expandedId === idx && (
               <View style={styles.answerContainer}>
-                <Text style={styles.answerText}>{item.answer}</Text>
+                <Text style={[styles.answerText, { fontSize: responsive.bodySmallSize }]}>
+                  {item.answer}
+                </Text>
               </View>
             )}
 
@@ -107,7 +113,7 @@ export default function HelpScreen() {
       </Card>
 
       <Card style={styles.contactCard}>
-        <Text style={styles.sectionTitle}>Still Need Help?</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Still Need Help?</Text>
 
         <List.Item
           title="Email Support"
@@ -119,7 +125,7 @@ export default function HelpScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.contactTitle}
+          titleStyle={[styles.contactTitle, { fontSize: responsive.bodySize }]}
           onPress={() => Linking.openURL("mailto:support@gamemate.com")}
         />
 
@@ -133,7 +139,7 @@ export default function HelpScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.contactTitle}
+          titleStyle={[styles.contactTitle, { fontSize: responsive.bodySize }]}
           onPress={() => Linking.openURL("https://discord.com")}
         />
 
@@ -147,13 +153,13 @@ export default function HelpScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.contactTitle}
+          titleStyle={[styles.contactTitle, { fontSize: responsive.bodySize }]}
           onPress={() => Linking.openURL("https://twitter.com/GameMateApp")}
         />
       </Card>
 
       <Card style={styles.infoCard}>
-        <Text style={styles.infoText}>
+        <Text style={[styles.infoText, { fontSize: responsive.captionSize }]}>
           Version 1.0.0{"\n"}
           Last updated: January 2025
         </Text>

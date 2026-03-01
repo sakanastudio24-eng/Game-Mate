@@ -6,6 +6,7 @@ import { List, Switch, Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // PrivacySettingsScreen: Privacy and content controls
@@ -13,6 +14,7 @@ import { colors, spacing } from "../../src/lib/theme";
 
 export default function PrivacySettingsScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [privacySettings, setPrivacySettings] = useState({
     profilePublic: true,
     showOnlineStatus: true,
@@ -30,7 +32,7 @@ export default function PrivacySettingsScreen() {
       <Header title="Privacy & Security" showBackButton />
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Profile Visibility</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Profile Visibility</Text>
 
         <List.Item
           title="Public Profile"
@@ -42,7 +44,7 @@ export default function PrivacySettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("profilePublic")}
         />
 
@@ -56,7 +58,7 @@ export default function PrivacySettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("showOnlineStatus")}
         />
 
@@ -70,13 +72,13 @@ export default function PrivacySettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("searchable")}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Interactions</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Interactions</Text>
 
         <List.Item
           title="Allow Direct Messages"
@@ -88,7 +90,7 @@ export default function PrivacySettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("allowMessages")}
         />
 
@@ -102,13 +104,13 @@ export default function PrivacySettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("allowGroupInvites")}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Safety</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Safety</Text>
 
         <List.Item
           title="Blocked Users"
@@ -120,7 +122,7 @@ export default function PrivacySettingsScreen() {
               color={colors.destructive}
             />
           )}
-          titleStyle={[styles.listTitle, { color: colors.destructive }]}
+          titleStyle={[styles.listTitle, { color: colors.destructive, fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/privacy-detail" as any)}
         />
 
@@ -134,7 +136,7 @@ export default function PrivacySettingsScreen() {
               color={colors.destructive}
             />
           )}
-          titleStyle={[styles.listTitle, { color: colors.destructive }]}
+          titleStyle={[styles.listTitle, { color: colors.destructive, fontSize: responsive.bodySize }]}
           onPress={() => router.push("/(tabs)/help" as any)}
         />
       </Card>

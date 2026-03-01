@@ -3,12 +3,14 @@ import { StyleSheet, View } from "react-native";
 import { Button, Dialog, Portal, Text, TextInput } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // AccountSettingsScreen: Change email, password, 2FA, delete account
 // Backend integration: PUT /api/user/email, /api/user/password, /api/user/2fa, DELETE /api/user in Phase B
 
 export default function AccountSettingsScreen() {
+  const responsive = useResponsive();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -58,8 +60,8 @@ export default function AccountSettingsScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.label}>Current Email</Text>
-            <Text style={styles.value}>user@example.com</Text>
+            <Text style={[styles.label, { fontSize: responsive.bodySmallSize }]}>Current Email</Text>
+            <Text style={[styles.value, { fontSize: responsive.bodySize + 2 }]}>user@example.com</Text>
           </View>
         </View>
         <Button
@@ -76,8 +78,8 @@ export default function AccountSettingsScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.label}>Password</Text>
-            <Text style={styles.value}>••••••••</Text>
+            <Text style={[styles.label, { fontSize: responsive.bodySmallSize }]}>Password</Text>
+            <Text style={[styles.value, { fontSize: responsive.bodySize + 2 }]}>••••••••</Text>
           </View>
         </View>
         <Button
@@ -94,8 +96,8 @@ export default function AccountSettingsScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={styles.label}>Two-Factor Authentication</Text>
-            <Text style={styles.value}>
+            <Text style={[styles.label, { fontSize: responsive.bodySmallSize }]}>Two-Factor Authentication</Text>
+            <Text style={[styles.value, { fontSize: responsive.bodySize + 2 }]}>
               {twoFAEnabled ? "Enabled" : "Disabled"}
             </Text>
           </View>
@@ -114,10 +116,12 @@ export default function AccountSettingsScreen() {
       <View style={[styles.section, styles.dangerSection]}>
         <View style={styles.sectionHeader}>
           <View>
-            <Text style={[styles.label, { color: colors.destructive }]}>
+            <Text style={[styles.label, { color: colors.destructive, fontSize: responsive.bodySmallSize }]}>
               Delete Account
             </Text>
-            <Text style={styles.value}>Permanently delete your account</Text>
+            <Text style={[styles.value, { fontSize: responsive.bodySize + 2 }]}>
+              Permanently delete your account
+            </Text>
           </View>
         </View>
         <Button
@@ -140,7 +144,9 @@ export default function AccountSettingsScreen() {
           onDismiss={() => setChangeEmailDialogVisible(false)}
           style={styles.dialog}
         >
-          <Dialog.Title style={styles.dialogTitle}>Change Email</Dialog.Title>
+          <Dialog.Title style={[styles.dialogTitle, { fontSize: responsive.sectionTitleSize }]}>
+            Change Email
+          </Dialog.Title>
           <Dialog.Content>
             <TextInput
               label="New Email"
@@ -170,7 +176,7 @@ export default function AccountSettingsScreen() {
           onDismiss={() => setChangePasswordDialogVisible(false)}
           style={styles.dialog}
         >
-          <Dialog.Title style={styles.dialogTitle}>
+          <Dialog.Title style={[styles.dialogTitle, { fontSize: responsive.sectionTitleSize }]}>
             Change Password
           </Dialog.Title>
           <Dialog.Content>
@@ -223,12 +229,12 @@ export default function AccountSettingsScreen() {
           onDismiss={() => setEnable2FADialogVisible(false)}
           style={styles.dialog}
         >
-          <Dialog.Title style={styles.dialogTitle}>
+          <Dialog.Title style={[styles.dialogTitle, { fontSize: responsive.sectionTitleSize }]}>
             {twoFAEnabled ? "Disable 2FA" : "Enable 2FA"}
           </Dialog.Title>
           <Dialog.Content>
             <View style={styles.dialogContent}>
-              <Text style={styles.dialogText}>
+              <Text style={[styles.dialogText, { fontSize: responsive.bodySize }]}>
                 {twoFAEnabled
                   ? "Are you sure you want to disable two-factor authentication?"
                   : "Enhance your account security with two-factor authentication. You will need an authenticator app."}
@@ -254,13 +260,16 @@ export default function AccountSettingsScreen() {
           style={styles.dialog}
         >
           <Dialog.Title
-            style={[styles.dialogTitle, { color: colors.destructive }]}
+            style={[
+              styles.dialogTitle,
+              { color: colors.destructive, fontSize: responsive.sectionTitleSize },
+            ]}
           >
             Delete Account
           </Dialog.Title>
           <Dialog.Content>
             <View style={styles.dialogContent}>
-              <Text style={styles.dialogText}>
+              <Text style={[styles.dialogText, { fontSize: responsive.bodySize }]}>
                 This action is permanent and cannot be undone. All your data,
                 groups, and messages will be deleted.
               </Text>

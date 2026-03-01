@@ -6,6 +6,7 @@ import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // NotificationsScreen: Notification center
@@ -28,6 +29,7 @@ interface Notification {
 }
 
 export default function NotificationsScreen() {
+  const responsive = useResponsive();
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
@@ -116,6 +118,11 @@ export default function NotificationsScreen() {
             style={[
               styles.iconContainer,
               {
+                width: responsive.iconButtonSize,
+                height: responsive.iconButtonSize,
+                borderRadius: responsive.searchRadius - 2,
+              },
+              {
                 backgroundColor: getNotificationColor(notification.type) + "20",
               },
             ]}
@@ -129,7 +136,7 @@ export default function NotificationsScreen() {
 
           <View style={styles.textContainer}>
             <View style={styles.titleRow}>
-              <Text style={styles.title}>{notification.title}</Text>
+              <Text style={[styles.title, { fontSize: responsive.bodySize }]}>{notification.title}</Text>
               {!notification.read && (
                 <View
                   style={[
@@ -139,8 +146,12 @@ export default function NotificationsScreen() {
                 />
               )}
             </View>
-            <Text style={styles.description}>{notification.description}</Text>
-            <Text style={styles.timestamp}>{notification.timestamp}</Text>
+            <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>
+              {notification.description}
+            </Text>
+            <Text style={[styles.timestamp, { fontSize: responsive.captionSize }]}>
+              {notification.timestamp}
+            </Text>
           </View>
 
           {notification.actionLabel && (
@@ -198,7 +209,6 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   notificationsList: {
-    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
   notificationCard: {

@@ -4,12 +4,14 @@ import { List, Switch, Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // NotificationSettingsScreen: Push notification preferences
 // Backend integration: PATCH /api/me/notifications endpoint in Phase B
 
 export default function NotificationSettingsScreen() {
+  const responsive = useResponsive();
   const [notifSettings, setNotifSettings] = useState({
     friendRequests: true,
     groupInvites: true,
@@ -29,7 +31,7 @@ export default function NotificationSettingsScreen() {
       <Header title="Notifications" showBackButton />
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Social</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Social</Text>
 
         <List.Item
           title="Friend Requests"
@@ -41,7 +43,7 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("friendRequests")}
         />
 
@@ -55,7 +57,7 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("friendOnline")}
         />
 
@@ -69,7 +71,7 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("friendActivity")}
         />
 
@@ -83,13 +85,13 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("messages")}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Groups</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Groups</Text>
 
         <List.Item
           title="Group Invites"
@@ -101,7 +103,7 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("groupInvites")}
         />
 
@@ -115,13 +117,13 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("matchmaking")}
         />
       </Card>
 
       <Card style={styles.section}>
-        <Text style={styles.sectionTitle}>Achievements</Text>
+        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Achievements</Text>
 
         <List.Item
           title="Achievements"
@@ -133,7 +135,7 @@ export default function NotificationSettingsScreen() {
               color={colors.primary}
             />
           )}
-          titleStyle={styles.listTitle}
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
           onPress={() => toggleSetting("achievements")}
         />
       </Card>

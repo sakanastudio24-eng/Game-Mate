@@ -35,6 +35,11 @@ GameMate is a mobile-first social gaming app built with Expo Router and React Na
   - Reusable skeletons (`SkeletonAvatar`, `SkeletonLine`, `SkeletonList`)
   - Reusable `EmptyState`, `FilterChips`, `RecentSearchList`
   - Local cache hook for offline snapshot behavior
+  - Android keyboard compatibility guards for Samsung-class IME behavior
+
+- Onboarding validation
+  - Date of birth input is strict `MMDDYYYY`
+  - Date must be valid calendar date and strictly earlier than current day
 
 ## Project Structure
 
@@ -71,12 +76,17 @@ npx eas build --platform android --profile production
 `@react-native-async-storage/async-storage` is declared in `package.json` and used by cache hooks.
 If dependency install fails in an offline shell, run `npm install` from an online environment to activate durable on-device persistence.
 
+## Android Runtime Note
+
+When using Expo Go performance overlays (draw-over-app), some Android devices can temporarily lock input/gesture behavior during app switch or swipe-away. Disable overlays before backgrounding and restart with `npx expo start -c` if it occurs.
+
 ## Documentation Index
 
 - [Build Status](BUILD_STATUS.md)
 - [Android Build Guide](ANDROID_BUILD_GUIDE.md)
 - [Mobile Workflow Notes](docs/MOBILE_WORKFLOW_NOTES.md)
 - [Frontend Checklist Status](docs/FRONTEND_CHECKLIST_STATUS.md)
+- [Frontend Handoff Checklist](docs/FRONTEND_HANDOFF_CHECKLIST.md)
 - [Navigation Flows](docs/FLOWS.md)
 - [Backend Contracts](docs/FLOWS_BACKEND.md)
 - [AI Handoff](docs/AI_HANDOFF.md)

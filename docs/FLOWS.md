@@ -31,6 +31,27 @@ Main tabs:
 - `/(tabs)/social`
 - `/(tabs)/profile`
 
+## Onboarding Flow
+
+Entry:
+- `/onboarding`
+
+Sequence:
+1. Welcome
+2. Email
+3. Birthdate
+4. Preferences
+5. Complete -> route to `/(tabs)/news`
+
+Validation gates:
+- Email step: requires basic valid email pattern (`includes("@")` in current client rule).
+- Birthdate step:
+  - format must be `MMDDYYYY` (8 numeric chars)
+  - must map to a real calendar date
+  - must be strictly earlier than current local day
+  - terms acceptance must be enabled
+- Preferences step: at least 1 genre, play style selected, platform selected.
+
 ## Feed Flow
 
 Entry:
@@ -167,3 +188,8 @@ Registered in tab layout with `href: null`:
   `video-preview`.
 
 These are reachable by programmatic navigation and preserve tab shell context.
+
+## Android Runtime Guardrails
+
+- Samsung keyboard/input compatibility is enforced through shared Android input props.
+- If Expo Go performance overlays are enabled, app switch/swipe-away may temporarily lock input on some devices; disable overlay and restart Metro (`npx expo start -c`) if reproduced.

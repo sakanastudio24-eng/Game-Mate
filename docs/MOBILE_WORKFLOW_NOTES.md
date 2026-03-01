@@ -36,6 +36,11 @@ Use this checklist before calling the preview build "ready":
 - Collection tabs (Videos/Games/Groups) all render and route correctly.
 - Video preview cards are tappable and open preview route.
 
+7. Onboarding validation gates
+- Birthdate input accepts only `MMDDYYYY`.
+- Birthdate must be a real date and strictly earlier than current day.
+- Continue remains disabled until date + terms checks pass.
+
 ## 1.1) 2026-03-01 Checklist Execution Log
 
 Completed this pass:
@@ -69,8 +74,12 @@ Completed this pass:
 - Added app-level `ToastProvider` and `useToast()` hook.
 - Migrated feed and groups undo/action toasts to global host.
 
+8. Android runtime hardening
+- Added shared Android input compatibility props for Samsung keyboard/input stability.
+- Added runtime docs note for Expo Go overlay lockups during app switching.
+
 Still open:
-- Real persistent storage package install completion in online environment (dependency now declared but install could not run in this offline sandbox).
+- Cross-device cold-start persistence verification matrix (Android and iOS) after AsyncStorage install.
 - Backend-driven autocomplete suggestions.
 - Full activity badge system, duplicate-group templates, and pull-to-refresh animation polish.
 
@@ -330,3 +339,12 @@ Scope audited: current Expo Router app under `app/` and shared modules under `sr
 1. Add `React.memo` for additional repeated cards on Profile tabs.
 2. Add `getItemLayout` where row height is fixed for extra scroll performance.
 3. Introduce TanStack Query when backend integration expands beyond current AI/search usage.
+
+## 13) Frontend Handoff Checklist (Release/Backend Ready)
+
+- Canonical checklist: `docs/FRONTEND_HANDOFF_CHECKLIST.md`
+- Keep this checklist in sync with:
+  1. `README.md`
+  2. `docs/FLOWS.md`
+  3. `BUILD_STATUS.md`
+  4. `docs/FRONTEND_CHECKLIST_STATUS.md`

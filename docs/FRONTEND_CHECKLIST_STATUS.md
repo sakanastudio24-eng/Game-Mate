@@ -2,47 +2,62 @@
 
 Last updated: 2026-03-01
 
-## Completed in this implementation pass
+## Completed
 
-1. Skeleton primitives
-- Added `SkeletonAvatar`, `SkeletonLine`, `SkeletonList` in `src/components/ui/Skeleton.tsx`.
+1. Skeleton primitives and loading states
+- `SkeletonAvatar`, `SkeletonLine`, `SkeletonList` available.
+- Search/feed/group recommendation surfaces render skeletons instead of blank states.
 
 2. Optimistic interactions
-- Feed like toggle is now optimistic with undo toast.
-- Group join and swipe-join are optimistic with undo toast.
+- Feed likes update instantly with undo toast.
+- Groups join actions (list + swipe modal) update instantly with undo toast.
 
 3. Local cache foundation
-- Added `useLocalCache(key)` hook.
-- Applied to feed snapshots/likes/saves, group joins/deletes, recent searches, and continue surfaces.
-- Added `@react-native-async-storage/async-storage` dependency entry in `package.json` for persistent storage backend.
+- `useLocalCache(key)` implemented.
+- Applied to feed snapshot state, likes/saves, group joins/deletes, recent searches, and continue surfaces.
+- AsyncStorage package is installed in workspace.
 
 4. Search UX upgrades
-- Added `useDebouncedValue`.
-- Added recent-search list component and clear action.
-- Added reusable filter chips and wired category filters in video search.
-- Added reusable `EmptyState` to strengthen no-results and error UX.
-- Added local autocomplete suggestion panel on video search.
+- Debounced query input on heavy search surfaces.
+- Recent-search list + clear action.
+- Local autocomplete suggestions (titles/authors/categories/recents).
+- Filter chips + stronger empty/error state presentation.
 
-5. Continue + saved behavior
-- Continue surfaces added for last search/last video and last opened group.
-- Saved IDs are now cached locally in feed.
+5. Global feedback architecture
+- Global `ToastProvider` wired at app root.
+- Feed and groups migrated to shared toast actions.
 
-6. Share pattern
-- Added copy-link fallback placeholder options in feed and groups share sheets.
+6. Back behavior reliability
+- `useSafeBackNavigation()` is route-aware and parent-aware.
+- Back buttons now prefer real stack history before fallback route mapping.
 
-## Partially complete
+7. Android runtime hardening
+- Shared `androidKeyboardCompatProps` applied across text/search inputs.
+- Group swipe pan-responder tuned to reduce native-gesture blocking.
+- Expo Go overlay lockup caveat documented in Android guides.
 
-1. Offline cache durability
-- Storage hook is wired for AsyncStorage-backed persistence and dependency is declared.
-- In this offline coding environment, package fetch/install could not complete, so local install must be finalized in an online environment.
+8. Onboarding validation hardening
+- Birthdate requires valid `MMDDYYYY`.
+- Date must be strictly before current day.
 
-2. Toast architecture
-- Added reusable `Toast` component plus global `ToastProvider` and `useToast()` hook.
-- Feed and Groups are migrated to global toasts; remaining screens can adopt gradually.
+## Partially Complete
 
-## Not complete in this pass
+1. Offline cache durability verification
+- AsyncStorage-backed hook path exists and package is installed.
+- Cross-device cold-restart validation matrix is still pending.
 
-1. Global activity badges system (`Active today`, `New`, `Last updated`).
-3. Pull-to-refresh animation layer.
-4. Duplicate group settings/template picker flow.
-5. Shared `useOptimisticToggle()` adoption across every toggle interaction (currently used in feed likes).
+2. Toast migration breadth
+- Shared toast is in place, but some screens still use non-toast local feedback patterns.
+
+## Not Complete (Planned)
+
+1. Global activity badges (`Active today`, `New`, `Last updated`).
+2. Pull-to-refresh motion polish on all list-heavy screens.
+3. Duplicate group settings/template picker flow.
+4. Full shared `useOptimisticToggle()` adoption across every toggle interaction.
+
+## Canonical Handoff
+
+- Delivery checklist: `docs/FRONTEND_HANDOFF_CHECKLIST.md`
+- Runtime/build status: `BUILD_STATUS.md`
+- Navigation contracts: `docs/FLOWS.md`

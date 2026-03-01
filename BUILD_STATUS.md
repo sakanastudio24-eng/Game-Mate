@@ -48,11 +48,18 @@ Resolved in this update:
   - app-level `ToastProvider` wired in root layout
   - feed and groups migrated to `useToast()` for shared undo/action feedback
 - Autocomplete suggestions added on video search using local sources (feed titles/authors/categories + recent searches)
+- Android runtime input hardening:
+  - shared Samsung-safe keyboard/input props applied across search + text entry surfaces
+  - reduced pan-responder native gesture blocking in group swipe modal
+- Onboarding hard validation:
+  - DOB requires valid `MMDDYYYY`
+  - DOB must be strictly before current day
+  - success/error hint state added for DOB quality signal
 
 Open follow-ups:
 - Migrate additional list-heavy screens to skeleton loading when API wiring starts (messages, notifications, discover)
 - Add visual regression checks for safe-area + skeleton states across device classes
-- Complete AsyncStorage dependency install in online environment (`@react-native-async-storage/async-storage` is declared but package install failed in offline sandbox)
+- Validate cold-start persistence across Android/iOS device matrix (AsyncStorage package is installed in current workspace)
 - Wire backend autocomplete to replace local suggestion fallback on `/(tabs)/ai-advisor`
 
 ## 3) Backend Endpoint Inventory (All v1 Endpoints)
@@ -178,3 +185,10 @@ Notable hidden routes currently in use:
 - Recommendation flows work with backend and local fallback
 - Platform connections persist + reload correctly
 - Error/rate-limit envelopes match the contract
+
+## 8) Frontend Handoff
+
+- Frontend implementation handoff checklist:
+  - `docs/FRONTEND_HANDOFF_CHECKLIST.md`
+- Frontend implementation status tracker:
+  - `docs/FRONTEND_CHECKLIST_STATUS.md`

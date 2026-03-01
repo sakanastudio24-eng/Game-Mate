@@ -51,6 +51,19 @@ export function Header({
   const resolvedRightIcon2 = rightAction2?.icon ?? rightIcon2;
   const resolvedRightPress2 = rightAction2?.onPress ?? onRightPress2;
   const topPadding = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
+  const handleBackPress = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/(tabs)/profile" as any);
+  };
 
   return (
     <View
@@ -65,7 +78,7 @@ export function Header({
       <View style={styles.leftSection}>
         {showBackButton && (
           <Pressable
-            onPress={onBack ?? (() => router.back())}
+            onPress={handleBackPress}
             style={[
               styles.backButton,
               {

@@ -1,17 +1,20 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { List, Text } from "react-native-paper";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { colors, spacing } from "../../src/lib/theme";
 
-// ProfileScreen: Tab 4 - User profile, stats, settings
-// Backend integration: GET /api/me endpoint in Phase B
-// Navigates to settings, edit profile, QR code screens
+const statRows = [
+  { label: "Groups", value: String(mockCurrentUser.groupsJoined), icon: "account-group" },
+  { label: "Games", value: String(mockCurrentUser.gamesPlayed.length), icon: "gamepad-variant" },
+  { label: "Wins", value: String(mockCurrentUser.stats?.wins ?? 0), icon: "trophy" },
+  { label: "Hours", value: `${Math.floor(mockCurrentUser.totalHours / 100) / 10}K`, icon: "clock-outline" },
+] as const;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -20,251 +23,256 @@ export default function ProfileScreen() {
     <Screen scrollable>
       <Header
         title="Profile"
-        rightAction={{
-          icon: "cog",
-          onPress: () => router.push("/(tabs)/settings" as any),
-          label: "Settings",
-        }}
+        subtitle="Your gamer identity"
+        rightAction={{ icon: "cog", onPress: () => router.push("/(tabs)/settings" as any) }}
       />
 
-      {/* User card */}
-      <Card variant="default" style={styles.userCard}>
-        <View style={styles.userHeader}>
-          <Text style={styles.userAvatar}>{mockCurrentUser.avatar}</Text>
-          <View style={styles.userInfo}>
-            <Text style={styles.username}>{mockCurrentUser.username}</Text>
-            <Text style={styles.bio}>{mockCurrentUser.bio}</Text>
-          </View>
+      <View style={styles.hero}>
+        <View style={styles.avatarRing}>
+          <Text style={styles.avatar}>{mockCurrentUser.avatar}</Text>
         </View>
 
-        {/* QR button */}
+        <View style={styles.nameRow}>
+          <Text style={styles.username}>{mockCurrentUser.username}</Text>
+          <MaterialCommunityIcons name="check-decagram" size={18} color={colors.primary} />
+        </View>
+
+        <Text style={styles.status}>Online • Playing Valorant</Text>
+        <Text style={styles.bio}>{mockCurrentUser.bio}</Text>
+
         <Pressable
-          onPress={() => router.push("/(tabs)/qr-code" as any)}
-          style={({ pressed }) => [
-            styles.qrButton,
-            pressed && { opacity: 0.7 },
-          ]}
+          onPress={() => router.push("/(tabs)/edit-profile" as any)}
+          style={styles.editButton}
         >
-          <MaterialCommunityIcons
-            name="qrcode"
-            size={20}
-            color={colors.primary}
-          />
-          <Text style={styles.qrButtonText}>Show QR Code</Text>
+          <MaterialCommunityIcons name="pencil" size={16} color={colors.background} />
+          <Text style={styles.editButtonText}>Edit Profile</Text>
         </Pressable>
-      </Card>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{mockCurrentUser.level}</Text>
-          <Text style={styles.statLabel}>Level</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>{mockCurrentUser.groupsJoined}</Text>
-          <Text style={styles.statLabel}>Groups</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>
-            {mockCurrentUser.gamesPlayed.length}
-          </Text>
-          <Text style={styles.statLabel}>Games</Text>
-        </View>
       </View>
 
-      {/* Games */}
-      <Card variant="default">
-        <Text style={styles.sectionTitle}>Favorite Games</Text>
-        <View style={styles.gamesList}>
-          {mockCurrentUser.gamesPlayed.map((game, idx) => (
-            <View key={idx} style={styles.gameTag}>
-              <Text style={styles.gameTagText}>{game}</Text>
+      <View style={styles.statsGrid}>
+        {statRows.map((stat) => (
+          <View key={stat.label} style={styles.statTile}>
+            <MaterialCommunityIcons name={stat.icon as any} size={18} color={colors.primary} />
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      <Card>
+        <Text style={styles.sectionTitle}>Achievements</Text>
+        <View style={styles.badgesWrap}>
+          {mockCurrentUser.badges.map((badge) => (
+            <View key={badge} style={styles.badgePill}>
+              <MaterialCommunityIcons name="star-four-points" size={14} color={colors.primary} />
+              <Text style={styles.badgeText}>{badge}</Text>
             </View>
           ))}
         </View>
       </Card>
 
-      {/* Settings menu */}
-      <Card variant="default" style={styles.settingsCard}>
-        <Text style={styles.sectionTitle}>Settings</Text>
-
-        <List.Item
-          title="Edit Profile"
-          left={() => (
-            <MaterialCommunityIcons
-              name="pencil"
-              size={20}
-              color={colors.primary}
-            />
+      <Card>
+        <View style={styles.gamesHeader}>
+          <Text style={styles.sectionTitle}>My Games</Text>
+          <Text style={styles.gamesCount}>{mockCurrentUser.gamesPlayed.length} games</Text>
+        </View>
+        <FlatList
+          data={mockCurrentUser.gamesPlayed}
+          keyExtractor={(item) => item}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.gameTile}>
+              <Text style={styles.gameTitle}>{item}</Text>
+            </View>
           )}
-          titleStyle={styles.listTitle}
-          onPress={() => router.push("/(tabs)/edit-profile" as any)}
         />
+      </Card>
 
-        <List.Item
-          title="Account Settings"
-          left={() => (
-            <MaterialCommunityIcons
-              name="lock"
-              size={20}
-              color={colors.primary}
-            />
-          )}
-          titleStyle={styles.listTitle}
-          onPress={() => router.push("/(tabs)/account-settings" as any)}
-        />
+      <Card style={styles.settingsCard}>
+        <Text style={styles.sectionTitle}>Quick Settings</Text>
 
-        <List.Item
-          title="Notifications"
-          left={() => (
+        {[
+          { label: "Account Settings", icon: "lock", route: "/(tabs)/account-settings" },
+          { label: "Notifications", icon: "bell", route: "/(tabs)/notification-settings" },
+          { label: "Privacy & Security", icon: "shield", route: "/(tabs)/privacy-settings" },
+          { label: "Help & Support", icon: "help-circle", route: "/(tabs)/help" },
+          { label: "My QR Code", icon: "qrcode", route: "/(tabs)/qr-code" },
+        ].map((item) => (
+          <Pressable
+            key={item.label}
+            onPress={() => router.push(item.route as any)}
+            style={styles.menuRow}
+          >
+            <View style={styles.menuRowLeft}>
+              <MaterialCommunityIcons name={item.icon as any} size={20} color={colors.primary} />
+              <Text style={styles.menuRowText}>{item.label}</Text>
+            </View>
             <MaterialCommunityIcons
-              name="bell"
+              name="chevron-right"
               size={20}
-              color={colors.primary}
+              color={colors.textMuted}
             />
-          )}
-          titleStyle={styles.listTitle}
-          onPress={() => router.push("/(tabs)/notification-settings" as any)}
-        />
-
-        <List.Item
-          title="Privacy & Security"
-          left={() => (
-            <MaterialCommunityIcons
-              name="shield"
-              size={20}
-              color={colors.primary}
-            />
-          )}
-          titleStyle={styles.listTitle}
-          onPress={() => router.push("/(tabs)/privacy-settings" as any)}
-        />
-
-        <List.Item
-          title="Help & Support"
-          left={() => (
-            <MaterialCommunityIcons
-              name="help-circle"
-              size={20}
-              color={colors.primary}
-            />
-          )}
-          titleStyle={styles.listTitle}
-          onPress={() => router.push("/(tabs)/help" as any)}
-        />
-
-        <List.Item
-          title="Logout"
-          left={() => (
-            <MaterialCommunityIcons
-              name="logout"
-              size={20}
-              color={colors.destructive}
-            />
-          )}
-          titleStyle={[styles.listTitle, { color: colors.destructive }]}
-          onPress={() => router.replace("/(tabs)/news" as any)}
-        />
+          </Pressable>
+        ))}
       </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  userCard: {
+  hero: {
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
     marginBottom: spacing.lg,
-  },
-  userHeader: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: spacing.md,
+  },
+  avatarRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: spacing.md,
   },
-  userAvatar: {
-    fontSize: 56,
+  avatar: {
+    fontSize: 60,
   },
-  userInfo: {
-    flex: 1,
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
   },
   username: {
     color: colors.text,
-    fontWeight: "700",
-    fontSize: 18,
-    marginBottom: spacing.xs,
+    fontWeight: "800",
+    fontSize: 26,
+  },
+  status: {
+    color: colors.online,
+    fontSize: 12,
+    marginTop: spacing.xs,
   },
   bio: {
     color: colors.textMuted,
-    fontSize: 12,
+    marginTop: spacing.sm,
+    textAlign: "center",
+    lineHeight: 20,
   },
-  qrButton: {
+  editButton: {
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.sm,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    gap: spacing.xs,
   },
-  qrButtonText: {
-    color: colors.primary,
-    fontWeight: "600",
-    fontSize: 14,
+  editButtonText: {
+    color: colors.background,
+    fontWeight: "700",
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    flexWrap: "wrap",
+    gap: spacing.sm,
     marginBottom: spacing.lg,
   },
-  statCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    alignItems: "center",
+  statTile: {
+    width: "48%",
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    flex: 1,
-    marginHorizontal: spacing.xs,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
   },
   statValue: {
-    color: colors.primary,
+    color: colors.text,
     fontWeight: "700",
     fontSize: 20,
-    marginBottom: spacing.xs,
+    marginTop: spacing.xs,
   },
   statLabel: {
     color: colors.textMuted,
+    marginTop: 2,
     fontSize: 12,
   },
   sectionTitle: {
     color: colors.text,
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 15,
     marginBottom: spacing.md,
   },
-  gamesList: {
+  badgesWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
   },
-  gameTag: {
+  badgePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
     backgroundColor: colors.background,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: colors.border,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
   },
-  gameTagText: {
-    color: colors.primary,
+  badgeText: {
+    color: colors.text,
     fontSize: 12,
     fontWeight: "600",
+  },
+  gamesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  gamesCount: {
+    color: colors.textMuted,
+    fontSize: 12,
+  },
+  gameTile: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginRight: spacing.sm,
+    minWidth: 130,
+  },
+  gameTitle: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 13,
   },
   settingsCard: {
     marginBottom: spacing.xl,
   },
-  listTitle: {
+  menuRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  menuRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  menuRowText: {
     color: colors.text,
     fontSize: 14,
+    fontWeight: "600",
   },
 });

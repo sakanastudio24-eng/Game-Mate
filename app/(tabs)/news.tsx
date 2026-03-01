@@ -10,6 +10,8 @@ import {
   View,
 } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
+import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 type CategoryId = "fyp" | "esports" | "patches" | "streams";
@@ -86,6 +88,7 @@ const feed: FeedItem[] = [
 
 export default function NewsScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [activeCategory, setActiveCategory] = useState<CategoryId>("fyp");
   const [searchQuery, setSearchQuery] = useState("");
   const [liked, setLiked] = useState<string[]>([]);
@@ -119,138 +122,163 @@ export default function NewsScreen() {
         data={filteredItems}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
-          <View style={styles.headerWrap}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title}>News</Text>
-              <Pressable
-                onPress={() => router.push("/(tabs)/qr-code")}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
-              </Pressable>
-            </View>
-
-            <Searchbar
-              placeholder="Search news, creators, games..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              style={styles.searchbar}
-              inputStyle={styles.searchInput}
-              placeholderTextColor={colors.textMuted}
-              iconColor={colors.textMuted}
-            />
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.pillsRow}
+          <AnimatedEntrance>
+            <View
+              style={[
+                styles.headerWrap,
+                {
+                  paddingHorizontal: responsive.horizontalPadding,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                },
+              ]}
             >
-              {categories.map((category) => {
-                const isActive = category.id === activeCategory;
-                return (
-                  <Pressable
-                    key={category.id}
-                    onPress={() => setActiveCategory(category.id)}
-                    style={[
-                      styles.pill,
-                      isActive ? styles.pillActive : undefined,
-                    ]}
-                  >
-                    <Text style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}>
-                      {category.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
+              <View style={styles.titleRow}>
+                <Text style={[styles.title, { fontSize: responsive.titleSize }]}>News</Text>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/qr-code")}
+                  style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+                </Pressable>
+              </View>
+
+              <Searchbar
+                placeholder="Search news, creators, games..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                style={styles.searchbar}
+                inputStyle={styles.searchInput}
+                placeholderTextColor={colors.textMuted}
+                iconColor={colors.textMuted}
+              />
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.pillsRow}
+              >
+                {categories.map((category) => {
+                  const isActive = category.id === activeCategory;
+                  return (
+                    <Pressable
+                      key={category.id}
+                      onPress={() => setActiveCategory(category.id)}
+                      style={[
+                        styles.pill,
+                        isActive ? styles.pillActive : undefined,
+                      ]}
+                    >
+                      <Text style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}>
+                        {category.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </AnimatedEntrance>
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const isLiked = liked.includes(item.id);
           const isSaved = saved.includes(item.id);
 
           return (
-            <View style={styles.card}>
-              <View style={styles.postHeader}>
-                <Image source={{ uri: authorAvatars[item.author] }} style={styles.avatar} />
-                <View style={styles.postHeaderText}>
-                  <Text style={styles.author}>{item.author}</Text>
-                  <Text style={styles.date}>{item.date}</Text>
+            <AnimatedEntrance delay={80 + index * 80}>
+              <View
+                style={[
+                  styles.card,
+                  {
+                    marginHorizontal: responsive.horizontalPadding,
+                    borderRadius: responsive.cardRadius,
+                    maxWidth: responsive.contentMaxWidth,
+                    alignSelf: "center",
+                    width: "100%",
+                  },
+                ]}
+              >
+                <View style={styles.postHeader}>
+                  <Image source={{ uri: authorAvatars[item.author] }} style={styles.avatar} />
+                  <View style={styles.postHeaderText}>
+                    <Text style={styles.author}>{item.author}</Text>
+                    <Text style={styles.date}>{item.date}</Text>
+                  </View>
+                  <Pressable hitSlop={8}>
+                    <MaterialCommunityIcons
+                      name="dots-horizontal"
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
                 </View>
-                <Pressable hitSlop={8}>
-                  <MaterialCommunityIcons
-                    name="dots-horizontal"
-                    size={18}
-                    color={colors.textSecondary}
-                  />
-                </Pressable>
-              </View>
 
-              <View style={styles.mediaWrap}>
-                <Image source={{ uri: item.thumbnail }} style={styles.media} />
+                <View style={styles.mediaWrap}>
+                  <Image source={{ uri: item.thumbnail }} style={styles.media} />
 
-                {item.type === "video" && (
-                  <View style={styles.videoPlayWrap}>
-                    <View style={styles.videoPlayInner}>
-                      <MaterialCommunityIcons name="play" size={26} color="#1A1A1A" />
+                  {item.type === "video" && (
+                    <View style={styles.videoPlayWrap}>
+                      <View style={styles.videoPlayInner}>
+                        <MaterialCommunityIcons name="play" size={26} color="#1A1A1A" />
+                      </View>
                     </View>
+                  )}
+
+                  {item.duration ? (
+                    <View style={styles.durationBadge}>
+                      <MaterialCommunityIcons name="play" size={12} color={colors.text} />
+                      <Text style={styles.durationText}>{item.duration}</Text>
+                    </View>
+                  ) : null}
+
+                  <View style={styles.titleOverlay}>
+                    <Text style={styles.itemTitle}>{item.title}</Text>
                   </View>
-                )}
-
-                {item.duration ? (
-                  <View style={styles.durationBadge}>
-                    <MaterialCommunityIcons name="play" size={12} color={colors.text} />
-                    <Text style={styles.durationText}>{item.duration}</Text>
-                  </View>
-                ) : null}
-
-                <View style={styles.titleOverlay}>
-                  <Text style={styles.itemTitle}>{item.title}</Text>
-                </View>
-              </View>
-
-              <View style={styles.actionsRow}>
-                <View style={styles.actionsLeft}>
-                  <Pressable onPress={() => toggleLike(item.id)} style={styles.actionButton}>
-                    <MaterialCommunityIcons
-                      name={isLiked ? "heart" : "heart-outline"}
-                      size={20}
-                      color={isLiked ? colors.destructive : colors.textSecondary}
-                    />
-                    <Text style={styles.actionCount}>{item.likes + (isLiked ? 1 : 0)}</Text>
-                  </Pressable>
-
-                  <Pressable style={styles.actionButton}>
-                    <MaterialCommunityIcons
-                      name="message-outline"
-                      size={20}
-                      color={colors.textSecondary}
-                    />
-                    <Text style={styles.actionCount}>{item.comments}</Text>
-                  </Pressable>
-
-                  <Pressable style={styles.actionButton}>
-                    <MaterialCommunityIcons
-                      name="share-variant-outline"
-                      size={20}
-                      color={colors.textSecondary}
-                    />
-                  </Pressable>
                 </View>
 
-                <Pressable onPress={() => toggleSave(item.id)}>
-                  <MaterialCommunityIcons
-                    name={isSaved ? "bookmark" : "bookmark-outline"}
-                    size={20}
-                    color={isSaved ? colors.primary : colors.textSecondary}
-                  />
-                </Pressable>
+                <View style={styles.actionsRow}>
+                  <View style={styles.actionsLeft}>
+                    <Pressable onPress={() => toggleLike(item.id)} style={styles.actionButton}>
+                      <MaterialCommunityIcons
+                        name={isLiked ? "heart" : "heart-outline"}
+                        size={20}
+                        color={isLiked ? colors.destructive : colors.textSecondary}
+                      />
+                      <Text style={styles.actionCount}>{item.likes + (isLiked ? 1 : 0)}</Text>
+                    </Pressable>
+
+                    <Pressable style={styles.actionButton}>
+                      <MaterialCommunityIcons
+                        name="message-outline"
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                      <Text style={styles.actionCount}>{item.comments}</Text>
+                    </Pressable>
+
+                    <Pressable style={styles.actionButton}>
+                      <MaterialCommunityIcons
+                        name="share-variant-outline"
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                    </Pressable>
+                  </View>
+
+                  <Pressable onPress={() => toggleSave(item.id)}>
+                    <MaterialCommunityIcons
+                      name={isSaved ? "bookmark" : "bookmark-outline"}
+                      size={20}
+                      color={isSaved ? colors.primary : colors.textSecondary}
+                    />
+                  </Pressable>
+                </View>
               </View>
-            </View>
+            </AnimatedEntrance>
           );
         }}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
+          <View style={[styles.emptyState, { paddingHorizontal: responsive.horizontalPadding }]}> 
             <Text style={styles.emptyTitle}>No posts found</Text>
             <Text style={styles.emptyCopy}>Try a different search or category.</Text>
           </View>
@@ -271,7 +299,6 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
   headerWrap: {
-    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
   },
   titleRow: {
@@ -282,7 +309,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 36,
     fontWeight: "800",
   },
   iconButton: {
@@ -332,8 +358,6 @@ const styles = StyleSheet.create({
   },
   card: {
     marginTop: spacing.md,
-    marginHorizontal: spacing.md,
-    borderRadius: 22,
     backgroundColor: "#242424",
     borderWidth: 1,
     borderColor: colors.border,

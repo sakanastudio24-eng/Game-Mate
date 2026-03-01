@@ -3,7 +3,9 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { mockCurrentUser } from "../../src/lib/mockData";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 const SELF_AVATAR =
@@ -78,126 +80,194 @@ const games = [
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
 
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.cover}>
-          <View style={styles.coverPattern} />
+        <AnimatedEntrance>
+          <View style={styles.cover}>
+            <View style={styles.coverPattern} />
 
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => router.push("/(tabs)/qr-code")}
-              style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}
+            <View
+              style={[
+                styles.headerActions,
+                { right: responsive.horizontalPadding },
+              ]}
             >
-              <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
-            </Pressable>
-            <Pressable
-              onPress={() => router.push("/(tabs)/settings")}
-              style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}
-            >
-              <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.profileBlock}>
-          <View style={styles.avatarRing}>
-            <Image source={{ uri: SELF_AVATAR }} style={styles.avatar} />
-          </View>
-          <View style={styles.onlineDot} />
-
-          <View style={styles.nameRow}>
-            <Text style={styles.name}>PlayerMaker34</Text>
-            <MaterialCommunityIcons name="check-decagram" size={18} color={colors.primary} />
-          </View>
-
-          <View style={styles.statusRow}>
-            <MaterialCommunityIcons name="controller-classic-outline" size={15} color={colors.textSecondary} />
-            <Text style={styles.statusText}>Online · Playing Overwatch</Text>
-          </View>
-
-          <Text style={styles.bio}>
-            Competitive gamer · Tournament organizer · Always looking for new challenges
-          </Text>
-
-          <Pressable
-            onPress={() => router.push("/(tabs)/edit-profile")}
-            style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
-          >
-            <MaterialCommunityIcons name="pencil-outline" size={16} color="#1A1A1A" />
-            <Text style={styles.editButtonText}>Edit Profile</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Stats</Text>
-          <View style={styles.statsGrid}>
-            {statRows.map((stat) => (
-              <View key={stat.label} style={styles.statCard}>
-                <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Achievements</Text>
-          <View style={styles.achievementsGrid}>
-            {achievements.map((achievement) => (
-              <View
-                key={achievement.name}
-                style={[
-                  styles.achievementCard,
-                  { borderColor: `${achievement.color}44` },
-                ]}
+              <Pressable
+                onPress={() => router.push("/(tabs)/qr-code")}
+                style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}
               >
+                <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+              </Pressable>
+              <Pressable
+                onPress={() => router.push("/(tabs)/settings")}
+                style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
+              </Pressable>
+            </View>
+          </View>
+        </AnimatedEntrance>
+
+        <AnimatedEntrance delay={80}>
+          <View
+            style={[
+              styles.profileBlock,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <View style={styles.avatarRing}>
+              <Image source={{ uri: SELF_AVATAR }} style={styles.avatar} />
+            </View>
+            <View style={styles.onlineDot} />
+
+            <View style={styles.nameRow}>
+              <Text style={[styles.name, { fontSize: responsive.isTablet ? 34 : 30 }]}>PlayerMaker34</Text>
+              <MaterialCommunityIcons name="check-decagram" size={18} color={colors.primary} />
+            </View>
+
+            <View style={styles.statusRow}>
+              <MaterialCommunityIcons name="controller-classic-outline" size={15} color={colors.textSecondary} />
+              <Text style={styles.statusText}>Online · Playing Overwatch</Text>
+            </View>
+
+            <Text style={styles.bio}>
+              Competitive gamer · Tournament organizer · Always looking for new challenges
+            </Text>
+
+            <Pressable
+              onPress={() => router.push("/(tabs)/edit-profile")}
+              style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
+            >
+              <MaterialCommunityIcons name="pencil-outline" size={16} color="#1A1A1A" />
+              <Text style={styles.editButtonText}>Edit Profile</Text>
+            </Pressable>
+          </View>
+        </AnimatedEntrance>
+
+        <AnimatedEntrance delay={140}>
+          <View
+            style={[
+              styles.section,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <Text style={styles.sectionTitle}>Stats</Text>
+            <View style={styles.statsGrid}>
+              {statRows.map((stat) => (
+                <View key={stat.label} style={styles.statCard}>
+                  <MaterialCommunityIcons name={stat.icon as any} size={20} color={stat.color} />
+                  <Text style={styles.statValue}>{stat.value}</Text>
+                  <Text style={styles.statLabel}>{stat.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </AnimatedEntrance>
+
+        <AnimatedEntrance delay={200}>
+          <View
+            style={[
+              styles.section,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <Text style={styles.sectionTitle}>Achievements</Text>
+            <View style={styles.achievementsGrid}>
+              {achievements.map((achievement) => (
                 <View
+                  key={achievement.name}
                   style={[
-                    styles.achievementIconWrap,
-                    { backgroundColor: `${achievement.color}22` },
+                    styles.achievementCard,
+                    { borderColor: `${achievement.color}44` },
                   ]}
                 >
-                  <MaterialCommunityIcons
-                    name={achievement.icon as any}
-                    size={22}
-                    color={achievement.color}
-                  />
+                  <View
+                    style={[
+                      styles.achievementIconWrap,
+                      { backgroundColor: `${achievement.color}22` },
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name={achievement.icon as any}
+                      size={22}
+                      color={achievement.color}
+                    />
+                  </View>
+                  <Text style={styles.achievementName}>{achievement.name}</Text>
+                  <Text style={[styles.achievementRarity, { color: achievement.color }]}>
+                    {achievement.rarity}
+                  </Text>
                 </View>
-                <Text style={styles.achievementName}>{achievement.name}</Text>
-                <Text style={[styles.achievementRarity, { color: achievement.color }]}>
-                  {achievement.rarity}
-                </Text>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        </AnimatedEntrance>
 
-        <View style={styles.section}>
-          <View style={styles.gamesHeader}>
-            <Text style={styles.sectionTitle}>My Games</Text>
-            <Text style={styles.gamesCount}>{games.length} games</Text>
-          </View>
+        <AnimatedEntrance delay={260}>
+          <View
+            style={[
+              styles.section,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <View style={styles.gamesHeader}>
+              <Text style={styles.sectionTitle}>My Games</Text>
+              <Text style={styles.gamesCount}>{games.length} games</Text>
+            </View>
 
-          <View style={styles.gamesGrid}>
-            {games.map((game) => (
-              <View key={game.name} style={styles.gameCard}>
-                <Image source={{ uri: game.image }} style={styles.gameImage} />
-                <View style={styles.gameOverlay}>
-                  <Text style={styles.gameName}>{game.name}</Text>
-                  <Text style={styles.gameHours}>{game.hours}h</Text>
+            <View style={styles.gamesGrid}>
+              {games.map((game) => (
+                <View key={game.name} style={styles.gameCard}>
+                  <Image source={{ uri: game.image }} style={styles.gameImage} />
+                  <View style={styles.gameOverlay}>
+                    <Text style={styles.gameName}>{game.name}</Text>
+                    <Text style={styles.gameHours}>{game.hours}h</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
-        </View>
+        </AnimatedEntrance>
 
-        <View style={styles.accountMeta}>
-          <Text style={styles.accountMetaText}>@{mockCurrentUser.username}</Text>
-          <Text style={styles.accountMetaText}>Level {mockCurrentUser.level}</Text>
-        </View>
+        <AnimatedEntrance delay={320}>
+          <View
+            style={[
+              styles.accountMeta,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <Text style={styles.accountMetaText}>@{mockCurrentUser.username}</Text>
+            <Text style={styles.accountMetaText}>Level {mockCurrentUser.level}</Text>
+          </View>
+        </AnimatedEntrance>
       </ScrollView>
     </View>
   );
@@ -224,7 +294,6 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     position: "absolute",
-    right: spacing.md,
     top: 52,
     flexDirection: "row",
   },
@@ -240,7 +309,6 @@ const styles = StyleSheet.create({
     borderColor: "rgba(245,245,245,0.2)",
   },
   profileBlock: {
-    paddingHorizontal: spacing.md,
     marginTop: -58,
     marginBottom: spacing.lg,
   },
@@ -275,7 +343,6 @@ const styles = StyleSheet.create({
   },
   name: {
     color: colors.text,
-    fontSize: 30,
     fontWeight: "800",
     marginRight: 8,
   },
@@ -310,7 +377,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   section: {
-    paddingHorizontal: spacing.md,
     marginBottom: spacing.lg,
   },
   sectionTitle: {
@@ -412,7 +478,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   accountMeta: {
-    paddingHorizontal: spacing.md,
+    marginTop: 4,
   },
   accountMetaText: {
     color: colors.textSecondary,

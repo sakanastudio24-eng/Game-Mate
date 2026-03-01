@@ -1,8 +1,17 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
 import { Text } from "react-native-paper";
+import { useResponsive } from "../src/lib/responsive";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
 
 type Step = "welcome" | "email" | "birthdate" | "preferences";
@@ -53,6 +62,7 @@ const SOCIAL_AUTH = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [step, setStep] = useState<Step>("welcome");
   const [email, setEmail] = useState("");
   const [birthdate, setBirthdate] = useState("02/24/1999");
@@ -60,6 +70,30 @@ export default function OnboardingScreen() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [playStyle, setPlayStyle] = useState("");
+
+  const stepTransition = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    stepTransition.setValue(0);
+    Animated.timing(stepTransition, {
+      toValue: 1,
+      duration: 260,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [step, stepTransition]);
+
+  const stepAnimatedStyle = {
+    opacity: stepTransition,
+    transform: [
+      {
+        translateY: stepTransition.interpolate({
+          inputRange: [0, 1],
+          outputRange: [18, 0],
+        }),
+      },
+    ],
+  };
 
   const progress = useMemo(() => {
     if (step === "email") return 1;
@@ -115,246 +149,261 @@ export default function OnboardingScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.headerBlock}>
-        <Text style={styles.brandText}>Welcome to Game Mate</Text>
-        <Text style={styles.heading}>Create Account</Text>
+      <View
+        style={[
+          styles.inner,
+          {
+            paddingHorizontal: responsive.horizontalPadding,
+            maxWidth: responsive.contentMaxWidth,
+            alignSelf: "center",
+            width: "100%",
+          },
+        ]}
+      >
+        <View style={styles.headerBlock}>
+          <Text style={styles.brandText}>Welcome to Game Mate</Text>
+          <Text style={[styles.heading, { fontSize: responsive.isTablet ? 42 : 34 }]}>Create Account</Text>
+
+          {step !== "welcome" && (
+            <View style={styles.progressRow}>
+              {[1, 2, 3].map((index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.progressBar,
+                    index <= progress ? styles.progressBarActive : undefined,
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+
+        <Animated.View style={stepAnimatedStyle}>
+          {step === "welcome" && (
+            <View style={styles.stepSection}>
+              <View style={styles.welcomeHero}>
+                <View style={styles.logoCircle}>
+                  <MaterialCommunityIcons name="gamepad-variant" size={72} color="#1A1A1A" />
+                </View>
+                <Text style={styles.appTitle}>Game Mate</Text>
+                <Text style={styles.welcomeCopy}>Your Gaming Community Hub</Text>
+              </View>
+
+              <Text style={styles.authHint}>Sign in with your gaming account</Text>
+              <View style={styles.authList}>
+                {SOCIAL_AUTH.map((provider, index) => (
+                  <View key={provider.id} style={{ marginTop: index === 0 ? 0 : 0 }}>
+                    <Pressable
+                      onPress={handleSocialAuth}
+                      style={({ pressed }) => [styles.authButton, pressed && styles.pressed]}
+                    >
+                      <MaterialCommunityIcons
+                        name={provider.icon as any}
+                        size={20}
+                        color="#F5F5F5"
+                        style={styles.authIcon}
+                      />
+                      <Text style={styles.authLabel}>{provider.label}</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.orRow}>
+                <View style={styles.orLine} />
+                <Text style={styles.orText}>or</Text>
+                <View style={styles.orLine} />
+              </View>
+
+              <Pressable
+                onPress={handleNext}
+                style={({ pressed }) => [styles.primaryWideButton, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="email-outline" size={20} color="#1A1A1A" />
+                <Text style={styles.primaryWideButtonText}>Continue with Email</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {step === "email" && (
+            <View style={styles.stepSection}>
+              <Text style={styles.stepTitle}>What's Your Email?</Text>
+              <Text style={styles.stepCopy}>We'll use this to keep your account secure</Text>
+
+              <Text style={styles.fieldLabel}>Email Address</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="gamer@example.com"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.input}
+                />
+                {email.includes("@") && (
+                  <View style={styles.validBadge}>
+                    <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
+                  </View>
+                )}
+              </View>
+
+              <Pressable
+                onPress={() => setAcceptEmails((prev) => !prev)}
+                style={({ pressed }) => [
+                  styles.checkboxRow,
+                  acceptEmails ? styles.checkboxRowActive : undefined,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={[styles.checkbox, acceptEmails ? styles.checkboxOn : undefined]}>
+                  {acceptEmails && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
+                </View>
+                <Text style={styles.checkboxText}>
+                  Send me updates about Game Mate features and gaming news
+                </Text>
+              </Pressable>
+            </View>
+          )}
+
+          {step === "birthdate" && (
+            <View style={styles.stepSection}>
+              <Text style={styles.stepTitle}>When Were You Born?</Text>
+              <Text style={styles.stepCopy}>We need this to verify your age</Text>
+
+              <Text style={styles.fieldLabel}>Date of Birth</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  value={birthdate}
+                  onChangeText={setBirthdate}
+                  placeholder="MM/DD/YYYY"
+                  placeholderTextColor="#999"
+                  style={styles.input}
+                />
+                <MaterialCommunityIcons
+                  name="calendar-month-outline"
+                  size={20}
+                  color="#777"
+                  style={styles.inputTrailingIcon}
+                />
+              </View>
+
+              <Pressable
+                onPress={() => setAcceptTerms((prev) => !prev)}
+                style={({ pressed }) => [
+                  styles.checkboxRow,
+                  acceptTerms ? styles.checkboxRowActive : undefined,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <View style={[styles.checkbox, acceptTerms ? styles.checkboxOn : undefined]}>
+                  {acceptTerms && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
+                </View>
+                <View style={styles.termsTextWrap}>
+                  <Text style={styles.checkboxText}>
+                    I agree to the <Text style={styles.linkText}>Terms of Service</Text> and{" "}
+                    <Text style={styles.linkText}>Privacy Policy</Text>
+                  </Text>
+                  <Text style={styles.securityHint}>Your data is secure and encrypted.</Text>
+                </View>
+              </Pressable>
+            </View>
+          )}
+
+          {step === "preferences" && (
+            <View style={styles.stepSection}>
+              <Text style={styles.stepTitle}>What Do You Like to Play?</Text>
+              <Text style={styles.stepCopy}>Select up to 5 genres (minimum 1)</Text>
+
+              <View style={styles.genreGrid}>
+                {GENRES.map((genre) => {
+                  const selected = selectedGenres.includes(genre);
+                  return (
+                    <Pressable
+                      key={genre}
+                      onPress={() => toggleGenre(genre)}
+                      style={({ pressed }) => [
+                        styles.genreChip,
+                        selected ? styles.genreChipSelected : undefined,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={[styles.genreChipText, selected ? styles.genreChipTextSelected : undefined]}>
+                        {genre}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Text style={[styles.stepTitle, styles.playStyleTitle]}>How Do You Play?</Text>
+              <Text style={styles.stepCopy}>Choose your primary play style</Text>
+
+              <View style={styles.playStyleList}>
+                {PLAY_STYLES.map((style) => {
+                  const selected = playStyle === style.id;
+                  return (
+                    <Pressable
+                      key={style.id}
+                      onPress={() => setPlayStyle(style.id)}
+                      style={({ pressed }) => [
+                        styles.playStyleRow,
+                        selected ? styles.playStyleRowSelected : undefined,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <View
+                        style={[
+                          styles.playStyleIconWrap,
+                          selected ? styles.playStyleIconWrapSelected : undefined,
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={style.icon as any}
+                          size={20}
+                          color={selected ? "#1A1A1A" : "#444"}
+                        />
+                      </View>
+                      <View style={styles.playStyleTextWrap}>
+                        <Text style={[styles.playStyleLabel, selected ? styles.playStyleLabelSelected : undefined]}>
+                          {style.label}
+                        </Text>
+                        <Text style={[styles.playStyleDescription, selected ? styles.playStyleDescriptionSelected : undefined]}>
+                          {style.description}
+                        </Text>
+                      </View>
+                      {selected && (
+                        <View style={styles.playStyleCheck}>
+                          <MaterialCommunityIcons name="check" size={16} color="#FF9F66" />
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+        </Animated.View>
 
         {step !== "welcome" && (
-          <View style={styles.progressRow}>
-            {[1, 2, 3].map((index) => (
-              <View
-                key={index}
-                style={[
-                  styles.progressBar,
-                  index <= progress ? styles.progressBarActive : undefined,
-                ]}
-              />
-            ))}
+          <View style={styles.footer}>
+            <Pressable
+              onPress={handleNext}
+              style={({ pressed }) => [
+                styles.nextButton,
+                !canContinue ? styles.nextButtonDisabled : undefined,
+                pressed && styles.pressed,
+              ]}
+            >
+              <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
+            </Pressable>
+            <Text style={styles.stepFootnote}>
+              {step === "email" ? "Step 1 of 3" : step === "birthdate" ? "Step 2 of 3" : "Step 3 of 3"}
+            </Text>
           </View>
         )}
       </View>
-
-      {step === "welcome" && (
-        <View style={styles.stepSection}>
-          <View style={styles.welcomeHero}>
-            <View style={styles.logoCircle}>
-              <MaterialCommunityIcons name="gamepad-variant" size={72} color="#1A1A1A" />
-            </View>
-            <Text style={styles.appTitle}>Game Mate</Text>
-            <Text style={styles.welcomeCopy}>Your Gaming Community Hub</Text>
-          </View>
-
-          <Text style={styles.authHint}>Sign in with your gaming account</Text>
-          <View style={styles.authList}>
-            {SOCIAL_AUTH.map((provider) => (
-              <Pressable
-                key={provider.id}
-                onPress={handleSocialAuth}
-                style={({ pressed }) => [styles.authButton, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons
-                  name={provider.icon as any}
-                  size={20}
-                  color="#F5F5F5"
-                  style={styles.authIcon}
-                />
-                <Text style={styles.authLabel}>{provider.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <View style={styles.orRow}>
-            <View style={styles.orLine} />
-            <Text style={styles.orText}>or</Text>
-            <View style={styles.orLine} />
-          </View>
-
-          <Pressable
-            onPress={handleNext}
-            style={({ pressed }) => [styles.primaryWideButton, pressed && styles.pressed]}
-          >
-            <MaterialCommunityIcons name="email-outline" size={20} color="#1A1A1A" />
-            <Text style={styles.primaryWideButtonText}>Continue with Email</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {step === "email" && (
-        <View style={styles.stepSection}>
-          <Text style={styles.stepTitle}>What's Your Email?</Text>
-          <Text style={styles.stepCopy}>We'll use this to keep your account secure</Text>
-
-          <Text style={styles.fieldLabel}>Email Address</Text>
-          <View style={styles.inputWrap}>
-            <TextInput
-              value={email}
-              onChangeText={setEmail}
-              placeholder="gamer@example.com"
-              placeholderTextColor="#999"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              style={styles.input}
-            />
-            {email.includes("@") && (
-              <View style={styles.validBadge}>
-                <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
-              </View>
-            )}
-          </View>
-
-          <Pressable
-            onPress={() => setAcceptEmails((prev) => !prev)}
-            style={({ pressed }) => [
-              styles.checkboxRow,
-              acceptEmails ? styles.checkboxRowActive : undefined,
-              pressed && styles.pressed,
-            ]}
-          >
-            <View style={[styles.checkbox, acceptEmails ? styles.checkboxOn : undefined]}>
-              {acceptEmails && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
-            </View>
-            <Text style={styles.checkboxText}>
-              Send me updates about Game Mate features and gaming news
-            </Text>
-          </Pressable>
-        </View>
-      )}
-
-      {step === "birthdate" && (
-        <View style={styles.stepSection}>
-          <Text style={styles.stepTitle}>When Were You Born?</Text>
-          <Text style={styles.stepCopy}>We need this to verify your age</Text>
-
-          <Text style={styles.fieldLabel}>Date of Birth</Text>
-          <View style={styles.inputWrap}>
-            <TextInput
-              value={birthdate}
-              onChangeText={setBirthdate}
-              placeholder="MM/DD/YYYY"
-              placeholderTextColor="#999"
-              style={styles.input}
-            />
-            <MaterialCommunityIcons
-              name="calendar-month-outline"
-              size={20}
-              color="#777"
-              style={styles.inputTrailingIcon}
-            />
-          </View>
-
-          <Pressable
-            onPress={() => setAcceptTerms((prev) => !prev)}
-            style={({ pressed }) => [
-              styles.checkboxRow,
-              acceptTerms ? styles.checkboxRowActive : undefined,
-              pressed && styles.pressed,
-            ]}
-          >
-            <View style={[styles.checkbox, acceptTerms ? styles.checkboxOn : undefined]}>
-              {acceptTerms && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
-            </View>
-            <View style={styles.termsTextWrap}>
-              <Text style={styles.checkboxText}>
-                I agree to the <Text style={styles.linkText}>Terms of Service</Text> and{" "}
-                <Text style={styles.linkText}>Privacy Policy</Text>
-              </Text>
-              <Text style={styles.securityHint}>Your data is secure and encrypted.</Text>
-            </View>
-          </Pressable>
-        </View>
-      )}
-
-      {step === "preferences" && (
-        <View style={styles.stepSection}>
-          <Text style={styles.stepTitle}>What Do You Like to Play?</Text>
-          <Text style={styles.stepCopy}>Select up to 5 genres (minimum 1)</Text>
-
-          <View style={styles.genreGrid}>
-            {GENRES.map((genre) => {
-              const selected = selectedGenres.includes(genre);
-              return (
-                <Pressable
-                  key={genre}
-                  onPress={() => toggleGenre(genre)}
-                  style={({ pressed }) => [
-                    styles.genreChip,
-                    selected ? styles.genreChipSelected : undefined,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={[styles.genreChipText, selected ? styles.genreChipTextSelected : undefined]}>
-                    {genre}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
-          <Text style={[styles.stepTitle, styles.playStyleTitle]}>How Do You Play?</Text>
-          <Text style={styles.stepCopy}>Choose your primary play style</Text>
-
-          <View style={styles.playStyleList}>
-            {PLAY_STYLES.map((style) => {
-              const selected = playStyle === style.id;
-              return (
-                <Pressable
-                  key={style.id}
-                  onPress={() => setPlayStyle(style.id)}
-                  style={({ pressed }) => [
-                    styles.playStyleRow,
-                    selected ? styles.playStyleRowSelected : undefined,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.playStyleIconWrap,
-                      selected ? styles.playStyleIconWrapSelected : undefined,
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={style.icon as any}
-                      size={20}
-                      color={selected ? "#1A1A1A" : "#444"}
-                    />
-                  </View>
-                  <View style={styles.playStyleTextWrap}>
-                    <Text style={[styles.playStyleLabel, selected ? styles.playStyleLabelSelected : undefined]}>
-                      {style.label}
-                    </Text>
-                    <Text style={[styles.playStyleDescription, selected ? styles.playStyleDescriptionSelected : undefined]}>
-                      {style.description}
-                    </Text>
-                  </View>
-                  {selected && (
-                    <View style={styles.playStyleCheck}>
-                      <MaterialCommunityIcons name="check" size={16} color="#FF9F66" />
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {step !== "welcome" && (
-        <View style={styles.footer}>
-          <Pressable
-            onPress={handleNext}
-            style={({ pressed }) => [
-              styles.nextButton,
-              !canContinue ? styles.nextButtonDisabled : undefined,
-              pressed && styles.pressed,
-            ]}
-          >
-            <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
-          </Pressable>
-          <Text style={styles.stepFootnote}>
-            {step === "email" ? "Step 1 of 3" : step === "birthdate" ? "Step 2 of 3" : "Step 3 of 3"}
-          </Text>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -366,9 +415,11 @@ const styles = StyleSheet.create({
   },
   content: {
     minHeight: "100%",
-    paddingHorizontal: 24,
     paddingTop: 48,
     paddingBottom: 40,
+  },
+  inner: {
+    flex: 1,
   },
   headerBlock: {
     marginBottom: 18,
@@ -380,7 +431,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     color: "#1A1A1A",
-    fontSize: 34,
     fontWeight: "800",
   },
   progressRow: {

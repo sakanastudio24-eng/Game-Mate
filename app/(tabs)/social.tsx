@@ -3,6 +3,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
 import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
+import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 type SocialTab = "friends" | "messages" | "requests";
@@ -159,6 +161,7 @@ const initialRequests: RequestItem[] = [
 
 export default function SocialScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
@@ -185,72 +188,96 @@ export default function SocialScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={styles.headerWrap}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>Social</Text>
+      <AnimatedEntrance>
+        <View
+          style={[
+            styles.headerWrap,
+            {
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
+              width: "100%",
+            },
+          ]}
+        >
+          <View style={styles.titleRow}>
+            <Text style={[styles.title, { fontSize: responsive.titleSize }]}>Social</Text>
 
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => router.push("/(tabs)/search-players")}
-              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-            >
-              <MaterialCommunityIcons name="account-plus-outline" size={20} color={colors.text} />
-            </Pressable>
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => router.push("/(tabs)/search-players")}
+                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="account-plus-outline" size={20} color={colors.text} />
+              </Pressable>
 
-            <Pressable
-              onPress={() => router.push("/(tabs)/qr-code")}
-              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-            >
-              <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
-            </Pressable>
+              <Pressable
+                onPress={() => router.push("/(tabs)/qr-code")}
+                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.tabRow}>
+            {(
+              [
+                { id: "friends", label: "Friends" },
+                { id: "messages", label: "Messages" },
+                { id: "requests", label: `Requests (${requests.length})` },
+              ] as const
+            ).map((tab) => {
+              const selected = activeTab === tab.id;
+              return (
+                <Pressable
+                  key={tab.id}
+                  onPress={() => setActiveTab(tab.id)}
+                  style={[styles.tabButton, selected ? styles.tabButtonActive : undefined]}
+                >
+                  <Text style={[styles.tabText, selected ? styles.tabTextActive : undefined]}>
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
-
-        <View style={styles.tabRow}>
-          {(
-            [
-              { id: "friends", label: "Friends" },
-              { id: "messages", label: "Messages" },
-              { id: "requests", label: `Requests (${requests.length})` },
-            ] as const
-          ).map((tab) => {
-            const selected = activeTab === tab.id;
-            return (
-              <Pressable
-                key={tab.id}
-                onPress={() => setActiveTab(tab.id)}
-                style={[styles.tabButton, selected ? styles.tabButtonActive : undefined]}
-              >
-                <Text style={[styles.tabText, selected ? styles.tabTextActive : undefined]}>
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      </AnimatedEntrance>
 
       {activeTab === "friends" && (
         <FlatList
           data={[...filteredOnline, ...filteredOffline]}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
-            <View style={styles.searchWrap}>
-              <Searchbar
-                placeholder="Search friends..."
-                value={search}
-                onChangeText={setSearch}
-                style={styles.searchbar}
-                inputStyle={styles.searchInput}
-                iconColor={colors.textSecondary}
-                placeholderTextColor={colors.textSecondary}
-              />
+            <AnimatedEntrance delay={90}>
+              <View
+                style={[
+                  styles.searchWrap,
+                  {
+                    paddingHorizontal: responsive.horizontalPadding,
+                    maxWidth: responsive.contentMaxWidth,
+                    alignSelf: "center",
+                    width: "100%",
+                  },
+                ]}
+              >
+                <Searchbar
+                  placeholder="Search friends..."
+                  value={search}
+                  onChangeText={setSearch}
+                  style={styles.searchbar}
+                  inputStyle={styles.searchInput}
+                  iconColor={colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary}
+                />
 
-              <View style={styles.sectionLabelRow}>
-                <Text style={styles.sectionLabel}>Online</Text>
-                <Text style={styles.sectionCount}>{filteredOnline.length}</Text>
+                <View style={styles.sectionLabelRow}>
+                  <Text style={styles.sectionLabel}>Online</Text>
+                  <Text style={styles.sectionCount}>{filteredOnline.length}</Text>
+                </View>
               </View>
-            </View>
+            </AnimatedEntrance>
           }
           renderItem={({ item, index }) => {
             const isOnline = item.online;
@@ -258,49 +285,58 @@ export default function SocialScreen() {
             const showOfflineTitle = !isOnline && index === firstOfflineIndex;
 
             return (
-              <View>
-                {showOfflineTitle ? (
-                  <View style={styles.offlineHeader}>
-                    <Text style={styles.sectionLabel}>Offline</Text>
-                    <Text style={styles.sectionCountMuted}>{filteredOffline.length}</Text>
-                  </View>
-                ) : null}
-
-                <Pressable
-                  onPress={() => router.push(`/(tabs)/user-profile?userId=${item.id}`)}
-                  style={({ pressed }) => [
-                    styles.friendCard,
-                    !isOnline ? styles.friendCardOffline : undefined,
-                    pressed && styles.pressed,
-                  ]}
+              <AnimatedEntrance delay={120 + index * 50}>
+                <View
+                  style={{
+                    paddingHorizontal: responsive.horizontalPadding,
+                    maxWidth: responsive.contentMaxWidth,
+                    alignSelf: "center",
+                    width: "100%",
+                  }}
                 >
-                  <View style={styles.friendAvatarWrap}>
-                    <Image source={{ uri: item.avatar }} style={styles.friendAvatar} />
-                    {isOnline ? <View style={styles.friendOnlineDot} /> : null}
-                  </View>
-
-                  <View style={styles.friendInfo}>
-                    <View style={styles.friendTopRow}>
-                      <Text style={styles.friendName}>{item.name}</Text>
-                      <Text style={styles.levelBadge}>Lvl {item.level}</Text>
+                  {showOfflineTitle ? (
+                    <View style={styles.offlineHeader}>
+                      <Text style={styles.sectionLabel}>Offline</Text>
+                      <Text style={styles.sectionCountMuted}>{filteredOffline.length}</Text>
                     </View>
-                    <Text style={styles.friendPrimaryStatus}>{isOnline ? item.game : item.statusText}</Text>
-                    {isOnline ? <Text style={styles.friendSecondaryStatus}>{item.statusText}</Text> : null}
-                  </View>
-
-                  {isOnline ? (
-                    <Pressable
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        router.push(`/(tabs)/chat?userId=${item.id}`);
-                      }}
-                      style={({ pressed }) => [styles.chatButton, pressed && styles.pressed]}
-                    >
-                      <MaterialCommunityIcons name="message-outline" size={19} color="#1A1A1A" />
-                    </Pressable>
                   ) : null}
-                </Pressable>
-              </View>
+
+                  <Pressable
+                    onPress={() => router.push(`/(tabs)/user-profile?userId=${item.id}`)}
+                    style={({ pressed }) => [
+                      styles.friendCard,
+                      !isOnline ? styles.friendCardOffline : undefined,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <View style={styles.friendAvatarWrap}>
+                      <Image source={{ uri: item.avatar }} style={styles.friendAvatar} />
+                      {isOnline ? <View style={styles.friendOnlineDot} /> : null}
+                    </View>
+
+                    <View style={styles.friendInfo}>
+                      <View style={styles.friendTopRow}>
+                        <Text style={styles.friendName}>{item.name}</Text>
+                        <Text style={styles.levelBadge}>Lvl {item.level}</Text>
+                      </View>
+                      <Text style={styles.friendPrimaryStatus}>{isOnline ? item.game : item.statusText}</Text>
+                      {isOnline ? <Text style={styles.friendSecondaryStatus}>{item.statusText}</Text> : null}
+                    </View>
+
+                    {isOnline ? (
+                      <Pressable
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          router.push(`/(tabs)/chat?userId=${item.id}`);
+                        }}
+                        style={({ pressed }) => [styles.chatButton, pressed && styles.pressed]}
+                      >
+                        <MaterialCommunityIcons name="message-outline" size={19} color="#1A1A1A" />
+                      </Pressable>
+                    ) : null}
+                  </Pressable>
+                </View>
+              </AnimatedEntrance>
             );
           }}
           contentContainerStyle={styles.listContent}
@@ -312,32 +348,43 @@ export default function SocialScreen() {
         <FlatList
           data={messageItems}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(tabs)/chat?userId=${item.userId}`)}
-              style={({ pressed }) => [styles.messageCard, pressed && styles.pressed]}
-            >
-              <View style={styles.messageAvatarWrap}>
-                <Image source={{ uri: item.avatar }} style={styles.messageAvatar} />
-                {item.online ? <View style={styles.friendOnlineDot} /> : null}
-              </View>
+          renderItem={({ item, index }) => (
+            <AnimatedEntrance delay={100 + index * 70}>
+              <View
+                style={{
+                  paddingHorizontal: responsive.horizontalPadding,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                }}
+              >
+                <Pressable
+                  onPress={() => router.push(`/(tabs)/chat?userId=${item.userId}`)}
+                  style={({ pressed }) => [styles.messageCard, pressed && styles.pressed]}
+                >
+                  <View style={styles.messageAvatarWrap}>
+                    <Image source={{ uri: item.avatar }} style={styles.messageAvatar} />
+                    {item.online ? <View style={styles.friendOnlineDot} /> : null}
+                  </View>
 
-              <View style={styles.messageInfo}>
-                <View style={styles.messageTopRow}>
-                  <Text style={styles.messageUser}>{item.user}</Text>
-                  <Text style={styles.messageTime}>{item.time}</Text>
-                </View>
-                <Text style={styles.messagePreview} numberOfLines={1}>
-                  {item.message}
-                </Text>
-              </View>
+                  <View style={styles.messageInfo}>
+                    <View style={styles.messageTopRow}>
+                      <Text style={styles.messageUser}>{item.user}</Text>
+                      <Text style={styles.messageTime}>{item.time}</Text>
+                    </View>
+                    <Text style={styles.messagePreview} numberOfLines={1}>
+                      {item.message}
+                    </Text>
+                  </View>
 
-              {item.unread > 0 ? (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadText}>{item.unread}</Text>
-                </View>
-              ) : null}
-            </Pressable>
+                  {item.unread > 0 ? (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadText}>{item.unread}</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+              </View>
+            </AnimatedEntrance>
           )}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
@@ -348,35 +395,46 @@ export default function SocialScreen() {
         <FlatList
           data={requests}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.requestCard}>
-              <Pressable
-                onPress={() => router.push(`/(tabs)/user-profile?userId=${item.userId}`)}
-                style={({ pressed }) => [styles.requestTop, pressed && styles.pressed]}
+          renderItem={({ item, index }) => (
+            <AnimatedEntrance delay={100 + index * 70}>
+              <View
+                style={{
+                  paddingHorizontal: responsive.horizontalPadding,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                }}
               >
-                <Image source={{ uri: item.avatar }} style={styles.requestAvatar} />
-                <View style={styles.requestInfo}>
-                  <Text style={styles.requestName}>{item.name}</Text>
-                  <Text style={styles.requestMeta}>{item.mutualFriends} mutual friends</Text>
-                  <Text style={styles.requestGames}>{item.games.join(" · ")}</Text>
-                </View>
-              </Pressable>
+                <View style={styles.requestCard}>
+                  <Pressable
+                    onPress={() => router.push(`/(tabs)/user-profile?userId=${item.userId}`)}
+                    style={({ pressed }) => [styles.requestTop, pressed && styles.pressed]}
+                  >
+                    <Image source={{ uri: item.avatar }} style={styles.requestAvatar} />
+                    <View style={styles.requestInfo}>
+                      <Text style={styles.requestName}>{item.name}</Text>
+                      <Text style={styles.requestMeta}>{item.mutualFriends} mutual friends</Text>
+                      <Text style={styles.requestGames}>{item.games.join(" · ")}</Text>
+                    </View>
+                  </Pressable>
 
-              <View style={styles.requestActions}>
-                <Pressable
-                  onPress={() => handleAcceptRequest(item.id)}
-                  style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}
-                >
-                  <Text style={styles.acceptText}>Accept</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => handleDeclineRequest(item.id)}
-                  style={({ pressed }) => [styles.declineButton, pressed && styles.pressed]}
-                >
-                  <Text style={styles.declineText}>Decline</Text>
-                </Pressable>
+                  <View style={styles.requestActions}>
+                    <Pressable
+                      onPress={() => handleAcceptRequest(item.id)}
+                      style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.acceptText}>Accept</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeclineRequest(item.id)}
+                      style={({ pressed }) => [styles.declineButton, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.declineText}>Decline</Text>
+                    </Pressable>
+                  </View>
+                </View>
               </View>
-            </View>
+            </AnimatedEntrance>
           )}
           ListEmptyComponent={
             <View style={styles.emptyState}>
@@ -398,7 +456,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   headerWrap: {
-    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
     marginBottom: spacing.sm,
   },
@@ -410,7 +467,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 36,
     fontWeight: "800",
   },
   headerActions: {
@@ -508,7 +564,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   listContent: {
-    paddingHorizontal: spacing.md,
     paddingBottom: 110,
   },
   friendCard: {

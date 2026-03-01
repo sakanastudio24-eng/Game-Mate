@@ -3,6 +3,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 interface GroupCardData {
@@ -89,6 +91,7 @@ const suggested: SuggestedGroupData[] = [
 
 export default function GroupsScreen() {
   const router = useRouter();
+  const responsive = useResponsive();
   const [joinedSuggested, setJoinedSuggested] = useState<string[]>([]);
 
   const totalOnline = myGroups.reduce((total, group) => total + group.online, 0);
@@ -102,122 +105,185 @@ export default function GroupsScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <View style={styles.headerWrap}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>Groups</Text>
-            <View style={styles.headerActions}>
-              <Pressable
-                onPress={() => router.push("/(tabs)/discover-groups")}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="magnify" size={20} color={colors.text} />
-              </Pressable>
-              <Pressable
-                onPress={() => router.push("/(tabs)/qr-code")}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
-              </Pressable>
+        <AnimatedEntrance>
+          <View
+            style={[
+              styles.headerWrap,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <View style={styles.titleRow}>
+              <Text style={[styles.title, { fontSize: responsive.titleSize }]}>Groups</Text>
+              <View style={styles.headerActions}>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/discover-groups")}
+                  style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="magnify" size={20} color={colors.text} />
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push("/(tabs)/qr-code")}
+                  style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+                </Pressable>
+              </View>
+            </View>
+
+            <View style={styles.statsRow}>
+              <View style={styles.statPrimary}>
+                <Text style={styles.statPrimaryText}>{myGroups.length} Active Groups</Text>
+              </View>
+              <View style={styles.statSecondary}>
+                <View style={styles.onlineDot} />
+                <Text style={styles.statSecondaryText}>{totalOnline} Online</Text>
+              </View>
             </View>
           </View>
+        </AnimatedEntrance>
 
-          <View style={styles.statsRow}>
-            <View style={styles.statPrimary}>
-              <Text style={styles.statPrimaryText}>{myGroups.length} Active Groups</Text>
-            </View>
-            <View style={styles.statSecondary}>
-              <View style={styles.onlineDot} />
-              <Text style={styles.statSecondaryText}>{totalOnline} Online</Text>
-            </View>
+        <AnimatedEntrance delay={80}>
+          <View
+            style={[
+              styles.sectionHead,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <Text style={styles.sectionTitle}>My Groups</Text>
+            <Pressable
+              onPress={() => router.push("/(tabs)/create-group")}
+              style={({ pressed }) => [styles.createButton, pressed && styles.pressed]}
+            >
+              <MaterialCommunityIcons name="plus" size={16} color="#1A1A1A" />
+              <Text style={styles.createButtonText}>Create</Text>
+            </Pressable>
           </View>
-        </View>
+        </AnimatedEntrance>
 
-        <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>My Groups</Text>
-          <Pressable
-            onPress={() => router.push("/(tabs)/create-group")}
-            style={({ pressed }) => [styles.createButton, pressed && styles.pressed]}
-          >
-            <MaterialCommunityIcons name="plus" size={16} color="#1A1A1A" />
-            <Text style={styles.createButtonText}>Create</Text>
-          </Pressable>
-        </View>
+        {myGroups.map((group, index) => (
+          <AnimatedEntrance key={group.id} delay={120 + index * 80}>
+            <Pressable
+              onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+              style={({ pressed }) => [
+                styles.groupCard,
+                {
+                  marginHorizontal: responsive.horizontalPadding,
+                  borderRadius: responsive.cardRadius,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                },
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.groupImageWrap}>
+                <Image source={{ uri: group.thumbnail }} style={styles.groupImage} />
 
-        {myGroups.map((group) => (
-          <Pressable
-            key={group.id}
-            onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
-            style={({ pressed }) => [styles.groupCard, pressed && styles.pressed]}
-          >
-            <View style={styles.groupImageWrap}>
-              <Image source={{ uri: group.thumbnail }} style={styles.groupImage} />
+                {group.verified && (
+                  <View style={styles.verifiedBadge}>
+                    <MaterialCommunityIcons name="check-decagram" size={14} color="#1A1A1A" />
+                  </View>
+                )}
 
-              {group.verified && (
-                <View style={styles.verifiedBadge}>
-                  <MaterialCommunityIcons name="check-decagram" size={14} color="#1A1A1A" />
+                <View style={styles.onlinePill}>
+                  <View style={styles.onlinePulseDot} />
+                  <Text style={styles.onlinePillText}>{group.online} online</Text>
                 </View>
-              )}
-
-              <View style={styles.onlinePill}>
-                <View style={styles.onlinePulseDot} />
-                <Text style={styles.onlinePillText}>{group.online} online</Text>
-              </View>
-            </View>
-
-            <View style={styles.groupBody}>
-              <View style={styles.groupTopRow}>
-                <View style={styles.groupTitleWrap}>
-                  <Text style={styles.groupTitle}>{group.name}</Text>
-                  <Text style={styles.groupSubtitle}>{group.game}</Text>
-                </View>
-                {group.date ? <Text style={styles.groupDate}>{group.date}</Text> : null}
               </View>
 
-              <View style={styles.memberRow}>
-                <View style={styles.avatarStack}>
-                  {memberAvatars.slice(0, 4).map((avatar, index) => (
-                    <Image
-                      key={`${group.id}-${index}`}
-                      source={{ uri: avatar }}
-                      style={[styles.memberAvatar, { marginLeft: index === 0 ? 0 : -10 }]}
-                    />
-                  ))}
+              <View style={styles.groupBody}>
+                <View style={styles.groupTopRow}>
+                  <View style={styles.groupTitleWrap}>
+                    <Text style={styles.groupTitle}>{group.name}</Text>
+                    <Text style={styles.groupSubtitle}>{group.game}</Text>
+                  </View>
+                  {group.date ? <Text style={styles.groupDate}>{group.date}</Text> : null}
                 </View>
-                <Text style={styles.memberText}>{group.members} members</Text>
+
+                <View style={styles.memberRow}>
+                  <View style={styles.avatarStack}>
+                    {memberAvatars.slice(0, 4).map((avatar, i) => (
+                      <Image
+                        key={`${group.id}-${i}`}
+                        source={{ uri: avatar }}
+                        style={[styles.memberAvatar, { marginLeft: i === 0 ? 0 : -10 }]}
+                      />
+                    ))}
+                  </View>
+                  <Text style={styles.memberText}>{group.members} members</Text>
+                </View>
               </View>
-            </View>
-          </Pressable>
+            </Pressable>
+          </AnimatedEntrance>
         ))}
 
-        <Text style={[styles.sectionTitle, styles.suggestedTitle]}>Suggested For You</Text>
+        <AnimatedEntrance delay={300}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              styles.suggestedTitle,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            Suggested For You
+          </Text>
+        </AnimatedEntrance>
 
-        {suggested.map((group) => {
+        {suggested.map((group, index) => {
           const isJoined = joinedSuggested.includes(group.id);
           return (
-            <View key={group.id} style={styles.suggestedCard}>
-              <Image source={{ uri: group.thumbnail }} style={styles.suggestedThumb} />
-
-              <View style={styles.suggestedInfo}>
-                <Text style={styles.suggestedName}>{group.name}</Text>
-                <Text style={styles.suggestedGame}>{group.game}</Text>
-                <Text style={styles.suggestedMeta}>
-                  {group.members} members · {group.online} online
-                </Text>
-              </View>
-
-              <Pressable
-                onPress={() => toggleJoinSuggested(group.id)}
-                style={({ pressed }) => [
-                  styles.joinButton,
-                  isJoined ? styles.joinedButton : undefined,
-                  pressed && styles.pressed,
+            <AnimatedEntrance key={group.id} delay={360 + index * 80}>
+              <View
+                style={[
+                  styles.suggestedCard,
+                  {
+                    marginHorizontal: responsive.horizontalPadding,
+                    borderRadius: responsive.cardRadius - 2,
+                    maxWidth: responsive.contentMaxWidth,
+                    alignSelf: "center",
+                    width: "100%",
+                  },
                 ]}
               >
-                <Text style={[styles.joinButtonText, isJoined ? styles.joinedButtonText : undefined]}>
-                  {isJoined ? "Joined" : "Join"}
-                </Text>
-              </Pressable>
-            </View>
+                <Image source={{ uri: group.thumbnail }} style={styles.suggestedThumb} />
+
+                <View style={styles.suggestedInfo}>
+                  <Text style={styles.suggestedName}>{group.name}</Text>
+                  <Text style={styles.suggestedGame}>{group.game}</Text>
+                  <Text style={styles.suggestedMeta}>
+                    {group.members} members · {group.online} online
+                  </Text>
+                </View>
+
+                <Pressable
+                  onPress={() => toggleJoinSuggested(group.id)}
+                  style={({ pressed }) => [
+                    styles.joinButton,
+                    isJoined ? styles.joinedButton : undefined,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={[styles.joinButtonText, isJoined ? styles.joinedButtonText : undefined]}>
+                    {isJoined ? "Joined" : "Join"}
+                  </Text>
+                </Pressable>
+              </View>
+            </AnimatedEntrance>
           );
         })}
       </ScrollView>
@@ -231,7 +297,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: spacing.md,
     paddingTop: spacing.lg,
     paddingBottom: 110,
   },
@@ -246,7 +311,6 @@ const styles = StyleSheet.create({
   },
   title: {
     color: colors.text,
-    fontSize: 36,
     fontWeight: "800",
   },
   headerActions: {
@@ -328,7 +392,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   groupCard: {
-    borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
@@ -437,7 +500,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   suggestedCard: {
-    borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",

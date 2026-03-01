@@ -1,9 +1,15 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
+import { Alert, Image, Modal, Pressable, ScrollView, Share, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  AIGroupCandidate,
+  AIRecommendationsResponse,
+  AIUserProfile,
+  getRecommendations,
+} from "../../src/ai/advisorClient";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import {
@@ -11,8 +17,45 @@ import {
   homeContentPrimed,
   SUGGESTED_GROUPS,
 } from "../../src/lib/content-data";
+import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
+
+type AISwipeItem = {
+  group: (typeof SUGGESTED_GROUPS)[number];
+  score: number;
+  reasons: string[];
+};
+
+function mapAiCandidate(group: (typeof SUGGESTED_GROUPS)[number]): AIGroupCandidate {
+  const gameKey = group.game.toLowerCase();
+  const inferredTags = gameKey.includes("counter")
+    ? ["competitive", "ranked", "mic"]
+    : gameKey.includes("various")
+      ? ["casual", "chill", "teamplay"]
+      : gameKey.includes("forza")
+        ? ["casual", "learning", "teamplay"]
+        : ["casual", "teamplay"];
+
+  return {
+    id: group.id,
+    game: group.game,
+    rankMin: gameKey.includes("counter") ? "silver" : "gold",
+    rankMax: gameKey.includes("counter") ? "diamond" : "platinum",
+    tags: inferredTags,
+    slots: Math.max(1, Math.round(group.members * 0.1)),
+    micRequired: inferredTags.includes("mic"),
+  };
+}
+
+function buildAiProfile(): AIUserProfile {
+  return {
+    games: mockCurrentUser.gamesPlayed,
+    rank: mockCurrentUser.rank,
+    mic: true,
+    tags: ["casual", "teamplay"],
+  };
+}
 
 export default function GroupsScreen() {
   const router = useRouter();
@@ -32,6 +75,10 @@ export default function GroupsScreen() {
     game: string;
   } | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
+  const [aiSwipeVisible, setAiSwipeVisible] = useState(false);
+  const [aiSwipeLoading, setAiSwipeLoading] = useState(false);
+  const [aiSwipeError, setAiSwipeError] = useState<string | null>(null);
+  const [aiSwipeItems, setAiSwipeItems] = useState<AISwipeItem[]>([]);
   const groupThumbSize = responsive.isSmallPhone ? 66 : responsive.isLargePhone ? 86 : 78;
 
   const filteredGroups = useMemo(() => {
@@ -65,6 +112,10 @@ export default function GroupsScreen() {
     setJoinedGroupIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
+  };
+
+  const joinGroup = (id: string) => {
+    setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
   };
 
   const loadMoreGroups = () => {
@@ -111,6 +162,62 @@ export default function GroupsScreen() {
   const handleReportGroup = (groupName: string) => {
     Alert.alert("Report Submitted", `Thanks. "${groupName}" was reported for review.`);
   };
+
+  const openAiSwipe = async () => {
+    setAiSwipeVisible(true);
+    setAiSwipeLoading(true);
+    setAiSwipeError(null);
+
+    const targetGroups = discoverableGroups.slice(0, 50);
+    if (targetGroups.length === 0) {
+      setAiSwipeItems([]);
+      setAiSwipeLoading(false);
+      return;
+    }
+
+    try {
+      const response = await getRecommendations({
+        userProfile: buildAiProfile(),
+        groups: targetGroups.map(mapAiCandidate),
+      });
+
+      const scoreMap = new Map<string, AIRecommendationsResponse["results"][number]>(
+        response.results.map((item) => [item.groupId, item]),
+      );
+
+      const ranked: AISwipeItem[] = targetGroups
+        .map((group) => {
+          const rec = scoreMap.get(group.id);
+          return {
+            group,
+            score: rec?.score ?? 0,
+            reasons: rec?.reasons?.slice(0, 3) ?? ["Profile fit pending"],
+          };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      setAiSwipeItems(ranked);
+    } catch (error) {
+      setAiSwipeError(error instanceof Error ? error.message : "Unable to load AI matches");
+      setAiSwipeItems([]);
+    } finally {
+      setAiSwipeLoading(false);
+    }
+  };
+
+  const handleSwipeLeft = () => {
+    setAiSwipeItems((prev) => prev.slice(1));
+  };
+
+  const handleSwipeRight = () => {
+    const current = aiSwipeItems[0];
+    if (!current) return;
+    joinGroup(current.group.id);
+    setAiSwipeItems((prev) => prev.slice(1));
+    Alert.alert("Joined Group", `You joined "${current.group.name}".`);
+  };
+
+  const activeAiItem = aiSwipeItems[0] ?? null;
 
   return (
     <View style={styles.screen}>
@@ -221,19 +328,34 @@ export default function GroupsScreen() {
             ]}
           >
             <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>Discover Groups</Text>
-            <Pressable
-              onPress={() => router.push("/(tabs)/create-group")}
-              accessibilityRole="button"
-              accessibilityLabel="Create a new group"
-              style={({ pressed }) => [
-                styles.createButton,
-                { minHeight: responsive.buttonHeightSmall },
-                pressed && styles.pressed,
-              ]}
-            >
-              <MaterialCommunityIcons name="plus" size={16} color="#1A1A1A" />
-              <Text style={styles.createButtonText}>Create</Text>
-            </Pressable>
+            <View style={styles.sectionActions}>
+              <Pressable
+                onPress={openAiSwipe}
+                accessibilityRole="button"
+                accessibilityLabel="Open AI swipe group recommendations"
+                style={({ pressed }) => [
+                  styles.aiSwipeButton,
+                  { minHeight: responsive.buttonHeightSmall },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <MaterialCommunityIcons name="robot-outline" size={16} color={colors.text} />
+                <Text style={styles.aiSwipeButtonText}>AI Swipe</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push("/(tabs)/create-group")}
+                accessibilityRole="button"
+                accessibilityLabel="Create a new group"
+                style={({ pressed }) => [
+                  styles.createButton,
+                  { minHeight: responsive.buttonHeightSmall },
+                  pressed && styles.pressed,
+                ]}
+              >
+                <MaterialCommunityIcons name="plus" size={16} color="#1A1A1A" />
+                <Text style={styles.createButtonText}>Create</Text>
+              </Pressable>
+            </View>
           </View>
         </AnimatedEntrance>
 
@@ -381,6 +503,103 @@ export default function GroupsScreen() {
           </View>
         ) : null}
       </ScrollView>
+
+      <Modal
+        visible={aiSwipeVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAiSwipeVisible(false)}
+      >
+        <Pressable style={styles.aiModalBackdrop} onPress={() => setAiSwipeVisible(false)}>
+          <Pressable
+            style={[styles.aiModalCard, { borderRadius: responsive.cardRadius }]}
+            onPress={() => null}
+          >
+            <View style={styles.aiModalHeader}>
+              <Text style={styles.aiModalTitle}>AI Group Swipe</Text>
+              <Pressable
+                onPress={() => setAiSwipeVisible(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Close AI group swipe"
+                style={({ pressed }) => [styles.aiModalClose, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="close" size={18} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            {aiSwipeLoading ? (
+              <View style={styles.aiStateWrap}>
+                <Text style={styles.aiStateTitle}>Loading recommendations...</Text>
+                <Text style={styles.aiStateCopy}>Matching groups to your preferences.</Text>
+              </View>
+            ) : aiSwipeError ? (
+              <View style={styles.aiStateWrap}>
+                <Text style={styles.aiStateTitle}>Recommendation error</Text>
+                <Text style={styles.aiStateCopy}>{aiSwipeError}</Text>
+                <Pressable
+                  onPress={() => void openAiSwipe()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Retry AI recommendations"
+                  style={({ pressed }) => [styles.aiRetryButton, pressed && styles.pressed]}
+                >
+                  <Text style={styles.aiRetryButtonText}>Retry</Text>
+                </Pressable>
+              </View>
+            ) : !activeAiItem ? (
+              <View style={styles.aiStateWrap}>
+                <Text style={styles.aiStateTitle}>No more groups</Text>
+                <Text style={styles.aiStateCopy}>Refresh later for more recommendations.</Text>
+              </View>
+            ) : (
+              <View style={styles.aiResultWrap}>
+                <Image source={{ uri: activeAiItem.group.thumbnail }} style={styles.aiGroupImage} />
+                <View style={styles.aiTitleRow}>
+                  <Text style={styles.aiGroupName}>{activeAiItem.group.name}</Text>
+                  <View style={styles.aiScorePill}>
+                    <Text style={styles.aiScoreText}>{activeAiItem.score}%</Text>
+                  </View>
+                </View>
+                <Text style={styles.aiGroupMeta}>
+                  {activeAiItem.group.game} · {activeAiItem.group.members} members ·{" "}
+                  {activeAiItem.group.online} online
+                </Text>
+                <View style={styles.aiReasonWrap}>
+                  {activeAiItem.reasons.map((reason) => (
+                    <View key={`${activeAiItem.group.id}-${reason}`} style={styles.aiReasonChip}>
+                      <MaterialCommunityIcons
+                        name={"star-four-points" as any}
+                        size={12}
+                        color={colors.primary}
+                      />
+                      <Text style={styles.aiReasonText}>{reason}</Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.aiActionsRow}>
+                  <Pressable
+                    onPress={handleSwipeLeft}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Skip ${activeAiItem.group.name}`}
+                    style={({ pressed }) => [styles.aiSkipButton, pressed && styles.pressed]}
+                  >
+                    <MaterialCommunityIcons name="close" size={18} color={colors.text} />
+                    <Text style={styles.aiSkipButtonText}>Skip</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={handleSwipeRight}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Join ${activeAiItem.group.name}`}
+                    style={({ pressed }) => [styles.aiJoinButton, pressed && styles.pressed]}
+                  >
+                    <MaterialCommunityIcons name="check" size={18} color="#1A1A1A" />
+                    <Text style={styles.aiJoinButtonText}>Join</Text>
+                  </Pressable>
+                </View>
+              </View>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <ActionSheet
         visible={activeGroupMenu !== null}
@@ -550,6 +769,28 @@ const styles = StyleSheet.create({
     fontSize: 21,
     fontWeight: "800",
   },
+  sectionActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  aiSwipeButton: {
+    backgroundColor: "#242424",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiSwipeButtonText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "800",
+    marginLeft: 4,
+  },
   createButton: {
     backgroundColor: colors.primary,
     borderRadius: 999,
@@ -663,6 +904,166 @@ const styles = StyleSheet.create({
   emptyCopy: {
     marginTop: 4,
     color: colors.textSecondary,
+  },
+  aiModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+  },
+  aiModalCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#1E1E1E",
+    padding: spacing.md,
+  },
+  aiModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+  },
+  aiModalTitle: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 19,
+  },
+  aiModalClose: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#242424",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiStateWrap: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: "#242424",
+    padding: spacing.md,
+  },
+  aiStateTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  aiStateCopy: {
+    color: colors.textSecondary,
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  aiRetryButton: {
+    marginTop: spacing.sm,
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  aiRetryButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  aiResultWrap: {
+    gap: spacing.sm,
+  },
+  aiGroupImage: {
+    width: "100%",
+    height: 168,
+    borderRadius: 14,
+  },
+  aiTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  aiGroupName: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 17,
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  aiGroupMeta: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  aiScorePill: {
+    borderRadius: 999,
+    backgroundColor: "rgba(255,159,102,0.2)",
+    borderWidth: 1,
+    borderColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  aiScoreText: {
+    color: colors.primary,
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  aiReasonWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+  },
+  aiReasonChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  aiReasonText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  aiActionsRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  aiSkipButton: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  aiSkipButtonText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  aiJoinButton: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  aiJoinButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+    fontSize: 13,
   },
   pressed: {
     opacity: 0.85,

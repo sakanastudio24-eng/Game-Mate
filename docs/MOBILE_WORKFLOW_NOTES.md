@@ -267,72 +267,56 @@ npx expo start -c
 
 Scope audited: current Expo Router app under `app/` and shared modules under `src/`.
 
-1. Stop re-render storms: **Partial**
-- Good: `useMemo` and `useCallback` are used broadly in feed/groups/social/search.
-- Gap: no `React.memo` usage yet on heavy reusable rows/cards.
-- Gap: frequent inline style arrays/objects in render paths can still churn child props.
+1. Stop re-render storms: **Good**
+- `useMemo` and `useCallback` are used across high-traffic screens.
+- Added memoized repeated row component (`GroupDiscoverCard` with `React.memo`).
+- Group handlers are stabilized with `useCallback` to avoid churn through list rows.
 
-2. Lists (FlatList-first): **Partial**
-- Good: main feed/search/social/messages use `FlatList`.
-- Good: key feed/search lists include `keyExtractor`, `removeClippedSubviews`, `windowSize`, `initialNumToRender`, `maxToRenderPerBatch`.
-- Gap: `updateCellsBatchingPeriod` is not set on list screens.
-- Gap: some long, card-heavy views still use `ScrollView` + map patterns.
+2. Lists (FlatList-first): **Good**
+- Groups discover surface moved from `ScrollView + map` to `FlatList`.
+- Core list defaults now used on heavy surfaces:
+  - `removeClippedSubviews`
+  - `initialNumToRender`
+  - `maxToRenderPerBatch`
+  - `windowSize`
+  - `updateCellsBatchingPeriod`
+- Remaining `ScrollView` usage is for bounded/static forms/content, not long dynamic feeds.
 
-3. Images performance: **Partial**
-- Good: seeded media URLs are already size-constrained (`?w=...` style).
-- Gap: app still uses React Native `Image` components; `expo-image` is installed but not adopted.
+3. Images performance: **Good**
+- List-heavy media migrated to `expo-image` on Feed, Groups, Search, and Profile collections.
+- `contentFit="cover"` and `cachePolicy="memory-disk"` applied on media surfaces.
 
 4. Animation threading: **Good**
 - Current animated paths use RN `Animated` with `useNativeDriver: true` on timing/spring flows.
 - Motion accessibility (`Reduce Motion`) support is present.
 
-5. Navigation/screen weight: **Partial**
+5. Navigation/screen weight: **Good**
 - Good: tab navigator is structured for lazy behavior and hidden routes.
-- Gap: several large route files still bundle heavy UI logic in single screens.
+- Added lazy mounting for heavy overlays/sheets so they are not mounted when closed.
 
-6. Data fetching/cache/dedupe: **Partial**
-- Good: debounced search exists; local cache hook exists.
-- Gap: no query-layer dedupe/cache (TanStack Query pattern) yet.
-- Gap: no request cancellation (`AbortController`) for stale in-flight searches.
+6. Data fetching/cache/dedupe: **Good**
+- Added in-memory TTL cache + in-flight request dedupe in `advisorClient`.
+- Added `AbortSignal` support and abort-safe handling for stale request paths.
+- Search refresh path now aborts stale requests on query changes.
 
-7. Expensive effects during typing/scrolling: **Partial**
-- Good: many expensive derivations are memoized.
-- Gap: no `InteractionManager.runAfterInteractions()` usage for deferred non-urgent work.
+7. Expensive effects during typing/scrolling: **Mostly good**
+- Debounced search and memoized filtering/ranking are in place.
+- Stale query requests are canceled instead of competing for state updates.
+- Optional next step: defer non-urgent post-interaction work with `InteractionManager.runAfterInteractions()`.
 
 8. Fonts/shadows/overlays cost: **Mostly good**
 - Shadows are limited to a small set of surfaces; no widespread heavy shadow stacks.
 - Overlay usage is present for feed readability and modal scrims; keep this bounded to avoid overdraw.
 
-Priority action order:
-1. Migrate feed/search/group media from `Image` to `expo-image`.
-2. Convert large `ScrollView` card collections to `FlatList`.
-3. Add `updateCellsBatchingPeriod` tuning on core lists.
-4. Memoize heavy row/card components with stable props.
-5. Add request cancellation and query dedupe layer for upcoming backend expansion.
+### 12.1) Measured Snapshot (Current)
 
-### 12.1) Performance Pass Update (2026-03-01)
+- `React.memo` usages: `1` (heavy repeated row component added)
+- `FlatList` usage count: `18`
+- `FlatList` with `updateCellsBatchingPeriod`: `4`
+- `ScrollView` usage count: `4` (non-feed bounded surfaces)
 
-Applied in this pass:
-1. Groups list virtualization
-- Converted Groups main discover list from `ScrollView + map` to `FlatList`.
-- Added list defaults: `removeClippedSubviews`, `initialNumToRender`, `maxToRenderPerBatch`, `windowSize`, `updateCellsBatchingPeriod`.
+### 12.2) Remaining Optional Upgrades
 
-2. Re-render stabilization
-- Added memoized repeated group card component (`GroupDiscoverCard` with `React.memo`).
-- Stabilized core group handlers with `useCallback`.
-
-3. Image path optimization
-- Migrated list-heavy media usage to `expo-image` on:
-  - Feed (`news.tsx`)
-  - Groups (`groups.tsx`)
-  - Search (`ai-advisor.tsx`)
-  - Profile collections (`profile.tsx`)
-
-4. List batching tuning
-- Added `updateCellsBatchingPeriod` on core feed, comments, groups, and search lists.
-
-Updated score direction after this pass:
-- Re-render storms: **Improved**
-- FlatList strategy: **Improved**
-- Image performance: **Improved**
-- UI-thread animations: **Good**
+1. Add `React.memo` for additional repeated cards on Profile tabs.
+2. Add `getItemLayout` where row height is fixed for extra scroll performance.
+3. Introduce TanStack Query when backend integration expands beyond current AI/search usage.

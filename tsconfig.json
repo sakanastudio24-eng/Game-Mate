@@ -17,11 +17,5 @@
     "src/lib/**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ],
-  "exclude": [
-    "src/main.tsx",
-    "src/styles/**",
-    "src/imports/**",
-    "vite.config.ts"
   ]
 }

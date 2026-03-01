@@ -103,6 +103,10 @@ export function GroupCard({
         }}
         style={({ pressed }) => [
           styles.joinButton,
+          {
+            minHeight: responsive.buttonHeightSmall,
+            minWidth: responsive.touchTargetMin,
+          },
           isJoined && styles.joinedButton,
           pressed && styles.buttonPressed,
         ]}
@@ -186,6 +190,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: 8,
     alignItems: "center",
+    justifyContent: "center",
   },
   joinedButton: {
     backgroundColor: colors.background,

@@ -79,6 +79,11 @@ export function FriendCard({
         }}
         style={({ pressed }) => [
           styles.button,
+          {
+            width: responsive.touchTargetMin,
+            height: responsive.touchTargetMin,
+            borderRadius: responsive.touchTargetMin / 2,
+          },
           isFollowing && styles.followingButton,
           pressed && styles.buttonPressed,
         ]}

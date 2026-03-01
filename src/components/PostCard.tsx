@@ -88,6 +88,10 @@ export function PostCard({
         <Pressable
           style={({ pressed }) => [
             styles.actionButton,
+            {
+              minHeight: responsive.touchTargetMin,
+              minWidth: responsive.touchTargetMin,
+            },
             pressed && styles.actionPressed,
           ]}
           onPress={() => onLike(post.id)}
@@ -108,7 +112,16 @@ export function PostCard({
           </Text>
         </Pressable>
 
-        <Pressable style={[styles.actionButton, { opacity: 0.5 }]}>
+        <Pressable
+          style={[
+            styles.actionButton,
+            {
+              minHeight: responsive.touchTargetMin,
+              minWidth: responsive.touchTargetMin,
+            },
+            { opacity: 0.5 },
+          ]}
+        >
           <MaterialCommunityIcons
             name="message-outline"
             size={20}
@@ -122,6 +135,10 @@ export function PostCard({
         <Pressable
           style={({ pressed }) => [
             styles.actionButton,
+            {
+              minHeight: responsive.touchTargetMin,
+              minWidth: responsive.touchTargetMin,
+            },
             pressed && styles.actionPressed,
           ]}
           onPress={() => onSave(post.id)}
@@ -133,7 +150,16 @@ export function PostCard({
           />
         </Pressable>
 
-        <Pressable style={[styles.actionButton, { opacity: 0.5 }]}>
+        <Pressable
+          style={[
+            styles.actionButton,
+            {
+              minHeight: responsive.touchTargetMin,
+              minWidth: responsive.touchTargetMin,
+            },
+            { opacity: 0.5 },
+          ]}
+        >
           <MaterialCommunityIcons
             name="share-outline"
             size={20}
@@ -221,6 +247,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: spacing.xs,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,

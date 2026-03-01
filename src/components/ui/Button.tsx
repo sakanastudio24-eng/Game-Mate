@@ -27,6 +27,8 @@ export function Button({
   variant,
   size = "medium",
   fullWidth = false,
+  contentStyle: contentStyleProp,
+  labelStyle: labelStyleProp,
   style,
   ...props
 }: ButtonProps) {
@@ -37,13 +39,15 @@ export function Button({
       : variant === "primary"
         ? "contained"
         : mode;
+  const minHeight =
+    size === "small"
+      ? responsive.buttonHeightSmall
+      : size === "large"
+        ? responsive.buttonHeightLarge
+        : responsive.buttonHeightMedium;
+  const minWidth = responsive.touchTargetMin;
 
   const buttonStyle = [
-    size === "small"
-      ? { minHeight: Math.max(32, responsive.iconButtonSize - 6) }
-      : size === "large"
-        ? { minHeight: Math.max(46, responsive.iconButtonSize + 8) }
-        : { minHeight: Math.max(40, responsive.iconButtonSize) },
     {
       borderRadius:
         size === "small"
@@ -55,6 +59,14 @@ export function Button({
     fullWidth ? { width: "100%" as const } : undefined,
     style,
   ];
+  const contentStyle = [
+    {
+      minHeight,
+      minWidth: fullWidth ? undefined : minWidth,
+      paddingHorizontal: size === "small" ? 12 : size === "large" ? 18 : 14,
+    },
+    contentStyleProp,
+  ];
 
   return (
     <PaperButton
@@ -64,7 +76,11 @@ export function Button({
       }
       buttonColor={resolvedMode === "contained" ? colors.primary : undefined}
       style={buttonStyle}
-      labelStyle={{ fontSize: responsive.bodySize, fontWeight: "700" }}
+      contentStyle={contentStyle}
+      labelStyle={[
+        { fontSize: responsive.bodySize, fontWeight: "700" },
+        labelStyleProp,
+      ]}
       {...props}
     >
       {children ?? label ?? ""}

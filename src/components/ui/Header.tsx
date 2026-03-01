@@ -64,7 +64,18 @@ export function Header({
     >
       <View style={styles.leftSection}>
         {showBackButton && (
-          <Pressable onPress={onBack ?? (() => router.back())} style={styles.backButton}>
+          <Pressable
+            onPress={onBack ?? (() => router.back())}
+            style={[
+              styles.backButton,
+              {
+                width: responsive.touchTargetMin,
+                height: responsive.touchTargetMin,
+                borderRadius: responsive.touchTargetMin / 2,
+              },
+            ]}
+            hitSlop={4}
+          >
             <MaterialCommunityIcons
               name="chevron-left"
               size={24}
@@ -85,11 +96,14 @@ export function Header({
             style={[
               styles.iconButton,
               {
+                minWidth: responsive.touchTargetMin,
+                minHeight: responsive.touchTargetMin,
                 width: responsive.iconButtonSize,
                 height: responsive.iconButtonSize,
                 borderRadius: responsive.iconButtonSize / 2,
               },
             ]}
+            hitSlop={4}
           >
             <MaterialCommunityIcons
               name={resolvedRightIcon as any}
@@ -104,11 +118,14 @@ export function Header({
             style={[
               styles.iconButton,
               {
+                minWidth: responsive.touchTargetMin,
+                minHeight: responsive.touchTargetMin,
                 width: responsive.iconButtonSize,
                 height: responsive.iconButtonSize,
                 borderRadius: responsive.iconButtonSize / 2,
               },
             ]}
+            hitSlop={4}
           >
             <MaterialCommunityIcons
               name={resolvedRightIcon2 as any}
@@ -139,7 +156,8 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: spacing.sm,
-    padding: spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
   titleSection: {
     flex: 1,

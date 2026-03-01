@@ -6,7 +6,6 @@ import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { MY_GROUPS } from "../../src/lib/content-data";
-import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -407,22 +406,6 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={320}>
-          <View
-            style={[
-              styles.accountMeta,
-              {
-                paddingHorizontal: responsive.horizontalPadding,
-                maxWidth: responsive.contentMaxWidth,
-                alignSelf: "center",
-                width: "100%",
-              },
-            ]}
-          >
-            <Text style={styles.accountMetaText}>@{mockCurrentUser.username}</Text>
-            <Text style={styles.accountMetaText}>Level {mockCurrentUser.level}</Text>
-          </View>
-        </AnimatedEntrance>
       </ScrollView>
     </View>
   );
@@ -732,14 +715,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 10,
     marginTop: 1,
-  },
-  accountMeta: {
-    marginTop: 4,
-  },
-  accountMetaText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginBottom: 2,
   },
   pressed: {
     opacity: 0.85,

@@ -52,15 +52,24 @@ export function Screen({
     ],
   };
 
-  const containerStyle = [
+  const widthStyle = {
+    paddingBottom: Math.max(insets.bottom, responsive.safeBottomInset),
+    width: "100%" as const,
+    maxWidth: responsive.contentMaxWidth,
+    alignSelf: "center" as const,
+  };
+
+  const nonScrollableContainerStyle = [
     styles.container,
     padded && { paddingHorizontal: responsive.horizontalPadding },
-    {
-      paddingBottom: Math.max(insets.bottom, responsive.safeBottomInset),
-      width: "100%" as const,
-      maxWidth: responsive.contentMaxWidth,
-      alignSelf: "center" as const,
-    },
+    widthStyle,
+    style,
+  ];
+
+  const scrollContainerStyle = [
+    styles.scrollContent,
+    padded && { paddingHorizontal: responsive.horizontalPadding },
+    widthStyle,
     style,
   ];
 
@@ -68,8 +77,9 @@ export function Screen({
     return (
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={containerStyle}
+        contentContainerStyle={scrollContainerStyle}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Animated.View style={animatedStyle}>{children}</Animated.View>
       </ScrollView>
@@ -77,7 +87,7 @@ export function Screen({
   }
 
   return (
-    <View style={containerStyle}>
+    <View style={nonScrollableContainerStyle}>
       <Animated.View style={[styles.fill, animatedStyle]}>{children}</Animated.View>
     </View>
   );
@@ -86,6 +96,10 @@ export function Screen({
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
+    backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
     backgroundColor: colors.background,
   },
   container: {

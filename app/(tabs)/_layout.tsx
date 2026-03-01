@@ -13,6 +13,9 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
+          height: 66,
+          paddingTop: 6,
+          paddingBottom: 8,
         },
         headerShown: false,
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
@@ -45,16 +48,7 @@ export default function TabLayout() {
         options={{
           title: "Social",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="heart" size={24} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="messages"
-        options={{
-          title: "Messages",
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="message" size={24} color={color} />
+            <MaterialCommunityIcons name="account-multiple" size={24} color={color} />
           ),
         }}
       />
@@ -77,6 +71,7 @@ export default function TabLayout() {
       <Tabs.Screen name="group-detail" options={{ href: null }} />
       <Tabs.Screen name="help" options={{ href: null }} />
       <Tabs.Screen name="matchmaking" options={{ href: null }} />
+      <Tabs.Screen name="messages" options={{ href: null }} />
       <Tabs.Screen name="notification-settings" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="privacy-detail" options={{ href: null }} />

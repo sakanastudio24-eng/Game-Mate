@@ -18,9 +18,24 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <PaperProvider>
         <ThemeProvider value={theme}>
-          <Stack>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+            <Stack.Screen
+              name="modal"
+              options={{
+                presentation: 'modal',
+                title: 'Modal',
+                headerShown: true,
+                animation: 'slide_from_bottom',
+              }}
+            />
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>

@@ -1,5 +1,12 @@
-import React from "react";
-import { ScrollView, StyleSheet, View, ViewStyle } from "react-native";
+import React, { useEffect, useRef } from "react";
+import {
+  Animated,
+  Easing,
+  ScrollView,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
 import { colors, spacing } from "../../lib/theme";
 
 // Screen wrapper component for consistent padding and layout
@@ -18,6 +25,29 @@ export function Screen({
   style,
   padded = true,
 }: ScreenProps) {
+  const entry = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(entry, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [entry]);
+
+  const animatedStyle = {
+    opacity: entry,
+    transform: [
+      {
+        translateY: entry.interpolate({
+          inputRange: [0, 1],
+          outputRange: [14, 0],
+        }),
+      },
+    ],
+  };
+
   const containerStyle = [styles.container, padded && styles.padded, style];
 
   if (scrollable) {
@@ -27,12 +57,16 @@ export function Screen({
         contentContainerStyle={containerStyle}
         showsVerticalScrollIndicator={false}
       >
-        {children}
+        <Animated.View style={animatedStyle}>{children}</Animated.View>
       </ScrollView>
     );
   }
 
-  return <View style={containerStyle}>{children}</View>;
+  return (
+    <View style={containerStyle}>
+      <Animated.View style={[styles.fill, animatedStyle]}>{children}</Animated.View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -46,5 +80,8 @@ const styles = StyleSheet.create({
   },
   padded: {
     paddingHorizontal: spacing.md,
+  },
+  fill: {
+    flex: 1,
   },
 });

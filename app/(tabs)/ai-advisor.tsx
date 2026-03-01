@@ -51,9 +51,9 @@ function buildProfile(): AIUserProfile {
 export default function AIAdvisorScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const params = useLocalSearchParams<{ source?: string; q?: string }>();
+  const params = useLocalSearchParams<{ source?: string }>();
 
-  const [query, setQuery] = useState(typeof params.q === "string" ? params.q : "");
+  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<AIRecommendationsResponse["results"]>([]);

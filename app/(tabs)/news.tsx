@@ -277,7 +277,7 @@ export default function NewsScreen() {
                     onPress={() =>
                       router.push({
                         pathname: "/(tabs)/ai-advisor",
-                        params: { source: "feed", q: item.title },
+                        params: { source: "feed" },
                       } as any)
                     }
                     accessibilityRole="button"

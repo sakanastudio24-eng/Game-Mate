@@ -364,7 +364,19 @@ export default function SocialScreen() {
                   ) : null}
 
                   <Pressable
-                    onPress={() => router.push(`/(tabs)/user-profile?userId=${item.id}`)}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(tabs)/user-profile",
+                        params: {
+                          userId: item.id,
+                          name: item.name,
+                          avatar: item.avatar,
+                          status: item.online ? "online" : "offline",
+                          currentGame: item.game?.replace("Playing ", ""),
+                          level: String(item.level),
+                        },
+                      })
+                    }
                     style={({ pressed }) => [
                       styles.friendCard,
                       {
@@ -494,7 +506,17 @@ export default function SocialScreen() {
                   ]}
                 >
                   <Pressable
-                    onPress={() => router.push(`/(tabs)/user-profile?userId=${item.userId}`)}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(tabs)/user-profile",
+                        params: {
+                          userId: item.userId,
+                          name: item.name,
+                          avatar: item.avatar,
+                          status: "online",
+                        },
+                      })
+                    }
                     style={({ pressed }) => [styles.requestTop, pressed && styles.pressed]}
                   >
                     <Image source={{ uri: item.avatar }} style={styles.requestAvatar} />

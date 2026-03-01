@@ -71,71 +71,6 @@ export default function GroupDetailScreen() {
     <Screen scrollable={false}>
       <Header title={group.name} showBackButton />
 
-      {/* Group header info */}
-      <Card style={styles.headerCard}>
-        <View style={styles.headerRow}>
-          <View>
-            <Text style={[styles.gameName, { fontSize: responsive.bodySize + 2 }]}>{group.game}</Text>
-            <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>{group.description}</Text>
-          </View>
-          <Text style={[styles.memberCount, { fontSize: responsive.titleSize - 10 }]}>
-            {group.memberCount}
-          </Text>
-        </View>
-
-        <View style={styles.badges}>
-          {group.mode === "ranked" && (
-            <Chip
-              icon="star"
-              label="Ranked"
-              size="small"
-              style={styles.badge}
-            />
-          )}
-          {group.micRequired && (
-            <Chip
-              icon="microphone"
-              label="Mic Required"
-              size="small"
-              style={styles.badge}
-            />
-          )}
-          {group.minRank && (
-            <Chip
-              label={`${group.minRank}+`}
-              size="small"
-              style={styles.badge}
-            />
-          )}
-        </View>
-
-        <Pressable
-          onPress={handleJoinGroup}
-          accessibilityRole="button"
-          accessibilityLabel={isJoined ? `${group.name} joined` : `Join ${group.name}`}
-          accessibilityState={{ selected: isJoined }}
-          style={({ pressed }) => [
-            styles.joinButton,
-            {
-              borderRadius: responsive.cardRadius - 8,
-              minHeight: responsive.buttonHeightMedium,
-            },
-            isJoined && styles.joinedButton,
-            pressed && styles.joinButtonPressed,
-          ]}
-        >
-          <Text
-            style={[
-              styles.joinButtonText,
-              { fontSize: responsive.bodySmallSize },
-              isJoined && styles.joinedButtonText,
-            ]}
-          >
-            {isJoined ? "Joined" : "Join Group"}
-          </Text>
-        </Pressable>
-      </Card>
-
       {/* Tab selector */}
       <View style={styles.tabSelector}>
         {["home", "events", "chat", "members"].map((tab) => (
@@ -172,8 +107,73 @@ export default function GroupDetailScreen() {
             <Text style={[styles.homeTitle, { fontSize: responsive.bodySize + 2 }]}>
               Group Home
             </Text>
+
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={[styles.gameName, { fontSize: responsive.bodySize + 2 }]}>{group.game}</Text>
+                <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>
+                  {group.description}
+                </Text>
+              </View>
+              <Text style={[styles.memberCount, { fontSize: responsive.titleSize - 10 }]}>
+                {group.memberCount}
+              </Text>
+            </View>
+
+            <View style={styles.badges}>
+              {group.mode === "ranked" && (
+                <Chip
+                  icon="star"
+                  label="Ranked"
+                  size="small"
+                  style={styles.badge}
+                />
+              )}
+              {group.micRequired && (
+                <Chip
+                  icon="microphone"
+                  label="Mic Required"
+                  size="small"
+                  style={styles.badge}
+                />
+              )}
+              {group.minRank && (
+                <Chip
+                  label={`${group.minRank}+`}
+                  size="small"
+                  style={styles.badge}
+                />
+              )}
+            </View>
+
+            <Pressable
+              onPress={handleJoinGroup}
+              accessibilityRole="button"
+              accessibilityLabel={isJoined ? `${group.name} joined` : `Join ${group.name}`}
+              accessibilityState={{ selected: isJoined }}
+              style={({ pressed }) => [
+                styles.joinButton,
+                {
+                  borderRadius: responsive.cardRadius - 8,
+                  minHeight: responsive.buttonHeightMedium,
+                },
+                isJoined && styles.joinedButton,
+                pressed && styles.joinButtonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.joinButtonText,
+                  { fontSize: responsive.bodySmallSize },
+                  isJoined && styles.joinedButtonText,
+                ]}
+              >
+                {isJoined ? "Joined" : "Join Group"}
+              </Text>
+            </Pressable>
+
             <Text style={[styles.homeCopy, { fontSize: responsive.bodySmallSize }]}>
-              {group.description}
+              Overview
             </Text>
             <View style={styles.homeStatsRow}>
               <View style={styles.homeStatPill}>
@@ -364,9 +364,6 @@ function formatChatTime(date: Date): string {
 }
 
 const styles = StyleSheet.create({
-  headerCard: {
-    marginBottom: spacing.lg,
-  },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -1,105 +1,179 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
-import { FriendCard } from "../../src/components/FriendCard";
-import { Card } from "../../src/components/ui/Card";
-import { Header } from "../../src/components/ui/Header";
-import { Screen } from "../../src/components/ui/Screen";
-import { mockFriends, mockSuggestedUsers } from "../../src/lib/mockData";
 import { colors, spacing } from "../../src/lib/theme";
 
 type SocialTab = "friends" | "messages" | "requests";
 
-interface Conversation {
+interface FriendItem {
+  id: string;
+  name: string;
+  game?: string;
+  statusText: string;
+  level: number;
+  online: boolean;
+  avatar: string;
+}
+
+interface MessageItem {
   id: string;
   userId: string;
   user: string;
   message: string;
   time: string;
   unread: number;
+  online: boolean;
+  avatar: string;
 }
 
-interface FriendRequest {
+interface RequestItem {
   id: string;
-  name: string;
   userId: string;
+  name: string;
   mutualFriends: number;
   games: string[];
+  avatar: string;
 }
 
-const conversations: Conversation[] = [
+const onlineFriends: FriendItem[] = [
   {
-    id: "c1",
-    userId: "1",
-    user: "ProGamer92",
-    message: "Ranked queue in 10?",
-    time: "2m ago",
-    unread: 2,
+    id: "1",
+    name: "ProGamer92",
+    game: "Playing Valorant",
+    statusText: "In Competitive",
+    level: 45,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1642792247757-c212e8ba9af9?w=200&h=200&fit=crop",
   },
   {
-    id: "c2",
-    userId: "3",
-    user: "EchoPlayer",
-    message: "GG last match",
-    time: "1h ago",
-    unread: 0,
+    id: "3",
+    name: "EchoPlayer",
+    game: "Playing CS2",
+    statusText: "In Match",
+    level: 38,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1572704764530-5b5da1f5a973?w=200&h=200&fit=crop",
   },
   {
-    id: "c3",
-    userId: "2",
-    user: "SkyWalker",
-    message: "Need one more for group event",
-    time: "3h ago",
-    unread: 1,
+    id: "4",
+    name: "NovaStrike",
+    game: "Playing Overwatch 2",
+    statusText: "In Queue",
+    level: 52,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1759701546655-d90ec831aa52?w=200&h=200&fit=crop",
   },
 ];
 
-const requestsSeed: FriendRequest[] = [
+const offlineFriends: FriendItem[] = [
+  {
+    id: "2",
+    name: "SkyWalker",
+    statusText: "2 hours ago",
+    level: 42,
+    online: false,
+    avatar:
+      "https://images.unsplash.com/photo-1599220274056-a6cdbe06c2c0?w=200&h=200&fit=crop",
+  },
+  {
+    id: "5",
+    name: "PlayerEater",
+    statusText: "1 day ago",
+    level: 28,
+    online: false,
+    avatar:
+      "https://images.unsplash.com/photo-1637767125552-b89f5e1ab923?w=200&h=200&fit=crop",
+  },
+  {
+    id: "6",
+    name: "NoobMaster",
+    statusText: "3 days ago",
+    level: 35,
+    online: false,
+    avatar:
+      "https://images.unsplash.com/photo-1633286464918-4d78c8424b59?w=200&h=200&fit=crop",
+  },
+];
+
+const messageItems: MessageItem[] = [
+  {
+    id: "m1",
+    userId: "1",
+    user: "ProGamer92",
+    message: "Want to queue up?",
+    time: "2m ago",
+    unread: 2,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1642792247757-c212e8ba9af9?w=200&h=200&fit=crop",
+  },
+  {
+    id: "m2",
+    userId: "3",
+    user: "EchoPlayer",
+    message: "GG last night!",
+    time: "1h ago",
+    unread: 0,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1572704764530-5b5da1f5a973?w=200&h=200&fit=crop",
+  },
+  {
+    id: "m3",
+    userId: "2",
+    user: "SkyWalker",
+    message: "Check this strat",
+    time: "3h ago",
+    unread: 1,
+    online: false,
+    avatar:
+      "https://images.unsplash.com/photo-1599220274056-a6cdbe06c2c0?w=200&h=200&fit=crop",
+  },
+];
+
+const initialRequests: RequestItem[] = [
   {
     id: "r1",
-    name: "NovaStrike",
     userId: "4",
-    mutualFriends: 3,
-    games: ["Overwatch 2", "Apex Legends"],
+    name: "NovaStrike",
+    mutualFriends: 5,
+    games: ["Overwatch 2", "CS2"],
+    avatar:
+      "https://images.unsplash.com/photo-1613063022614-dc11527f5ece?w=200&h=200&fit=crop",
   },
   {
     id: "r2",
-    name: "TacticalFox",
-    userId: "5",
-    mutualFriends: 1,
-    games: ["CS2"],
+    userId: "1",
+    name: "ProGamer92",
+    mutualFriends: 3,
+    games: ["Valorant"],
+    avatar:
+      "https://images.unsplash.com/photo-1628501899963-43bb8e2423e1?w=200&h=200&fit=crop",
   },
 ];
 
 export default function SocialScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [following, setFollowing] = useState<string[]>([]);
-  const [requests, setRequests] = useState<FriendRequest[]>(requestsSeed);
+  const [search, setSearch] = useState("");
+  const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
 
-  const allFriends = [...mockFriends, ...mockSuggestedUsers];
+  const filteredOnline = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return onlineFriends;
+    return onlineFriends.filter((friend) => friend.name.toLowerCase().includes(q));
+  }, [search]);
 
-  const filteredFriends = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return allFriends.filter((friend) => {
-      if (!q) return true;
-      return [friend.name, friend.username, friend.currentGame]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [allFriends, searchQuery]);
-
-  const handleFollow = (userId: string) => {
-    setFollowing((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId],
-    );
-  };
+  const filteredOffline = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return offlineFriends;
+    return offlineFriends.filter((friend) => friend.name.toLowerCase().includes(q));
+  }, [search]);
 
   const handleAcceptRequest = (requestId: string) => {
     setRequests((prev) => prev.filter((request) => request.id !== requestId));
@@ -110,109 +184,163 @@ export default function SocialScreen() {
   };
 
   return (
-    <Screen scrollable={false} padded={false}>
-      <Header
-        title="Social"
-        subtitle="Friend zone and direct connects"
-        rightAction={{
-          icon: "account-plus",
-          onPress: () => router.push("/(tabs)/search-players" as any),
-        }}
-      />
+    <View style={styles.screen}>
+      <View style={styles.headerWrap}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Social</Text>
 
-      <View style={styles.topSection}>
-        <View style={styles.tabRow}>
-          {([
-            { id: "friends", label: "Friends" },
-            { id: "messages", label: "Messages" },
-            { id: "requests", label: `Requests (${requests.length})` },
-          ] as const).map((tab) => (
+          <View style={styles.headerActions}>
             <Pressable
-              key={tab.id}
-              onPress={() => setActiveTab(tab.id)}
-              style={[styles.tabButton, activeTab === tab.id && styles.tabButtonActive]}
+              onPress={() => router.push("/(tabs)/search-players")}
+              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
             >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === tab.id && styles.tabTextActive,
-                ]}
-              >
-                {tab.label}
-              </Text>
+              <MaterialCommunityIcons name="account-plus-outline" size={20} color={colors.text} />
             </Pressable>
-          ))}
+
+            <Pressable
+              onPress={() => router.push("/(tabs)/qr-code")}
+              style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+            >
+              <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+            </Pressable>
+          </View>
         </View>
 
-        {activeTab === "friends" && (
-          <Searchbar
-            placeholder="Search friends..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            style={styles.searchbar}
-            inputStyle={styles.searchInput}
-            placeholderTextColor={colors.textMuted}
-          />
-        )}
+        <View style={styles.tabRow}>
+          {(
+            [
+              { id: "friends", label: "Friends" },
+              { id: "messages", label: "Messages" },
+              { id: "requests", label: `Requests (${requests.length})` },
+            ] as const
+          ).map((tab) => {
+            const selected = activeTab === tab.id;
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => setActiveTab(tab.id)}
+                style={[styles.tabButton, selected ? styles.tabButtonActive : undefined]}
+              >
+                <Text style={[styles.tabText, selected ? styles.tabTextActive : undefined]}>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       {activeTab === "friends" && (
         <FlatList
-          data={filteredFriends}
+          data={[...filteredOnline, ...filteredOffline]}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <FriendCard
-              friend={item}
-              isFollowing={following.includes(item.id)}
-              onFollow={() => handleFollow(item.id)}
-              onPress={() =>
-                router.push(`/(tabs)/user-profile?userId=${item.id}` as any)
-              }
-            />
-          )}
+          ListHeaderComponent={
+            <View style={styles.searchWrap}>
+              <Searchbar
+                placeholder="Search friends..."
+                value={search}
+                onChangeText={setSearch}
+                style={styles.searchbar}
+                inputStyle={styles.searchInput}
+                iconColor={colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
+              />
+
+              <View style={styles.sectionLabelRow}>
+                <Text style={styles.sectionLabel}>Online</Text>
+                <Text style={styles.sectionCount}>{filteredOnline.length}</Text>
+              </View>
+            </View>
+          }
+          renderItem={({ item, index }) => {
+            const isOnline = item.online;
+            const firstOfflineIndex = filteredOnline.length;
+            const showOfflineTitle = !isOnline && index === firstOfflineIndex;
+
+            return (
+              <View>
+                {showOfflineTitle ? (
+                  <View style={styles.offlineHeader}>
+                    <Text style={styles.sectionLabel}>Offline</Text>
+                    <Text style={styles.sectionCountMuted}>{filteredOffline.length}</Text>
+                  </View>
+                ) : null}
+
+                <Pressable
+                  onPress={() => router.push(`/(tabs)/user-profile?userId=${item.id}`)}
+                  style={({ pressed }) => [
+                    styles.friendCard,
+                    !isOnline ? styles.friendCardOffline : undefined,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={styles.friendAvatarWrap}>
+                    <Image source={{ uri: item.avatar }} style={styles.friendAvatar} />
+                    {isOnline ? <View style={styles.friendOnlineDot} /> : null}
+                  </View>
+
+                  <View style={styles.friendInfo}>
+                    <View style={styles.friendTopRow}>
+                      <Text style={styles.friendName}>{item.name}</Text>
+                      <Text style={styles.levelBadge}>Lvl {item.level}</Text>
+                    </View>
+                    <Text style={styles.friendPrimaryStatus}>{isOnline ? item.game : item.statusText}</Text>
+                    {isOnline ? <Text style={styles.friendSecondaryStatus}>{item.statusText}</Text> : null}
+                  </View>
+
+                  {isOnline ? (
+                    <Pressable
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        router.push(`/(tabs)/chat?userId=${item.id}`);
+                      }}
+                      style={({ pressed }) => [styles.chatButton, pressed && styles.pressed]}
+                    >
+                      <MaterialCommunityIcons name="message-outline" size={19} color="#1A1A1A" />
+                    </Pressable>
+                  ) : null}
+                </Pressable>
+              </View>
+            );
+          }}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
       {activeTab === "messages" && (
         <FlatList
-          data={conversations}
+          data={messageItems}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <Card
-              style={styles.messageCard}
-              onPress={() =>
-                router.push(`/(tabs)/chat?userId=${item.userId}` as any)
-              }
+            <Pressable
+              onPress={() => router.push(`/(tabs)/chat?userId=${item.userId}`)}
+              style={({ pressed }) => [styles.messageCard, pressed && styles.pressed]}
             >
-              <View style={styles.messageRow}>
-                <View style={styles.messageLeft}>
-                  <View style={styles.messageAvatar}>
-                    <MaterialCommunityIcons
-                      name="account"
-                      size={24}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.messageInfo}>
-                    <Text style={styles.messageUser}>{item.user}</Text>
-                    <Text style={styles.messagePreview} numberOfLines={1}>
-                      {item.message}
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.messageRight}>
-                  <Text style={styles.messageTime}>{item.time}</Text>
-                  {item.unread > 0 && (
-                    <View style={styles.unreadBadge}>
-                      <Text style={styles.unreadText}>{item.unread}</Text>
-                    </View>
-                  )}
-                </View>
+              <View style={styles.messageAvatarWrap}>
+                <Image source={{ uri: item.avatar }} style={styles.messageAvatar} />
+                {item.online ? <View style={styles.friendOnlineDot} /> : null}
               </View>
-            </Card>
+
+              <View style={styles.messageInfo}>
+                <View style={styles.messageTopRow}>
+                  <Text style={styles.messageUser}>{item.user}</Text>
+                  <Text style={styles.messageTime}>{item.time}</Text>
+                </View>
+                <Text style={styles.messagePreview} numberOfLines={1}>
+                  {item.message}
+                </Text>
+              </View>
+
+              {item.unread > 0 ? (
+                <View style={styles.unreadBadge}>
+                  <Text style={styles.unreadText}>{item.unread}</Text>
+                </View>
+              ) : null}
+            </Pressable>
           )}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -220,71 +348,96 @@ export default function SocialScreen() {
         <FlatList
           data={requests}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <Card style={styles.requestCard}>
-              <View style={styles.requestTop}>
-                <View style={styles.requestLeft}>
-                  <View style={styles.messageAvatar}>
-                    <MaterialCommunityIcons
-                      name="account-plus"
-                      size={22}
-                      color={colors.primary}
-                    />
-                  </View>
-                  <View style={styles.requestInfo}>
-                    <Text style={styles.requestName}>{item.name}</Text>
-                    <Text style={styles.requestMeta}>
-                      {item.mutualFriends} mutual friends
-                    </Text>
-                    <Text style={styles.requestGames}>{item.games.join(" • ")}</Text>
-                  </View>
+            <View style={styles.requestCard}>
+              <Pressable
+                onPress={() => router.push(`/(tabs)/user-profile?userId=${item.userId}`)}
+                style={({ pressed }) => [styles.requestTop, pressed && styles.pressed]}
+              >
+                <Image source={{ uri: item.avatar }} style={styles.requestAvatar} />
+                <View style={styles.requestInfo}>
+                  <Text style={styles.requestName}>{item.name}</Text>
+                  <Text style={styles.requestMeta}>{item.mutualFriends} mutual friends</Text>
+                  <Text style={styles.requestGames}>{item.games.join(" · ")}</Text>
                 </View>
-              </View>
+              </Pressable>
+
               <View style={styles.requestActions}>
                 <Pressable
-                  style={styles.acceptBtn}
                   onPress={() => handleAcceptRequest(item.id)}
+                  style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}
                 >
-                  <Text style={styles.acceptBtnText}>Accept</Text>
+                  <Text style={styles.acceptText}>Accept</Text>
                 </Pressable>
                 <Pressable
-                  style={styles.declineBtn}
                   onPress={() => handleDeclineRequest(item.id)}
+                  style={({ pressed }) => [styles.declineButton, pressed && styles.pressed]}
                 >
-                  <Text style={styles.declineBtnText}>Decline</Text>
+                  <Text style={styles.declineText}>Decline</Text>
                 </Pressable>
               </View>
-            </Card>
+            </View>
           )}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No pending friend requests</Text>
+              <Text style={styles.emptyTitle}>No pending requests</Text>
+              <Text style={styles.emptyCopy}>New friend invites will appear here.</Text>
             </View>
           }
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
         />
       )}
-    </Screen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  topSection: {
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  headerWrap: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.md,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 36,
+    fontWeight: "800",
+  },
+  headerActions: {
+    flexDirection: "row",
+  },
+  iconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#242424",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: spacing.sm,
   },
   tabRow: {
     flexDirection: "row",
-    gap: spacing.sm,
-    marginBottom: spacing.md,
   },
   tabButton: {
     flex: 1,
-    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
-    paddingVertical: spacing.sm,
+    backgroundColor: "#242424",
+    borderRadius: 12,
+    paddingVertical: 10,
+    marginRight: 8,
     alignItems: "center",
   },
   tabButtonActive: {
@@ -292,151 +445,288 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   tabText: {
-    color: colors.textMuted,
-    fontWeight: "700",
+    color: colors.textSecondary,
     fontSize: 12,
+    fontWeight: "800",
   },
   tabTextActive: {
-    color: colors.background,
+    color: "#1A1A1A",
+  },
+  searchWrap: {
+    marginBottom: spacing.sm,
   },
   searchbar: {
-    backgroundColor: colors.surface,
+    backgroundColor: "#242424",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.md,
   },
   searchInput: {
     color: colors.text,
     fontSize: 14,
   },
-  listContent: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  messageCard: {
-    padding: spacing.md,
+  sectionLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.sm,
   },
-  messageRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  messageLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  messageAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginRight: spacing.md,
-  },
-  messageInfo: {
-    flex: 1,
-  },
-  messageUser: {
+  sectionLabel: {
     color: colors.text,
-    fontWeight: "700",
-    fontSize: 14,
+    fontWeight: "800",
+    fontSize: 18,
+    marginRight: 8,
   },
-  messagePreview: {
-    color: colors.textMuted,
-    marginTop: 2,
+  sectionCount: {
+    color: "#4ADE80",
+    backgroundColor: "rgba(74,222,128,0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(74,222,128,0.3)",
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontWeight: "700",
     fontSize: 12,
   },
-  messageRight: {
-    alignItems: "flex-end",
-    marginLeft: spacing.md,
+  sectionCountMuted: {
+    color: colors.textSecondary,
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    fontWeight: "700",
+    fontSize: 12,
   },
-  messageTime: {
-    color: colors.textMuted,
+  offlineHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  listContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: 110,
+  },
+  friendCard: {
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  friendCardOffline: {
+    opacity: 0.6,
+  },
+  friendAvatarWrap: {
+    position: "relative",
+    marginRight: spacing.md,
+  },
+  friendAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 2,
+    borderColor: "#444",
+  },
+  friendOnlineDot: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: "#242424",
+    backgroundColor: "#4ADE80",
+  },
+  friendInfo: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  friendTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  friendName: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "800",
+    marginRight: 8,
+  },
+  levelBadge: {
+    color: colors.textSecondary,
     fontSize: 11,
+    borderWidth: 1,
+    borderColor: "#444",
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
-  unreadBadge: {
-    marginTop: spacing.xs,
-    minWidth: 20,
-    height: 20,
-    borderRadius: 10,
+  friendPrimaryStatus: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  friendSecondaryStatus: {
+    color: "#4ADE80",
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: "600",
+  },
+  chatButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  unreadText: {
-    color: colors.background,
-    fontWeight: "700",
+  messageCard: {
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  messageAvatarWrap: {
+    position: "relative",
+    marginRight: spacing.md,
+  },
+  messageAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 1,
+    borderColor: "#444",
+  },
+  messageInfo: {
+    flex: 1,
+  },
+  messageTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  messageUser: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  messageTime: {
+    color: colors.textSecondary,
     fontSize: 11,
   },
+  messagePreview: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  unreadBadge: {
+    marginLeft: spacing.sm,
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  unreadText: {
+    color: "#1A1A1A",
+    fontSize: 12,
+    fontWeight: "800",
+  },
   requestCard: {
-    padding: spacing.md,
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
     marginBottom: spacing.sm,
   },
   requestTop: {
-    marginBottom: spacing.md,
-  },
-  requestLeft: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 12,
+  },
+  requestAvatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    marginRight: spacing.md,
+    borderWidth: 1,
+    borderColor: "#444",
   },
   requestInfo: {
     flex: 1,
   },
   requestName: {
     color: colors.text,
-    fontWeight: "700",
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: "800",
   },
   requestMeta: {
-    color: colors.textMuted,
+    color: colors.textSecondary,
     fontSize: 12,
     marginTop: 2,
   },
   requestGames: {
     color: colors.primary,
     fontSize: 12,
-    marginTop: 3,
+    marginTop: 4,
   },
   requestActions: {
     flexDirection: "row",
-    gap: spacing.sm,
   },
-  acceptBtn: {
+  acceptButton: {
     flex: 1,
     backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingVertical: spacing.sm,
+    borderRadius: 12,
+    paddingVertical: 10,
     alignItems: "center",
+    marginRight: spacing.sm,
   },
-  acceptBtnText: {
-    color: colors.background,
-    fontWeight: "700",
+  acceptText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
   },
-  declineBtn: {
+  declineButton: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: "#333",
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingVertical: spacing.sm,
+    borderColor: "#444",
+    borderRadius: 12,
+    paddingVertical: 10,
     alignItems: "center",
   },
-  declineBtnText: {
+  declineText: {
     color: colors.text,
     fontWeight: "700",
   },
   emptyState: {
     alignItems: "center",
-    paddingVertical: spacing.xl,
+    marginTop: 40,
   },
-  emptyText: {
-    color: colors.textMuted,
+  emptyTitle: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  emptyCopy: {
+    marginTop: 4,
+    color: colors.textSecondary,
+  },
+  pressed: {
+    opacity: 0.85,
   },
 });

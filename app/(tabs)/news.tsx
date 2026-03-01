@@ -149,7 +149,7 @@ export default function NewsScreen() {
                     },
                   ]}
                 >
-                  News
+                  Feed
                 </Text>
                 <Pressable
                   onPress={() => router.push("/(tabs)/qr-code")}
@@ -170,10 +170,10 @@ export default function NewsScreen() {
               </View>
 
               <Searchbar
-                placeholder="Search news, creators, games..."
+                placeholder="Search feed, creators, games..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                accessibilityLabel="Search news"
+                accessibilityLabel="Search feed"
                 style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
                 inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
                 placeholderTextColor={colors.textMuted}

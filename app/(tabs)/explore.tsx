@@ -15,7 +15,7 @@ interface RouteItem {
 }
 
 const ROUTES: RouteItem[] = [
-  { id: "news", label: "News", path: "/(tabs)/news", group: "core" },
+  { id: "news", label: "Feed", path: "/(tabs)/news", group: "core" },
   { id: "groups", label: "Groups", path: "/(tabs)/groups", group: "core" },
   { id: "social", label: "Social", path: "/(tabs)/social", group: "core" },
   { id: "profile", label: "Profile", path: "/(tabs)/profile", group: "core" },

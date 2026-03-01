@@ -35,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="news"
         options={{
-          title: "News",
+          title: "Feed",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="newspaper" size={iconSize} color={color} />
           ),

@@ -28,7 +28,7 @@ export default function GroupDetailScreen() {
   const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const onlineCount = Math.max(1, Math.min(group.memberCount, Math.round(group.memberCount * 0.55)));
-  const homeEvents = [
+  const groupEvents = [
     {
       id: "h-ev-1",
       title: group.mode === "ranked" ? "Ranked Session" : "Casual Queue Night",
@@ -93,6 +93,16 @@ export default function GroupDetailScreen() {
       },
     ]);
   };
+
+  const renderEventRow = (event: { id: string; title: string; time: string }) => (
+    <View key={event.id} style={styles.homeEventRow}>
+      <MaterialCommunityIcons name="calendar-clock" size={16} color={colors.primary} />
+      <View style={styles.homeEventTextWrap}>
+        <Text style={styles.homeEventTitle}>{event.title}</Text>
+        <Text style={styles.homeEventTime}>{event.time}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <Screen scrollable={false}>
@@ -191,15 +201,7 @@ export default function GroupDetailScreen() {
 
           <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Events</Text>
           <View style={styles.homeEventsList}>
-            {homeEvents.map((event) => (
-              <View key={event.id} style={styles.homeEventRow}>
-                <MaterialCommunityIcons name="calendar-clock" size={16} color={colors.primary} />
-                <View style={styles.homeEventTextWrap}>
-                  <Text style={styles.homeEventTitle}>{event.title}</Text>
-                  <Text style={styles.homeEventTime}>{event.time}</Text>
-                </View>
-              </View>
-            ))}
+            {groupEvents.map((event) => renderEventRow(event))}
           </View>
         </View>
       )}
@@ -330,11 +332,13 @@ export default function GroupDetailScreen() {
       )}
 
       {activeTab === "events" && (
-        <View style={styles.emptyState}>
-          <Text style={[styles.emptyText, { fontSize: responsive.bodySize }]}>No events scheduled</Text>
-          <Text style={[styles.emptySubtext, { fontSize: responsive.bodySmallSize }]}>
-            Upcoming events will appear here
+        <View style={styles.eventsWrap}>
+          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>
+            Events
           </Text>
+          <View style={styles.homeEventsList}>
+            {groupEvents.map((event) => renderEventRow(event))}
+          </View>
         </View>
       )}
 
@@ -443,6 +447,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   homeWrap: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  eventsWrap: {
     flex: 1,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
@@ -608,20 +617,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: spacing.xl,
-  },
-  emptyText: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: spacing.sm,
-  },
-  emptySubtext: {
-    color: colors.textMuted,
-    fontSize: 12,
   },
 });

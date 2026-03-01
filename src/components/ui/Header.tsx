@@ -56,13 +56,7 @@ export function Header({
       onBack();
       return;
     }
-
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    router.replace("/(tabs)/profile" as any);
+    router.back();
   };
 
   return (

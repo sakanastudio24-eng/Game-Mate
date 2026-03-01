@@ -18,6 +18,10 @@ export interface ResponsiveInfo {
   headerTopSpacing: number;
   headerTitleSize: number;
   iconButtonSize: number;
+  touchTargetMin: number;
+  buttonHeightSmall: number;
+  buttonHeightMedium: number;
+  buttonHeightLarge: number;
   cardRadius: number;
   cardPadding: number;
   tabBarBaseHeight: number;
@@ -52,6 +56,10 @@ export function useResponsive(): ResponsiveInfo {
       headerTopSpacing: tokens.headerTopSpacing,
       headerTitleSize: tokens.headerTitleSize,
       iconButtonSize: tokens.iconButtonSize,
+      touchTargetMin: tokens.touchTargetMin,
+      buttonHeightSmall: tokens.buttonHeightSmall,
+      buttonHeightMedium: tokens.buttonHeightMedium,
+      buttonHeightLarge: tokens.buttonHeightLarge,
       cardRadius: tokens.cardRadius,
       cardPadding: tokens.cardPadding,
       tabBarBaseHeight: tokens.tabBarBaseHeight,

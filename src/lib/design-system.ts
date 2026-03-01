@@ -15,6 +15,10 @@ interface PlatformPreset {
   headerTopSpacing: number;
   headerTitleSize: number;
   iconButtonSize: number;
+  touchTargetMin: number;
+  buttonHeightSmall: number;
+  buttonHeightMedium: number;
+  buttonHeightLarge: number;
   tabBarBaseHeight: number;
   tabBarLabelSize: number;
   searchRadius: number;
@@ -40,6 +44,10 @@ export interface MobileDesignTokens {
   headerTopSpacing: number;
   headerTitleSize: number;
   iconButtonSize: number;
+  touchTargetMin: number;
+  buttonHeightSmall: number;
+  buttonHeightMedium: number;
+  buttonHeightLarge: number;
   tabBarBaseHeight: number;
   tabBarLabelSize: number;
   searchRadius: number;
@@ -59,7 +67,11 @@ const PLATFORM_PRESETS: Record<MobilePlatform, PlatformPreset> = {
     cardPadding: 14,
     headerTopSpacing: 8,
     headerTitleSize: 19,
-    iconButtonSize: 42,
+    iconButtonSize: 44,
+    touchTargetMin: 44,
+    buttonHeightSmall: 44,
+    buttonHeightMedium: 48,
+    buttonHeightLarge: 52,
     tabBarBaseHeight: 58,
     tabBarLabelSize: 12,
     searchRadius: 14,
@@ -77,7 +89,11 @@ const PLATFORM_PRESETS: Record<MobilePlatform, PlatformPreset> = {
     cardPadding: 12,
     headerTopSpacing: 6,
     headerTitleSize: 18,
-    iconButtonSize: 40,
+    iconButtonSize: 48,
+    touchTargetMin: 48,
+    buttonHeightSmall: 48,
+    buttonHeightMedium: 52,
+    buttonHeightLarge: 56,
     tabBarBaseHeight: 60,
     tabBarLabelSize: 11,
     searchRadius: 12,
@@ -115,6 +131,19 @@ export function useMobileDesignTokens(): MobileDesignTokens {
       headerTopSpacing: preset.headerTopSpacing,
       headerTitleSize: Math.round(preset.headerTitleSize * sizeScale),
       iconButtonSize: Math.round(preset.iconButtonSize * sizeScale),
+      touchTargetMin: preset.touchTargetMin,
+      buttonHeightSmall: Math.max(
+        preset.touchTargetMin,
+        Math.round(preset.buttonHeightSmall * sizeScale),
+      ),
+      buttonHeightMedium: Math.max(
+        preset.touchTargetMin,
+        Math.round(preset.buttonHeightMedium * sizeScale),
+      ),
+      buttonHeightLarge: Math.max(
+        preset.touchTargetMin,
+        Math.round(preset.buttonHeightLarge * sizeScale),
+      ),
       tabBarBaseHeight: Math.round(preset.tabBarBaseHeight * sizeScale),
       tabBarLabelSize: Math.round(preset.tabBarLabelSize * sizeScale),
       searchRadius: Math.round(preset.searchRadius * sizeScale),

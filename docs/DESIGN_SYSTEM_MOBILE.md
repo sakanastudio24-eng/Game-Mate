@@ -32,7 +32,11 @@ Adapter used by screens/components:
 - `cardPadding`: `14`
 - `headerTopSpacing`: `8`
 - `headerTitleSize`: `19`
-- `iconButtonSize`: `42`
+- `iconButtonSize`: `44`
+- `touchTargetMin`: `44`
+- `buttonHeightSmall`: `44`
+- `buttonHeightMedium`: `48`
+- `buttonHeightLarge`: `52`
 - `tabBarBaseHeight`: `58`
 - `tabBarLabelSize`: `12`
 - `searchRadius`: `14`
@@ -51,7 +55,11 @@ Adapter used by screens/components:
 - `cardPadding`: `12`
 - `headerTopSpacing`: `6`
 - `headerTitleSize`: `18`
-- `iconButtonSize`: `40`
+- `iconButtonSize`: `48`
+- `touchTargetMin`: `48`
+- `buttonHeightSmall`: `48`
+- `buttonHeightMedium`: `52`
+- `buttonHeightLarge`: `56`
 - `tabBarBaseHeight`: `60`
 - `tabBarLabelSize`: `11`
 - `searchRadius`: `12`
@@ -85,6 +93,11 @@ Tokens are scaled by screen width class in `useMobileDesignTokens()`:
 
 6. Search and segmented controls:
 - Use `responsive.searchRadius` and `responsive.bodySize/bodySmallSize` for field text.
+
+7. Tap target minimums:
+- iPhone: minimum interactive target is `44pt`.
+- Android: minimum interactive target is `48dp`.
+- In code use `responsive.touchTargetMin` for icon-only actions and `responsive.buttonHeight*` for text buttons.
 
 ## Typography Rules
 
@@ -132,6 +145,11 @@ Route coverage:
 - iPhone with home indicator
 - Android with gesture nav
 - Android with 3-button nav
+
+## External Reference Baselines
+
+- Apple Human Interface Guidelines (controls sizing and tap comfort): https://developer.apple.com/design/human-interface-guidelines/controls
+- Android Accessibility Help (touch target size): https://support.google.com/accessibility/android/answer/7101858?hl=en
 
 ## Runtime QA Pass
 

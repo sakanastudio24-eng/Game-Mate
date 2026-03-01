@@ -63,6 +63,12 @@ function compactNumber(value: number): string {
   return String(value);
 }
 
+function truncateFeedTitle(title: string, maxWords = 6): string {
+  const words = title.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return title;
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
 function buildCommentPreview(item: FeedEntry): CommentItem[] {
   return [
     {
@@ -362,7 +368,7 @@ export default function NewsScreen() {
                     <Text style={styles.date}>{item.date}</Text>
                   </View>
                 </View>
-                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.title}>{truncateFeedTitle(item.title)}</Text>
                 <Text style={styles.description}>
                   {item.type === "video" ? "Live clip and highlights" : "Editorial update"} ·{" "}
                   {item.category.toUpperCase()}

@@ -109,7 +109,7 @@ const statusConfig: Record<
 > = {
   online: {
     label: "Online",
-    color: "#4ADE80",
+    color: colors.primary,
     icon: "checkbox-marked-circle-outline",
     detail: "Ready to play",
   },

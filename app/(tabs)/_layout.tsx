@@ -87,6 +87,7 @@ export default function TabLayout() {
       <Tabs.Screen name="messages" options={{ href: null }} />
       <Tabs.Screen name="notification-settings" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="platform-connections" options={{ href: null }} />
       <Tabs.Screen name="privacy-detail" options={{ href: null }} />
       <Tabs.Screen name="privacy-settings" options={{ href: null }} />
       <Tabs.Screen name="qr-code" options={{ href: null }} />

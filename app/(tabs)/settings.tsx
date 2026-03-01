@@ -74,6 +74,14 @@ export default function SettingsScreen() {
           left={() => <MaterialCommunityIcons name="shield-lock-outline" size={20} color={colors.primary} />}
           onPress={() => router.push("/(tabs)/privacy-settings" as any)}
         />
+
+        <List.Item
+          title="Platform Connections"
+          description="Link PlayStation, Computer, Phone, and Switch"
+          titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
+          left={() => <MaterialCommunityIcons name="gamepad-variant-outline" size={20} color={colors.primary} />}
+          onPress={() => router.push("/(tabs)/platform-connections" as any)}
+        />
       </Card>
 
       <Card style={styles.section}>

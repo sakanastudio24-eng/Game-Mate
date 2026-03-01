@@ -167,7 +167,7 @@ export default function SearchPlayersScreen() {
           data={filteredResults}
           renderItem={({ item }) => renderPlayerCard(item)}
           keyExtractor={(item) => item.id}
-          scrollEnabled={false}
+          scrollEnabled={true}
           contentContainerStyle={styles.resultsList}
         />
       ) : (

@@ -174,7 +174,7 @@ export default function MatchmakingScreen() {
           data={filteredMatches}
           renderItem={({ item }) => renderMatchCard(item)}
           keyExtractor={(item) => item.id}
-          scrollEnabled={false}
+          scrollEnabled={true}
           contentContainerStyle={styles.matchesList}
         />
       ) : (

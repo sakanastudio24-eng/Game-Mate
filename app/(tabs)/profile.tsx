@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { MY_GROUPS } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
@@ -100,6 +101,44 @@ const videoTools = [
   { id: "drafts", label: "Drafts", icon: "file-document-edit-outline", premium: false },
 ] as const;
 
+type OnlineStatus = "online" | "away" | "busy" | "invisible" | "offline";
+
+const statusConfig: Record<
+  OnlineStatus,
+  { label: string; color: string; icon: string; detail: string }
+> = {
+  online: {
+    label: "Online",
+    color: "#4ADE80",
+    icon: "checkbox-marked-circle-outline",
+    detail: "Ready to play",
+  },
+  away: {
+    label: "Away",
+    color: "#FACC15",
+    icon: "clock-outline",
+    detail: "Temporarily away",
+  },
+  busy: {
+    label: "Busy",
+    color: "#F87171",
+    icon: "minus-circle-outline",
+    detail: "Do not disturb",
+  },
+  invisible: {
+    label: "Invisible",
+    color: "#A3A3A3",
+    icon: "incognito",
+    detail: "Appear offline",
+  },
+  offline: {
+    label: "Offline",
+    color: "#6B7280",
+    icon: "power-plug-off-outline",
+    detail: "Not available",
+  },
+};
+
 export default function ProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
@@ -110,6 +149,8 @@ export default function ProfileScreen() {
   const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
     "videos",
   );
+  const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("online");
+  const [statusPickerOpen, setStatusPickerOpen] = useState(false);
 
   const statCardWidth = responsive.isSmallPhone ? "48.5%" : "24%";
   const gameCardWidth = responsive.isSmallPhone ? "48.5%" : "31.5%";
@@ -158,6 +199,7 @@ export default function ProfileScreen() {
       },
     } as any);
   };
+  const activeStatus = statusConfig[onlineStatus];
 
   return (
     <View style={styles.screen}>
@@ -230,7 +272,7 @@ export default function ProfileScreen() {
             <View style={styles.avatarRing}>
               <Image source={{ uri: CURRENT_USER_AVATAR }} style={styles.avatar} />
             </View>
-            <View style={styles.onlineDot} />
+            <View style={[styles.onlineDot, { backgroundColor: activeStatus.color }]} />
 
             <View style={styles.nameRow}>
               <Text
@@ -248,14 +290,22 @@ export default function ProfileScreen() {
               <MaterialCommunityIcons name="check-decagram" size={18} color={colors.primary} />
             </View>
 
-            <View style={styles.statusRow}>
+            <Pressable
+              onPress={() => setStatusPickerOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Choose online status"
+              style={({ pressed }) => [styles.statusRow, pressed && styles.pressed]}
+            >
               <MaterialCommunityIcons
-                name="controller-classic-outline"
+                name={activeStatus.icon as any}
                 size={15}
                 color={colors.textSecondary}
               />
-              <Text style={[styles.statusText, { fontSize: responsive.bodySmallSize }]}>Online · Playing Overwatch</Text>
-            </View>
+              <Text style={[styles.statusText, { fontSize: responsive.bodySmallSize }]}>
+                {activeStatus.label} · {activeStatus.detail}
+              </Text>
+              <MaterialCommunityIcons name="chevron-down" size={16} color={colors.textSecondary} />
+            </Pressable>
 
             <Text
               style={[
@@ -567,6 +617,21 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
       </ScrollView>
+
+      <ActionSheet
+        visible={statusPickerOpen}
+        title="Online Status"
+        subtitle="Choose how you appear"
+        onClose={() => setStatusPickerOpen(false)}
+        options={(Object.keys(statusConfig) as OnlineStatus[]).map((statusKey) => ({
+          id: statusKey,
+          label:
+            statusConfig[statusKey].label +
+            (onlineStatus === statusKey ? " (Selected)" : ""),
+          icon: statusConfig[statusKey].icon,
+          onPress: () => setOnlineStatus(statusKey),
+        }))}
+      />
     </View>
   );
 }

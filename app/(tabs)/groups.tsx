@@ -33,13 +33,18 @@ export default function GroupsScreen() {
     );
   }, [query]);
 
+  const discoverableGroups = useMemo(
+    () => filteredGroups.filter((group) => !joinedGroupIds.includes(group.id)),
+    [filteredGroups, joinedGroupIds],
+  );
+
   useEffect(() => {
     setVisibleCount(initialVisible);
   }, [query, initialVisible]);
 
   const visibleGroups = useMemo(
-    () => filteredGroups.slice(0, visibleCount),
-    [filteredGroups, visibleCount],
+    () => discoverableGroups.slice(0, visibleCount),
+    [discoverableGroups, visibleCount],
   );
 
   const totalOnline = SUGGESTED_GROUPS.reduce((total, group) => total + group.online, 0);
@@ -51,7 +56,7 @@ export default function GroupsScreen() {
   };
 
   const loadMoreGroups = () => {
-    setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, filteredGroups.length));
+    setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, discoverableGroups.length));
   };
 
   return (
@@ -125,7 +130,7 @@ export default function GroupsScreen() {
 
             <View style={styles.statsRow}>
               <View style={styles.statPrimary}>
-                <Text style={styles.statPrimaryText}>{SUGGESTED_GROUPS.length} Discoverable</Text>
+                <Text style={styles.statPrimaryText}>{discoverableGroups.length} Discoverable</Text>
               </View>
               <View style={styles.statSecondary}>
                 <View style={styles.onlineDot} />
@@ -175,7 +180,8 @@ export default function GroupsScreen() {
           const isJoined = joinedGroupIds.includes(group.id);
           return (
             <AnimatedEntrance key={group.id} delay={120 + index * 70}>
-              <View
+              <Pressable
+                onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
                 style={[
                   styles.groupCard,
                   {
@@ -186,6 +192,7 @@ export default function GroupsScreen() {
                     alignSelf: "center",
                     width: "100%",
                   },
+                  styles.cardPressable,
                 ]}
               >
                 <View style={styles.groupRow}>
@@ -198,11 +205,37 @@ export default function GroupsScreen() {
                       {group.members} members · {group.online} online
                     </Text>
                   </View>
+
+                  <Pressable
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      router.push(`/(tabs)/group-detail?groupId=${group.id}`);
+                    }}
+                    style={({ pressed }) => [
+                      styles.groupOptionsButton,
+                      {
+                        minWidth: responsive.touchTargetMin,
+                        minHeight: responsive.touchTargetMin,
+                        borderRadius: responsive.touchTargetMin / 2,
+                      },
+                      pressed && styles.pressed,
+                    ]}
+                    hitSlop={4}
+                  >
+                    <MaterialCommunityIcons
+                      name="dots-vertical"
+                      size={20}
+                      color={colors.textSecondary}
+                    />
+                  </Pressable>
                 </View>
 
                 <View style={styles.groupActionRow}>
                   <Pressable
-                    onPress={() => toggleJoin(group.id)}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      toggleJoin(group.id);
+                    }}
                     style={({ pressed }) => [
                       styles.groupJoinButton,
                       { minHeight: responsive.buttonHeightSmall },
@@ -219,24 +252,13 @@ export default function GroupsScreen() {
                       {isJoined ? "Joined" : "Join"}
                     </Text>
                   </Pressable>
-
-                  <Pressable
-                    onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
-                    style={({ pressed }) => [
-                      styles.groupViewButton,
-                      { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 16 },
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text style={styles.groupViewButtonText}>Open</Text>
-                  </Pressable>
                 </View>
-              </View>
+              </Pressable>
             </AnimatedEntrance>
           );
         })}
 
-        {filteredGroups.length > visibleCount ? (
+        {discoverableGroups.length > visibleCount ? (
           <Pressable
             onPress={loadMoreGroups}
             style={[
@@ -254,7 +276,7 @@ export default function GroupsScreen() {
           </Pressable>
         ) : null}
 
-        {filteredGroups.length === 0 ? (
+        {discoverableGroups.length === 0 ? (
           <View
             style={[
               styles.emptyState,
@@ -266,8 +288,8 @@ export default function GroupsScreen() {
               },
             ]}
           >
-            <Text style={styles.emptyTitle}>No groups found</Text>
-            <Text style={styles.emptyCopy}>Try another search phrase.</Text>
+            <Text style={styles.emptyTitle}>No groups available</Text>
+            <Text style={styles.emptyCopy}>Joined groups are now in your profile.</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -390,6 +412,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#242424",
     marginBottom: spacing.sm,
   },
+  cardPressable: {
+    overflow: "hidden",
+  },
   groupRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -421,7 +446,7 @@ const styles = StyleSheet.create({
   groupActionRow: {
     marginTop: spacing.md,
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
     gap: spacing.sm,
   },
@@ -446,20 +471,13 @@ const styles = StyleSheet.create({
   groupJoinedButtonText: {
     color: "#4ADE80",
   },
-  groupViewButton: {
-    borderRadius: 999,
+  groupOptionsButton: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#2A2A2A",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
     alignItems: "center",
     justifyContent: "center",
-  },
-  groupViewButtonText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 12,
+    marginLeft: spacing.sm,
   },
   loadMoreButton: {
     marginTop: spacing.xs,

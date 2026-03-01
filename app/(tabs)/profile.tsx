@@ -1,7 +1,7 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
@@ -91,6 +91,17 @@ export default function ProfileScreen() {
 
   const leaveGroup = (groupId: string) => {
     setMyGroups((prev) => prev.filter((group) => group.id !== groupId));
+  };
+
+  const openGroupOptions = (groupId: string, groupName: string) => {
+    Alert.alert(groupName, "Group actions", [
+      {
+        text: "Leave Group",
+        style: "destructive",
+        onPress: () => leaveGroup(groupId),
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   return (
@@ -386,7 +397,7 @@ export default function ProfileScreen() {
                       <Pressable
                         onPress={(event) => {
                           event.stopPropagation();
-                          router.push(`/(tabs)/group-detail?groupId=${group.id}`);
+                          openGroupOptions(group.id, group.name);
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`More options for ${group.name}`}
@@ -411,22 +422,6 @@ export default function ProfileScreen() {
                     <Text style={styles.myGroupMeta}>
                       {group.game} · {group.members} members · {group.online} online
                     </Text>
-
-                    <Pressable
-                      onPress={(event) => {
-                        event.stopPropagation();
-                        leaveGroup(group.id);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Leave ${group.name}`}
-                      style={({ pressed }) => [
-                        styles.groupLeaveButton,
-                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={styles.groupLeaveButtonText}>Leave</Text>
-                    </Pressable>
                   </View>
                 </Pressable>
               ))

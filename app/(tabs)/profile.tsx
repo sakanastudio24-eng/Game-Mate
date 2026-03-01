@@ -96,12 +96,6 @@ const videos = [
   },
 ] as const;
 
-const videoTools = [
-  { id: "upload", label: "Upload", icon: "upload", premium: true },
-  { id: "studio", label: "Studio", icon: "movie-open-outline", premium: false },
-  { id: "drafts", label: "Drafts", icon: "file-document-edit-outline", premium: false },
-] as const;
-
 type OnlineStatus = "online" | "away" | "busy" | "invisible" | "offline";
 
 const statusConfig: Record<
@@ -457,49 +451,6 @@ export default function ProfileScreen() {
 
             {activeCollectionTab === "videos" ? (
               <View>
-                <View style={styles.videoToolsRow}>
-                  {videoTools.map((tool) => (
-                    <Pressable
-                      key={tool.id}
-                      onPress={() => {
-                        if (tool.id === "upload") {
-                          openCreateFlow("video");
-                          return;
-                        }
-                        Alert.alert(tool.label, `${tool.label} tools are ready for next integration.`);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={tool.label}
-                      style={({ pressed }) => [
-                        styles.videoToolCard,
-                        tool.premium && styles.videoToolCardPremium,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <View style={[styles.videoToolIconWrap, tool.premium && styles.videoToolIconWrapPremium]}>
-                        <MaterialCommunityIcons
-                          name={tool.icon as any}
-                          size={18}
-                          color={tool.premium ? "#1A1A1A" : colors.primary}
-                        />
-                      </View>
-                      <View style={styles.videoToolTextWrap}>
-                        <Text style={[styles.videoToolTitle, tool.premium && styles.videoToolTitlePremium]}>
-                          {tool.label}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.videoToolSubtitle,
-                            tool.premium && styles.videoToolSubtitlePremium,
-                          ]}
-                        >
-                          {tool.id === "upload" ? "Post a new clip" : "Manage content"}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-
                 <View style={styles.videosGrid}>
                 <Pressable
                   onPress={() => openCreateFlow("video")}
@@ -894,63 +845,6 @@ const styles = StyleSheet.create({
   },
   collectionTabTextActive: {
     color: "#1A1A1A",
-  },
-  videoToolsRow: {
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  videoToolCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#242424",
-    borderRadius: 14,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  videoToolCardPremium: {
-    borderColor: "#FFB07A",
-    backgroundColor: "#2E241B",
-    shadowColor: "#FF9F66",
-    shadowOpacity: 0.26,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 7,
-  },
-  videoToolIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#1F1F1F",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.sm,
-  },
-  videoToolIconWrapPremium: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary,
-  },
-  videoToolTextWrap: {
-    flex: 1,
-  },
-  videoToolTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "800",
-  },
-  videoToolTitlePremium: {
-    color: "#FFE8D6",
-  },
-  videoToolSubtitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 1,
-  },
-  videoToolSubtitlePremium: {
-    color: "#FFD7BF",
   },
   videosGrid: {
     flexDirection: "row",

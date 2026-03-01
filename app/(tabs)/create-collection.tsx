@@ -15,6 +15,7 @@ type CreateType = "video" | "game" | "group";
 
 const platforms = ["PlayStation", "PC", "Mobile", "Switch", "Cross-platform"];
 const tags = ["Competitive", "Casual", "Guide", "Highlights", "Tutorial"];
+const mediaSources = ["None", "Upload", "Camera"];
 
 const flowCopy: Record<
   CreateType,
@@ -74,6 +75,7 @@ export default function CreateCollectionScreen() {
   const [description, setDescription] = useState("");
   const [platform, setPlatform] = useState("PC");
   const [tag, setTag] = useState("Competitive");
+  const [mediaSource, setMediaSource] = useState("Upload");
   const [visibility, setVisibility] = useState<"public" | "friends" | "private">("public");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -183,6 +185,23 @@ export default function CreateCollectionScreen() {
           </Card>
 
           <Card style={styles.card}>
+            <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Media Upload</Text>
+            <View style={styles.optionWrap}>
+              {mediaSources.map((option) => (
+                <Button
+                  key={option}
+                  variant={mediaSource === option ? "primary" : "secondary"}
+                  size="small"
+                  style={styles.optionButton}
+                  onPress={() => setMediaSource(option)}
+                >
+                  {option}
+                </Button>
+              ))}
+            </View>
+          </Card>
+
+          <Card style={styles.card}>
             <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Visibility</Text>
             <SegmentedButtons
               value={visibility}
@@ -219,6 +238,9 @@ export default function CreateCollectionScreen() {
 
             <Text style={styles.reviewLabel}>Tag</Text>
             <Text style={styles.reviewValue}>{tag}</Text>
+
+            <Text style={styles.reviewLabel}>Media Upload</Text>
+            <Text style={styles.reviewValue}>{mediaSource}</Text>
 
             <Text style={styles.reviewLabel}>Visibility</Text>
             <Text style={styles.reviewValue}>{visibility}</Text>

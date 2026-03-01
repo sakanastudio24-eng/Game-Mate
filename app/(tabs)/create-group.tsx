@@ -23,6 +23,7 @@ const games = [
   "Minecraft",
 ];
 const ranks = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Radiant"];
+const mediaSources = ["None", "Upload", "Camera"];
 
 export default function CreateGroupScreen() {
   const safeBack = useSafeBackNavigation();
@@ -33,6 +34,7 @@ export default function CreateGroupScreen() {
   const [micRequired, setMicRequired] = useState(true);
   const [minRank, setMinRank] = useState("Gold");
   const [description, setDescription] = useState("");
+  const [mediaSource, setMediaSource] = useState("Upload");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
@@ -148,6 +150,23 @@ export default function CreateGroupScreen() {
           numberOfLines={4}
           fullWidth
         />
+      </Card>
+
+      <Card style={styles.card}>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Group Media Upload</Text>
+        <View style={styles.gameList}>
+          {mediaSources.map((source) => (
+            <Button
+              key={source}
+              variant={mediaSource === source ? "primary" : "secondary"}
+              onPress={() => setMediaSource(source)}
+              size="small"
+              style={styles.gameButton}
+            >
+              {source}
+            </Button>
+          ))}
+        </View>
       </Card>
 
       <Button

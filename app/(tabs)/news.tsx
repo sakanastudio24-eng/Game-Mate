@@ -180,7 +180,7 @@ export default function NewsScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={[styles.pillsRow, { minWidth: "100%" }]}
+                contentContainerStyle={[styles.pillsRow, { minWidth: "100%", flexGrow: 1 }]}
               >
                 {categories.map((category, index) => {
                   const isActive = category.id === activeCategory;

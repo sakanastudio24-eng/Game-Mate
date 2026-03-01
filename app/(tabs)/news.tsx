@@ -77,7 +77,8 @@ export default function NewsScreen() {
   const bottomSafeInset = Math.max(insets.bottom, responsive.safeBottomInset);
   const horizontalPadding = responsive.horizontalPadding;
   const itemHeight = Math.max(viewportHeight, 1);
-  const actionRailBottom = bottomSafeInset + 22;
+  const actionRailBottom = bottomSafeInset + 18;
+  const actionRailRight = horizontalPadding + Math.max(16, Math.round(responsive.width * 0.05));
   const bottomMetaOffset = bottomSafeInset + 10;
 
   const isLiked = useCallback(
@@ -204,7 +205,7 @@ export default function NewsScreen() {
                 style={[
                   styles.actionRail,
                   {
-                    right: horizontalPadding,
+                    right: actionRailRight,
                     bottom: actionRailBottom,
                   },
                 ]}

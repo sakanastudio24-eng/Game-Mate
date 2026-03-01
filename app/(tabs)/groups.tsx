@@ -1,31 +1,18 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Text } from "react-native-paper";
+import { Searchbar, Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import {
+  GROUPS_PAGE_SIZE,
+  homeContentPrimed,
+  MY_GROUPS,
+  SUGGESTED_GROUPS,
+} from "../../src/lib/content-data";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
-
-interface GroupCardData {
-  id: string;
-  name: string;
-  game: string;
-  date?: string;
-  members: number;
-  online: number;
-  thumbnail: string;
-  verified: boolean;
-}
-
-interface SuggestedGroupData {
-  id: string;
-  name: string;
-  game: string;
-  members: number;
-  online: number;
-  thumbnail: string;
-}
 
 const memberAvatars = [
   "https://images.unsplash.com/photo-1613063022614-dc11527f5ece?w=80&h=80&fit=crop",
@@ -34,67 +21,43 @@ const memberAvatars = [
   "https://images.unsplash.com/photo-1622349851524-890cc3641b87?w=80&h=80&fit=crop",
 ];
 
-const myGroups: GroupCardData[] = [
-  {
-    id: "1",
-    name: "Disco 2024 Tournament",
-    game: "Overwatch",
-    date: "Aug 25, 2026",
-    members: 12,
-    online: 8,
-    thumbnail:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=700&q=80",
-    verified: true,
-  },
-  {
-    id: "2",
-    name: "Arc Raiders Squad",
-    game: "Arc Raiders",
-    members: 8,
-    online: 3,
-    thumbnail:
-      "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=700&q=80",
-    verified: false,
-  },
-  {
-    id: "3",
-    name: "Valorant Grinders",
-    game: "Valorant",
-    members: 24,
-    online: 15,
-    thumbnail:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=700&q=80",
-    verified: true,
-  },
-];
-
-const suggested: SuggestedGroupData[] = [
-  {
-    id: "s1",
-    name: "CS2 Pro League",
-    game: "Counter-Strike 2",
-    members: 156,
-    online: 89,
-    thumbnail:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80",
-  },
-  {
-    id: "s2",
-    name: "Chill Gaming Nights",
-    game: "Various",
-    members: 45,
-    online: 12,
-    thumbnail:
-      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80",
-  },
-];
-
 export default function GroupsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const [joinedSuggested, setJoinedSuggested] = useState<string[]>([]);
+  const insets = useSafeAreaInsets();
 
-  const totalOnline = myGroups.reduce((total, group) => total + group.online, 0);
+  const initialVisible = homeContentPrimed() ? GROUPS_PAGE_SIZE + 1 : GROUPS_PAGE_SIZE;
+
+  const [joinedSuggested, setJoinedSuggested] = useState<string[]>([]);
+  const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(initialVisible);
+
+  const totalOnline = MY_GROUPS.reduce((total, group) => total + group.online, 0);
+
+  const filteredGroups = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return MY_GROUPS;
+    return MY_GROUPS.filter((group) =>
+      [group.name, group.game].join(" ").toLowerCase().includes(q),
+    );
+  }, [query]);
+
+  useEffect(() => {
+    setVisibleCount(initialVisible);
+  }, [query, initialVisible]);
+
+  const visibleGroups = useMemo(
+    () => filteredGroups.slice(0, visibleCount),
+    [filteredGroups, visibleCount],
+  );
+
+  const filteredSuggested = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return SUGGESTED_GROUPS;
+    return SUGGESTED_GROUPS.filter((group) =>
+      [group.name, group.game].join(" ").toLowerCase().includes(q),
+    );
+  }, [query]);
 
   const toggleJoinSuggested = (id: string) => {
     setJoinedSuggested((prev) =>
@@ -102,14 +65,22 @@ export default function GroupsScreen() {
     );
   };
 
+  const loadMoreGroups = () => {
+    setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, filteredGroups.length));
+  };
+
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + insets.bottom }]}
+      >
         <AnimatedEntrance>
           <View
             style={[
               styles.headerWrap,
               {
+                paddingTop: insets.top + spacing.md,
                 paddingHorizontal: responsive.horizontalPadding,
                 maxWidth: responsive.contentMaxWidth,
                 alignSelf: "center",
@@ -137,13 +108,22 @@ export default function GroupsScreen() {
 
             <View style={styles.statsRow}>
               <View style={styles.statPrimary}>
-                <Text style={styles.statPrimaryText}>{myGroups.length} Active Groups</Text>
+                <Text style={styles.statPrimaryText}>{MY_GROUPS.length} Active Groups</Text>
               </View>
               <View style={styles.statSecondary}>
                 <View style={styles.onlineDot} />
                 <Text style={styles.statSecondaryText}>{totalOnline} Online</Text>
               </View>
             </View>
+
+            <Searchbar
+              placeholder="Search groups..."
+              value={query}
+              onChangeText={setQuery}
+              style={styles.searchbar}
+              inputStyle={styles.searchInput}
+              placeholderTextColor={colors.textSecondary}
+            />
           </View>
         </AnimatedEntrance>
 
@@ -170,8 +150,8 @@ export default function GroupsScreen() {
           </View>
         </AnimatedEntrance>
 
-        {myGroups.map((group, index) => (
-          <AnimatedEntrance key={group.id} delay={120 + index * 80}>
+        {visibleGroups.map((group, index) => (
+          <AnimatedEntrance key={group.id} delay={120 + index * 70}>
             <Pressable
               onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
               style={({ pressed }) => [
@@ -227,7 +207,24 @@ export default function GroupsScreen() {
           </AnimatedEntrance>
         ))}
 
-        <AnimatedEntrance delay={300}>
+        {filteredGroups.length > visibleCount ? (
+          <Pressable
+            onPress={loadMoreGroups}
+            style={[
+              styles.loadMoreButton,
+              {
+                marginHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
+            <Text style={styles.loadMoreText}>Load More Groups</Text>
+          </Pressable>
+        ) : null}
+
+        <AnimatedEntrance delay={260}>
           <Text
             style={[
               styles.sectionTitle,
@@ -244,10 +241,10 @@ export default function GroupsScreen() {
           </Text>
         </AnimatedEntrance>
 
-        {suggested.map((group, index) => {
+        {filteredSuggested.map((group, index) => {
           const isJoined = joinedSuggested.includes(group.id);
           return (
-            <AnimatedEntrance key={group.id} delay={360 + index * 80}>
+            <AnimatedEntrance key={group.id} delay={320 + index * 70}>
               <View
                 style={[
                   styles.suggestedCard,
@@ -330,6 +327,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: spacing.md,
   },
   statPrimary: {
     backgroundColor: colors.primary,
@@ -364,6 +362,16 @@ const styles = StyleSheet.create({
     color: "#4ADE80",
     fontSize: 12,
     fontWeight: "700",
+  },
+  searchbar: {
+    backgroundColor: "#242424",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    color: colors.text,
+    fontSize: 14,
   },
   sectionHead: {
     flexDirection: "row",
@@ -494,6 +502,19 @@ const styles = StyleSheet.create({
   memberText: {
     color: colors.textSecondary,
     fontSize: 13,
+  },
+  loadMoreButton: {
+    marginTop: spacing.xs,
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  loadMoreText: {
+    color: colors.text,
+    fontWeight: "700",
   },
   suggestedTitle: {
     marginTop: spacing.md,

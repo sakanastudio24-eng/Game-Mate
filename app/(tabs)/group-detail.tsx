@@ -18,6 +18,11 @@ export default function GroupDetailScreen() {
   const router = useRouter();
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const group = mockGroups.find((item) => item.id === groupId) ?? mockGroups[0];
+  const initialMembers = Array.isArray(group.members) ? group.members : [];
+  const [members, setMembers] = useState<string[]>(initialMembers);
+  const [isJoined, setIsJoined] = useState(
+    initialMembers.some((member) => member.toLowerCase() === "you"),
+  );
   const [activeTab, setActiveTab] = useState<"members" | "chat" | "events">(
     "chat",
   );
@@ -31,12 +36,23 @@ export default function GroupDetailScreen() {
 
   const handleSendMessage = () => {
     if (chatMessage.trim()) {
+      if (!isJoined) return;
       setMessages([
         ...messages,
         { id: Date.now().toString(), user: "You", text: chatMessage },
       ]);
       setChatMessage("");
     }
+  };
+
+  const handleJoinGroup = () => {
+    if (isJoined) return;
+    setIsJoined(true);
+    setMembers((prev) =>
+      prev.some((member) => member.toLowerCase() === "you")
+        ? prev
+        : [...prev, "You"],
+    );
   };
 
   return (
@@ -78,6 +94,19 @@ export default function GroupDetailScreen() {
             />
           )}
         </View>
+
+        <Pressable
+          onPress={handleJoinGroup}
+          style={({ pressed }) => [
+            styles.joinButton,
+            isJoined && styles.joinedButton,
+            pressed && styles.joinButtonPressed,
+          ]}
+        >
+          <Text style={[styles.joinButtonText, isJoined && styles.joinedButtonText]}>
+            {isJoined ? "Joined" : "Join Group"}
+          </Text>
+        </Pressable>
       </Card>
 
       {/* Tab selector */}
@@ -106,7 +135,7 @@ export default function GroupDetailScreen() {
       {/* Tab content */}
       {activeTab === "members" && (
         <FlatList
-          data={group.members}
+          data={members}
           keyExtractor={(_, idx) => `${idx}`}
           renderItem={({ item, index }) => (
             <Pressable
@@ -156,18 +185,21 @@ export default function GroupDetailScreen() {
           <View style={styles.composer}>
             <TextInput
               style={styles.input}
-              placeholder="Message group..."
+              placeholder={isJoined ? "Message group..." : "Join group to message"}
               placeholderTextColor={colors.textMuted}
               value={chatMessage}
               onChangeText={setChatMessage}
               multiline
+              editable={isJoined}
             />
             <Pressable
               onPress={handleSendMessage}
               style={({ pressed }) => [
                 styles.sendButton,
+                !isJoined && styles.sendButtonDisabled,
                 pressed && { opacity: 0.7 },
               ]}
+              disabled={!isJoined}
             >
               <MaterialCommunityIcons
                 name="send"
@@ -224,6 +256,29 @@ const styles = StyleSheet.create({
   },
   badge: {
     marginRight: spacing.xs,
+  },
+  joinButton: {
+    marginTop: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: spacing.sm,
+    alignItems: "center",
+  },
+  joinButtonPressed: {
+    opacity: 0.8,
+  },
+  joinButtonText: {
+    color: colors.background,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  joinedButton: {
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  joinedButtonText: {
+    color: colors.primary,
   },
   tabSelector: {
     flexDirection: "row",
@@ -318,6 +373,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  sendButtonDisabled: {
+    opacity: 0.45,
   },
   emptyState: {
     flex: 1,

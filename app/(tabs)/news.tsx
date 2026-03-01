@@ -1,108 +1,66 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   View,
 } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import {
+  AUTHOR_AVATARS,
+  homeContentPrimed,
+  NEWS_FEED,
+  NEWS_PAGE_SIZE,
+  NewsCategoryId,
+  NewsFeedItem,
+} from "../../src/lib/content-data";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-type CategoryId = "fyp" | "esports" | "patches" | "streams";
-
-interface FeedItem {
-  id: string;
-  type: "video" | "article";
-  title: string;
-  author: string;
-  date: string;
-  duration?: string;
-  thumbnail: string;
-  likes: number;
-  comments: number;
-  category: CategoryId;
-}
-
-const categories: Array<{ id: CategoryId; label: string }> = [
+const categories: Array<{ id: NewsCategoryId; label: string }> = [
   { id: "fyp", label: "For You" },
   { id: "esports", label: "Esports" },
   { id: "patches", label: "Updates" },
   { id: "streams", label: "Streams" },
 ];
 
-const authorAvatars: Record<string, string> = {
-  ProGamingLeague:
-    "https://images.unsplash.com/photo-1759701546655-d90ec831aa52?w=100&h=100&fit=crop",
-  GameStrategy:
-    "https://images.unsplash.com/photo-1622349851524-890cc3641b87?w=100&h=100&fit=crop",
-  GameDevs:
-    "https://images.unsplash.com/photo-1613063022614-dc11527f5ece?w=100&h=100&fit=crop",
-};
-
-const feed: FeedItem[] = [
-  {
-    id: "1",
-    type: "video",
-    title: "Disco 2024 Tournament Finals",
-    author: "ProGamingLeague",
-    date: "Aug 25, 2026",
-    duration: "1:20",
-    thumbnail:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80",
-    likes: 1240,
-    comments: 89,
-    category: "fyp",
-  },
-  {
-    id: "2",
-    type: "video",
-    title: "New Meta Breakdown - Season 5",
-    author: "GameStrategy",
-    date: "Feb 12, 2026",
-    duration: "0:58",
-    thumbnail:
-      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80",
-    likes: 856,
-    comments: 45,
-    category: "fyp",
-  },
-  {
-    id: "3",
-    type: "article",
-    title: "Patch Notes 3.2 - Major Balance Changes",
-    author: "GameDevs",
-    date: "Feb 10, 2026",
-    thumbnail:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&q=80",
-    likes: 2100,
-    comments: 156,
-    category: "patches",
-  },
-];
-
 export default function NewsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const [activeCategory, setActiveCategory] = useState<CategoryId>("fyp");
+  const insets = useSafeAreaInsets();
+  const initialLoadCount = homeContentPrimed() ? NEWS_PAGE_SIZE * 2 : NEWS_PAGE_SIZE;
+
+  const [activeCategory, setActiveCategory] = useState<NewsCategoryId>("fyp");
   const [searchQuery, setSearchQuery] = useState("");
   const [liked, setLiked] = useState<string[]>([]);
   const [saved, setSaved] = useState<string[]>([]);
+  const [visibleCount, setVisibleCount] = useState(initialLoadCount);
 
   const filteredItems = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
 
-    return feed.filter((item) => {
+    return NEWS_FEED.filter((item) => {
       if (item.category !== activeCategory) return false;
       if (!normalized) return true;
       return [item.title, item.author].join(" ").toLowerCase().includes(normalized);
     });
   }, [activeCategory, searchQuery]);
+
+  useEffect(() => {
+    setVisibleCount(initialLoadCount);
+  }, [activeCategory, searchQuery, initialLoadCount]);
+
+  const visibleItems = useMemo(
+    () => filteredItems.slice(0, visibleCount),
+    [filteredItems, visibleCount],
+  );
 
   const toggleLike = (id: string) => {
     setLiked((prev) =>
@@ -116,10 +74,24 @@ export default function NewsScreen() {
     );
   };
 
+  const handleShare = async (item: NewsFeedItem) => {
+    try {
+      await Share.share({
+        message: `${item.title} · ${item.author}`,
+      });
+    } catch {
+      // no-op preview fallback
+    }
+  };
+
+  const loadMore = () => {
+    setVisibleCount((prev) => Math.min(prev + NEWS_PAGE_SIZE, filteredItems.length));
+  };
+
   return (
     <View style={styles.screen}>
       <FlatList
-        data={filteredItems}
+        data={visibleItems}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <AnimatedEntrance>
@@ -127,6 +99,7 @@ export default function NewsScreen() {
               style={[
                 styles.headerWrap,
                 {
+                  paddingTop: insets.top + spacing.md,
                   paddingHorizontal: responsive.horizontalPadding,
                   maxWidth: responsive.contentMaxWidth,
                   alignSelf: "center",
@@ -165,10 +138,7 @@ export default function NewsScreen() {
                     <Pressable
                       key={category.id}
                       onPress={() => setActiveCategory(category.id)}
-                      style={[
-                        styles.pill,
-                        isActive ? styles.pillActive : undefined,
-                      ]}
+                      style={[styles.pill, isActive ? styles.pillActive : undefined]}
                     >
                       <Text style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}>
                         {category.label}
@@ -199,12 +169,12 @@ export default function NewsScreen() {
                 ]}
               >
                 <View style={styles.postHeader}>
-                  <Image source={{ uri: authorAvatars[item.author] }} style={styles.avatar} />
+                  <Image source={{ uri: AUTHOR_AVATARS[item.author] }} style={styles.avatar} />
                   <View style={styles.postHeaderText}>
                     <Text style={styles.author}>{item.author}</Text>
                     <Text style={styles.date}>{item.date}</Text>
                   </View>
-                  <Pressable hitSlop={8}>
+                  <Pressable hitSlop={8} onPress={() => handleShare(item)}>
                     <MaterialCommunityIcons
                       name="dots-horizontal"
                       size={18}
@@ -247,7 +217,10 @@ export default function NewsScreen() {
                       <Text style={styles.actionCount}>{item.likes + (isLiked ? 1 : 0)}</Text>
                     </Pressable>
 
-                    <Pressable style={styles.actionButton}>
+                    <Pressable
+                      style={styles.actionButton}
+                      onPress={() => router.push("/(tabs)/messages")}
+                    >
                       <MaterialCommunityIcons
                         name="message-outline"
                         size={20}
@@ -256,7 +229,7 @@ export default function NewsScreen() {
                       <Text style={styles.actionCount}>{item.comments}</Text>
                     </Pressable>
 
-                    <Pressable style={styles.actionButton}>
+                    <Pressable style={styles.actionButton} onPress={() => handleShare(item)}>
                       <MaterialCommunityIcons
                         name="share-variant-outline"
                         size={20}
@@ -277,13 +250,31 @@ export default function NewsScreen() {
             </AnimatedEntrance>
           );
         }}
+        ListFooterComponent={
+          filteredItems.length > visibleCount ? (
+            <Pressable
+              onPress={loadMore}
+              style={[
+                styles.loadMoreButton,
+                {
+                  marginHorizontal: responsive.horizontalPadding,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                },
+              ]}
+            >
+              <Text style={styles.loadMoreText}>Load More</Text>
+            </Pressable>
+          ) : null
+        }
         ListEmptyComponent={
           <View style={[styles.emptyState, { paddingHorizontal: responsive.horizontalPadding }]}> 
             <Text style={styles.emptyTitle}>No posts found</Text>
             <Text style={styles.emptyCopy}>Try a different search or category.</Text>
           </View>
         }
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -464,6 +455,19 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginLeft: 4,
     fontSize: 12,
+  },
+  loadMoreButton: {
+    marginTop: spacing.md,
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  loadMoreText: {
+    color: colors.text,
+    fontWeight: "700",
   },
   emptyState: {
     alignItems: "center",

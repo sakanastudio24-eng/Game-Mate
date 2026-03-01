@@ -189,169 +189,175 @@ export default function NewsScreen() {
           return (
             <AnimatedEntrance preset="card" delay={70} staggerIndex={index}>
               <View
-                style={[
-                  styles.card,
-                  {
-                    marginHorizontal: responsive.horizontalPadding,
-                    borderRadius: responsive.cardRadius,
-                    maxWidth: responsive.contentMaxWidth,
-                    alignSelf: "center",
-                    width: "100%",
-                  },
-                ]}
+                style={{
+                  paddingHorizontal: responsive.horizontalPadding,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                }}
               >
                 <View
                   style={[
-                    styles.postHeader,
+                    styles.card,
                     {
-                      paddingHorizontal: responsive.cardPadding,
-                      paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
+                      borderRadius: responsive.cardRadius,
+                      width: "100%",
                     },
                   ]}
                 >
-                  <Image
-                    source={{ uri: AUTHOR_AVATARS[item.author] }}
-                    style={styles.avatar}
-                    accessibilityLabel={`${item.author} avatar`}
-                  />
-                  <View style={styles.postHeaderText}>
-                    <Text style={styles.author}>{item.author}</Text>
-                    <Text style={styles.date}>{item.date}</Text>
-                  </View>
-                  <Pressable
-                    hitSlop={8}
-                    onPress={() => handleShare(item)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Share options for ${item.title}`}
-                    style={{
-                      minWidth: responsive.touchTargetMin,
-                      minHeight: responsive.touchTargetMin,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                  <View
+                    style={[
+                      styles.postHeader,
+                      {
+                        paddingHorizontal: responsive.cardPadding,
+                        paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
+                      },
+                    ]}
                   >
-                    <MaterialCommunityIcons
-                      name="dots-horizontal"
-                      size={18}
-                      color={colors.textSecondary}
+                    <Image
+                      source={{ uri: AUTHOR_AVATARS[item.author] }}
+                      style={styles.avatar}
+                      accessibilityLabel={`${item.author} avatar`}
                     />
-                  </Pressable>
-                </View>
-
-                <View style={styles.mediaWrap}>
-                  <Image source={{ uri: item.thumbnail }} style={[styles.media, { height: mediaHeight }]} />
-
-                  {item.type === "video" && (
-                    <View style={styles.videoPlayWrap}>
-                      <View style={styles.videoPlayInner}>
-                        <MaterialCommunityIcons name="play" size={26} color="#1A1A1A" />
-                      </View>
+                    <View style={styles.postHeaderText}>
+                      <Text style={styles.author}>{item.author}</Text>
+                      <Text style={styles.date}>{item.date}</Text>
                     </View>
-                  )}
-
-                  {item.duration ? (
-                    <View style={styles.durationBadge}>
-                      <MaterialCommunityIcons name="play" size={12} color={colors.text} />
-                      <Text style={styles.durationText}>{item.duration}</Text>
-                    </View>
-                  ) : null}
-
-                  <View style={[styles.titleOverlay, { padding: responsive.cardPadding }]}>
-                    <Text style={[styles.itemTitle, { fontSize: responsive.sectionTitleSize - 3 }]}>
-                      {item.title}
-                    </Text>
-                  </View>
-                </View>
-
-                <View
-                  style={[
-                    styles.actionsRow,
-                    {
-                      paddingHorizontal: responsive.cardPadding,
-                      paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
-                    },
-                  ]}
-                >
-                  <View style={styles.actionsLeft}>
                     <Pressable
-                      onPress={() => toggleLike(item.id)}
-                      style={[
-                        styles.actionButton,
-                        {
-                          minWidth: responsive.touchTargetMin,
-                          minHeight: responsive.touchTargetMin,
-                        },
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={isLiked ? `Unlike ${item.title}` : `Like ${item.title}`}
-                      accessibilityState={{ selected: isLiked }}
-                    >
-                      <MaterialCommunityIcons
-                        name={isLiked ? "heart" : "heart-outline"}
-                        size={20}
-                        color={isLiked ? colors.destructive : colors.textSecondary}
-                      />
-                      <Text style={styles.actionCount}>{item.likes + (isLiked ? 1 : 0)}</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={[
-                        styles.actionButton,
-                        {
-                          minWidth: responsive.touchTargetMin,
-                          minHeight: responsive.touchTargetMin,
-                        },
-                      ]}
-                      onPress={() => router.push("/(tabs)/messages")}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Open comments for ${item.title}`}
-                    >
-                      <MaterialCommunityIcons
-                        name="message-outline"
-                        size={20}
-                        color={colors.textSecondary}
-                      />
-                      <Text style={styles.actionCount}>{item.comments}</Text>
-                    </Pressable>
-
-                    <Pressable
-                      style={[
-                        styles.actionButton,
-                        {
-                          minWidth: responsive.touchTargetMin,
-                          minHeight: responsive.touchTargetMin,
-                        },
-                      ]}
+                      hitSlop={8}
                       onPress={() => handleShare(item)}
                       accessibilityRole="button"
-                      accessibilityLabel={`Share ${item.title}`}
+                      accessibilityLabel={`Share options for ${item.title}`}
+                      style={{
+                        minWidth: responsive.touchTargetMin,
+                        minHeight: responsive.touchTargetMin,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
                     >
                       <MaterialCommunityIcons
-                        name="share-variant-outline"
-                        size={20}
+                        name="dots-horizontal"
+                        size={18}
                         color={colors.textSecondary}
                       />
                     </Pressable>
                   </View>
 
-                  <Pressable
-                    onPress={() => toggleSave(item.id)}
-                    accessibilityRole="button"
-                    accessibilityLabel={isSaved ? `Unsave ${item.title}` : `Save ${item.title}`}
-                    accessibilityState={{ selected: isSaved }}
-                    style={{
-                      minWidth: responsive.touchTargetMin,
-                      minHeight: responsive.touchTargetMin,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
+                  <View style={styles.mediaWrap}>
+                    <Image source={{ uri: item.thumbnail }} style={[styles.media, { height: mediaHeight }]} />
+
+                    {item.type === "video" && (
+                      <View style={styles.videoPlayWrap}>
+                        <View style={styles.videoPlayInner}>
+                          <MaterialCommunityIcons name="play" size={26} color="#1A1A1A" />
+                        </View>
+                      </View>
+                    )}
+
+                    {item.duration ? (
+                      <View style={styles.durationBadge}>
+                        <MaterialCommunityIcons name="play" size={12} color={colors.text} />
+                        <Text style={styles.durationText}>{item.duration}</Text>
+                      </View>
+                    ) : null}
+
+                    <View style={[styles.titleOverlay, { padding: responsive.cardPadding }]}>
+                      <Text style={[styles.itemTitle, { fontSize: responsive.sectionTitleSize - 3 }]}>
+                        {item.title}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View
+                    style={[
+                      styles.actionsRow,
+                      {
+                        paddingHorizontal: responsive.cardPadding,
+                        paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
+                      },
+                    ]}
                   >
-                    <MaterialCommunityIcons
-                      name={isSaved ? "bookmark" : "bookmark-outline"}
-                      size={20}
-                      color={isSaved ? colors.primary : colors.textSecondary}
-                    />
-                  </Pressable>
+                    <View style={styles.actionsLeft}>
+                      <Pressable
+                        onPress={() => toggleLike(item.id)}
+                        style={[
+                          styles.actionButton,
+                          {
+                            minWidth: responsive.touchTargetMin,
+                            minHeight: responsive.touchTargetMin,
+                          },
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={isLiked ? `Unlike ${item.title}` : `Like ${item.title}`}
+                        accessibilityState={{ selected: isLiked }}
+                      >
+                        <MaterialCommunityIcons
+                          name={isLiked ? "heart" : "heart-outline"}
+                          size={20}
+                          color={isLiked ? colors.destructive : colors.textSecondary}
+                        />
+                        <Text style={styles.actionCount}>{item.likes + (isLiked ? 1 : 0)}</Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={[
+                          styles.actionButton,
+                          {
+                            minWidth: responsive.touchTargetMin,
+                            minHeight: responsive.touchTargetMin,
+                          },
+                        ]}
+                        onPress={() => router.push("/(tabs)/messages")}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Open comments for ${item.title}`}
+                      >
+                        <MaterialCommunityIcons
+                          name="message-outline"
+                          size={20}
+                          color={colors.textSecondary}
+                        />
+                        <Text style={styles.actionCount}>{item.comments}</Text>
+                      </Pressable>
+
+                      <Pressable
+                        style={[
+                          styles.actionButton,
+                          {
+                            minWidth: responsive.touchTargetMin,
+                            minHeight: responsive.touchTargetMin,
+                          },
+                        ]}
+                        onPress={() => handleShare(item)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Share ${item.title}`}
+                      >
+                        <MaterialCommunityIcons
+                          name="share-variant-outline"
+                          size={20}
+                          color={colors.textSecondary}
+                        />
+                      </Pressable>
+                    </View>
+
+                    <Pressable
+                      onPress={() => toggleSave(item.id)}
+                      accessibilityRole="button"
+                      accessibilityLabel={isSaved ? `Unsave ${item.title}` : `Save ${item.title}`}
+                      accessibilityState={{ selected: isSaved }}
+                      style={{
+                        minWidth: responsive.touchTargetMin,
+                        minHeight: responsive.touchTargetMin,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name={isSaved ? "bookmark" : "bookmark-outline"}
+                        size={20}
+                        color={isSaved ? colors.primary : colors.textSecondary}
+                      />
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             </AnimatedEntrance>
@@ -359,29 +365,44 @@ export default function NewsScreen() {
         }}
         ListFooterComponent={
           filteredItems.length > visibleCount ? (
-            <Pressable
-              onPress={loadMore}
-              accessibilityRole="button"
-              accessibilityLabel="Load more news posts"
-              style={[
-                styles.loadMoreButton,
-                {
-                  marginHorizontal: responsive.horizontalPadding,
-                  maxWidth: responsive.contentMaxWidth,
-                  alignSelf: "center",
-                  width: "100%",
-                  minHeight: responsive.buttonHeightMedium,
-                },
-              ]}
+            <View
+              style={{
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              }}
             >
-              <Text style={styles.loadMoreText}>Load More</Text>
-            </Pressable>
+              <Pressable
+                onPress={loadMore}
+                accessibilityRole="button"
+                accessibilityLabel="Load more news posts"
+                style={[
+                  styles.loadMoreButton,
+                  {
+                    width: "100%",
+                    minHeight: responsive.buttonHeightMedium,
+                  },
+                ]}
+              >
+                <Text style={styles.loadMoreText}>Load More</Text>
+              </Pressable>
+            </View>
           ) : null
         }
         ListEmptyComponent={
-          <View style={[styles.emptyState, { paddingHorizontal: responsive.horizontalPadding }]}> 
-            <Text style={styles.emptyTitle}>No posts found</Text>
-            <Text style={styles.emptyCopy}>Try a different search or category.</Text>
+          <View
+            style={{
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
+              width: "100%",
+            }}
+          >
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No posts found</Text>
+              <Text style={styles.emptyCopy}>Try a different search or category.</Text>
+            </View>
           </View>
         }
         contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}

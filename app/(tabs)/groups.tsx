@@ -225,132 +225,143 @@ export default function GroupsScreen() {
           const isJoined = joinedGroupIds.includes(group.id);
           return (
             <AnimatedEntrance key={group.id} preset="card" delay={80} staggerIndex={index}>
-              <Pressable
-                onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
-                accessibilityHint="Open group details"
-                style={[
-                  styles.groupCard,
-                  {
-                    marginHorizontal: responsive.horizontalPadding,
-                    borderRadius: responsive.cardRadius,
-                    padding: responsive.cardPadding,
-                    maxWidth: responsive.contentMaxWidth,
-                    alignSelf: "center",
-                    width: "100%",
-                  },
-                  styles.cardPressable,
-                ]}
+              <View
+                style={{
+                  paddingHorizontal: responsive.horizontalPadding,
+                  maxWidth: responsive.contentMaxWidth,
+                  alignSelf: "center",
+                  width: "100%",
+                }}
               >
-                <View style={styles.groupRow}>
-                  <Image
-                    source={{ uri: group.thumbnail }}
-                    style={[
-                      styles.groupThumb,
-                      { width: groupThumbSize, height: groupThumbSize },
-                    ]}
-                  />
+                <Pressable
+                  onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
+                  accessibilityHint="Open group details"
+                  style={[
+                    styles.groupCard,
+                    {
+                      borderRadius: responsive.cardRadius,
+                      padding: responsive.cardPadding,
+                      width: "100%",
+                    },
+                    styles.cardPressable,
+                  ]}
+                >
+                  <View style={styles.groupRow}>
+                    <Image
+                      source={{ uri: group.thumbnail }}
+                      style={[
+                        styles.groupThumb,
+                        { width: groupThumbSize, height: groupThumbSize },
+                      ]}
+                    />
 
-                  <View style={styles.groupInfo}>
-                    <Text style={styles.groupName}>{group.name}</Text>
-                    <Text style={styles.groupGame}>{group.game}</Text>
-                    <Text style={styles.groupMeta}>
-                      {group.members} members · {group.online} online
-                    </Text>
+                    <View style={styles.groupInfo}>
+                      <Text style={styles.groupName}>{group.name}</Text>
+                      <Text style={styles.groupGame}>{group.game}</Text>
+                      <Text style={styles.groupMeta}>
+                        {group.members} members · {group.online} online
+                      </Text>
+                    </View>
+
+                    <Pressable
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        openGroupOptions(group.id, group.name, group.game);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`More options for ${group.name}`}
+                      style={({ pressed }) => [
+                        styles.groupOptionsButton,
+                        {
+                          minWidth: responsive.touchTargetMin,
+                          minHeight: responsive.touchTargetMin,
+                          borderRadius: responsive.touchTargetMin / 2,
+                        },
+                        pressed && styles.pressed,
+                      ]}
+                      hitSlop={4}
+                    >
+                      <MaterialCommunityIcons
+                        name="dots-vertical"
+                        size={20}
+                        color={colors.textSecondary}
+                      />
+                    </Pressable>
                   </View>
 
-                  <Pressable
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      openGroupOptions(group.id, group.name, group.game);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`More options for ${group.name}`}
-                    style={({ pressed }) => [
-                      styles.groupOptionsButton,
-                      {
-                        minWidth: responsive.touchTargetMin,
-                        minHeight: responsive.touchTargetMin,
-                        borderRadius: responsive.touchTargetMin / 2,
-                      },
-                      pressed && styles.pressed,
-                    ]}
-                    hitSlop={4}
-                  >
-                    <MaterialCommunityIcons
-                      name="dots-vertical"
-                      size={20}
-                      color={colors.textSecondary}
-                    />
-                  </Pressable>
-                </View>
-
-                <View style={styles.groupActionRow}>
-                  <Pressable
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      toggleJoin(group.id);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={isJoined ? `Leave ${group.name}` : `Join ${group.name}`}
-                    accessibilityState={{ selected: isJoined }}
-                    style={({ pressed }) => [
-                      styles.groupJoinButton,
-                      { minHeight: responsive.buttonHeightSmall },
-                      isJoined && styles.groupJoinedButton,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.groupJoinButtonText,
-                        isJoined && styles.groupJoinedButtonText,
+                  <View style={styles.groupActionRow}>
+                    <Pressable
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        toggleJoin(group.id);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={isJoined ? `Leave ${group.name}` : `Join ${group.name}`}
+                      accessibilityState={{ selected: isJoined }}
+                      style={({ pressed }) => [
+                        styles.groupJoinButton,
+                        { minHeight: responsive.buttonHeightSmall },
+                        isJoined && styles.groupJoinedButton,
+                        pressed && styles.pressed,
                       ]}
                     >
-                      {isJoined ? "Joined" : "Join"}
-                    </Text>
-                  </Pressable>
-                </View>
-              </Pressable>
+                      <Text
+                        style={[
+                          styles.groupJoinButtonText,
+                          isJoined && styles.groupJoinedButtonText,
+                        ]}
+                      >
+                        {isJoined ? "Joined" : "Join"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </Pressable>
+              </View>
             </AnimatedEntrance>
           );
         })}
 
         {discoverableGroups.length > visibleCount ? (
-          <Pressable
-            onPress={loadMoreGroups}
-            accessibilityRole="button"
-            accessibilityLabel="Load more groups"
-            style={[
-              styles.loadMoreButton,
-              {
-                minHeight: responsive.buttonHeightMedium,
-                marginHorizontal: responsive.horizontalPadding,
-                maxWidth: responsive.contentMaxWidth,
-                alignSelf: "center",
-                width: "100%",
-              },
-            ]}
+          <View
+            style={{
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
+              width: "100%",
+            }}
           >
-            <Text style={styles.loadMoreText}>Load More Groups</Text>
-          </Pressable>
+            <Pressable
+              onPress={loadMoreGroups}
+              accessibilityRole="button"
+              accessibilityLabel="Load more groups"
+              style={[
+                styles.loadMoreButton,
+                {
+                  minHeight: responsive.buttonHeightMedium,
+                  width: "100%",
+                },
+              ]}
+            >
+              <Text style={styles.loadMoreText}>Load More Groups</Text>
+            </Pressable>
+          </View>
         ) : null}
 
         {discoverableGroups.length === 0 ? (
           <View
-            style={[
-              styles.emptyState,
-              {
-                marginHorizontal: responsive.horizontalPadding,
-                maxWidth: responsive.contentMaxWidth,
-                alignSelf: "center",
-                width: "100%",
-              },
-            ]}
+            style={{
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
+              width: "100%",
+            }}
           >
-            <Text style={styles.emptyTitle}>No groups available</Text>
-            <Text style={styles.emptyCopy}>Joined groups are now in your profile.</Text>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No groups available</Text>
+              <Text style={styles.emptyCopy}>Joined groups are now in your profile.</Text>
+            </View>
           </View>
         ) : null}
       </ScrollView>

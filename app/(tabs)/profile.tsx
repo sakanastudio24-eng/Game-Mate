@@ -79,6 +79,8 @@ export default function ProfileScreen() {
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
   const [myGroups, setMyGroups] = useState(MY_GROUPS);
   const [activeCollectionTab, setActiveCollectionTab] = useState<"games" | "groups">("games");
+  const statCardWidth = responsive.isSmallPhone ? "48.5%" : "24%";
+  const gameCardWidth = responsive.isSmallPhone ? "48.5%" : "31.5%";
 
   const statRows = [
     { label: "Groups", value: String(myGroups.length), icon: "account-group-outline", color: colors.primary },
@@ -97,7 +99,7 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        <AnimatedEntrance>
+        <AnimatedEntrance preset="screen">
           <View style={styles.cover}>
             <View style={styles.coverPattern} />
 
@@ -145,7 +147,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={80}>
+        <AnimatedEntrance preset="section" delay={60}>
           <View
             style={[
               styles.profileBlock,
@@ -212,7 +214,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={140}>
+        <AnimatedEntrance preset="section" delay={100}>
           <View
             style={[
               styles.section,
@@ -229,7 +231,7 @@ export default function ProfileScreen() {
             </Text>
             <View style={styles.statsGrid}>
               {statRows.map((stat) => (
-                <View key={stat.label} style={styles.statCard}>
+                <View key={stat.label} style={[styles.statCard, { width: statCardWidth }]}>
                   <View style={styles.statIconWrap}>
                     <MaterialCommunityIcons name={stat.icon as any} size={18} color={stat.color} />
                   </View>
@@ -241,7 +243,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={200}>
+        <AnimatedEntrance preset="section" delay={140}>
           <View
             style={[
               styles.section,
@@ -287,7 +289,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={260}>
+        <AnimatedEntrance preset="section" delay={180}>
           <View
             style={[
               styles.section,
@@ -332,7 +334,7 @@ export default function ProfileScreen() {
             {activeCollectionTab === "games" ? (
               <View style={styles.gamesGrid}>
                 {games.map((game) => (
-                  <View key={game.name} style={styles.gameCard}>
+                  <View key={game.name} style={[styles.gameCard, { width: gameCardWidth }]}>
                     <Image source={{ uri: game.image }} style={styles.gameImage} />
                     <View style={styles.gameOverlay}>
                       <Text style={styles.gameName}>{game.name}</Text>
@@ -520,6 +522,7 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
   },
   statCard: {

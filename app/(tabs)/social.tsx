@@ -169,6 +169,8 @@ export default function SocialScreen() {
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
+  const profileAvatarSize = responsive.isSmallPhone ? 48 : responsive.isLargePhone ? 58 : 54;
+  const actionCircleSize = responsive.isSmallPhone ? responsive.touchTargetMin : 42;
 
   const filteredOnline = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -215,7 +217,7 @@ export default function SocialScreen() {
 
   return (
     <View style={styles.screen}>
-      <AnimatedEntrance>
+      <AnimatedEntrance preset="screen">
         <View
           style={[
             styles.headerWrap,
@@ -347,7 +349,7 @@ export default function SocialScreen() {
             const showOfflineTitle = !isOnline && index === firstOfflineIndex;
 
             return (
-              <AnimatedEntrance delay={90 + index * 50}>
+              <AnimatedEntrance preset="card" delay={80} staggerIndex={index}>
                 <View
                   style={{
                     paddingHorizontal: responsive.horizontalPadding,
@@ -388,7 +390,17 @@ export default function SocialScreen() {
                     ]}
                   >
                     <View style={styles.friendAvatarWrap}>
-                      <Image source={{ uri: item.avatar }} style={styles.friendAvatar} />
+                      <Image
+                        source={{ uri: item.avatar }}
+                        style={[
+                          styles.friendAvatar,
+                          {
+                            width: profileAvatarSize,
+                            height: profileAvatarSize,
+                            borderRadius: profileAvatarSize / 2,
+                          },
+                        ]}
+                      />
                       {isOnline ? <View style={styles.friendOnlineDot} /> : null}
                     </View>
 
@@ -407,7 +419,15 @@ export default function SocialScreen() {
                           event.stopPropagation();
                           router.push(`/(tabs)/chat?userId=${item.id}`);
                         }}
-                        style={({ pressed }) => [styles.chatButton, pressed && styles.pressed]}
+                        style={({ pressed }) => [
+                          styles.chatButton,
+                          {
+                            width: actionCircleSize,
+                            height: actionCircleSize,
+                            borderRadius: actionCircleSize / 2,
+                          },
+                          pressed && styles.pressed,
+                        ]}
                       >
                         <MaterialCommunityIcons name="message-outline" size={19} color="#1A1A1A" />
                       </Pressable>
@@ -427,7 +447,7 @@ export default function SocialScreen() {
           data={filteredMessages}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
-            <AnimatedEntrance delay={100 + index * 70}>
+            <AnimatedEntrance preset="card" delay={80} staggerIndex={index}>
               <View
                 style={{
                   paddingHorizontal: responsive.horizontalPadding,
@@ -448,7 +468,17 @@ export default function SocialScreen() {
                   ]}
                 >
                   <View style={styles.messageAvatarWrap}>
-                    <Image source={{ uri: item.avatar }} style={styles.messageAvatar} />
+                    <Image
+                      source={{ uri: item.avatar }}
+                      style={[
+                        styles.messageAvatar,
+                        {
+                          width: profileAvatarSize,
+                          height: profileAvatarSize,
+                          borderRadius: profileAvatarSize / 2,
+                        },
+                      ]}
+                    />
                     {item.online ? <View style={styles.friendOnlineDot} /> : null}
                   </View>
 
@@ -487,7 +517,7 @@ export default function SocialScreen() {
           data={filteredRequests}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
-            <AnimatedEntrance delay={100 + index * 70}>
+            <AnimatedEntrance preset="card" delay={80} staggerIndex={index}>
               <View
                 style={{
                   paddingHorizontal: responsive.horizontalPadding,

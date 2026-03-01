@@ -84,6 +84,8 @@ export default function OnboardingScreen() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [playStyle, setPlayStyle] = useState("");
   const [platform, setPlatform] = useState("");
+  const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
+  const platformChipWidth = responsive.isSmallPhone ? "100%" : "48.5%";
 
   const stepTransition = useRef(new Animated.Value(1)).current;
 
@@ -91,11 +93,11 @@ export default function OnboardingScreen() {
     stepTransition.setValue(0);
     Animated.timing(stepTransition, {
       toValue: 1,
-      duration: 260,
+      duration: responsive.motionBase,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [step, stepTransition]);
+  }, [responsive.motionBase, step, stepTransition]);
 
   const stepAnimatedStyle = {
     opacity: stepTransition,
@@ -103,7 +105,7 @@ export default function OnboardingScreen() {
       {
         translateY: stepTransition.interpolate({
           inputRange: [0, 1],
-          outputRange: [18, 0],
+          outputRange: [Math.max(10, responsive.screenEntranceOffset + 4), 0],
         }),
       },
     ],
@@ -215,7 +217,11 @@ export default function OnboardingScreen() {
                   <View key={provider.id} style={{ marginTop: index === 0 ? 0 : 0 }}>
                     <Pressable
                       onPress={handleSocialAuth}
-                      style={({ pressed }) => [styles.authButton, pressed && styles.pressed]}
+                      style={({ pressed }) => [
+                        styles.authButton,
+                        { minHeight: responsive.buttonHeightMedium },
+                        pressed && styles.pressed,
+                      ]}
                     >
                       <MaterialCommunityIcons
                         name={provider.icon as any}
@@ -237,7 +243,11 @@ export default function OnboardingScreen() {
 
               <Pressable
                 onPress={handleNext}
-                style={({ pressed }) => [styles.primaryWideButton, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.primaryWideButton,
+                  { minHeight: responsive.buttonHeightLarge },
+                  pressed && styles.pressed,
+                ]}
               >
                 <MaterialCommunityIcons name="email-outline" size={20} color="#1A1A1A" />
                 <Text style={styles.primaryWideButtonText}>Continue with Email</Text>
@@ -247,7 +257,7 @@ export default function OnboardingScreen() {
 
           {step === "email" && (
             <View style={styles.stepSection}>
-              <Text style={styles.stepTitle}>What's Your Email?</Text>
+              <Text style={[styles.stepTitle, { fontSize: stepTitleSize }]}>What's Your Email?</Text>
               <Text style={styles.stepCopy}>We'll use this to keep your account secure</Text>
 
               <Text style={styles.fieldLabel}>Email Address</Text>
@@ -288,7 +298,7 @@ export default function OnboardingScreen() {
 
           {step === "birthdate" && (
             <View style={styles.stepSection}>
-              <Text style={styles.stepTitle}>When Were You Born?</Text>
+              <Text style={[styles.stepTitle, { fontSize: stepTitleSize }]}>When Were You Born?</Text>
               <Text style={styles.stepCopy}>We need this to verify your age</Text>
 
               <Text style={styles.fieldLabel}>Date of Birth</Text>
@@ -332,7 +342,7 @@ export default function OnboardingScreen() {
 
           {step === "preferences" && (
             <View style={styles.stepSection}>
-              <Text style={styles.stepTitle}>What Do You Like to Play?</Text>
+              <Text style={[styles.stepTitle, { fontSize: stepTitleSize }]}>What Do You Like to Play?</Text>
               <Text style={styles.stepCopy}>Select up to 5 genres (minimum 1)</Text>
 
               <View style={styles.genreGrid}>
@@ -356,7 +366,9 @@ export default function OnboardingScreen() {
                 })}
               </View>
 
-              <Text style={[styles.stepTitle, styles.playStyleTitle]}>How Do You Play?</Text>
+              <Text style={[styles.stepTitle, styles.playStyleTitle, { fontSize: stepTitleSize }]}>
+                How Do You Play?
+              </Text>
               <Text style={styles.stepCopy}>Choose your primary play style</Text>
 
               <View style={styles.playStyleList}>
@@ -402,7 +414,9 @@ export default function OnboardingScreen() {
                 })}
               </View>
 
-              <Text style={[styles.stepTitle, styles.platformTitle]}>Where Do You Play?</Text>
+              <Text style={[styles.stepTitle, styles.platformTitle, { fontSize: stepTitleSize }]}>
+                Where Do You Play?
+              </Text>
               <Text style={styles.stepCopy}>Choose your primary platform</Text>
 
               <View style={styles.platformGrid}>
@@ -414,6 +428,10 @@ export default function OnboardingScreen() {
                       onPress={() => setPlatform(item.id)}
                       style={({ pressed }) => [
                         styles.platformChip,
+                        {
+                          width: platformChipWidth,
+                          minHeight: responsive.buttonHeightSmall,
+                        },
                         selected ? styles.platformChipSelected : undefined,
                         pressed && styles.pressed,
                       ]}

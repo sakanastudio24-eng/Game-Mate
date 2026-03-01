@@ -44,6 +44,7 @@ export default function NewsScreen() {
   const [liked, setLiked] = useState<string[]>([]);
   const [saved, setSaved] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(initialLoadCount);
+  const mediaHeight = responsive.isSmallPhone ? 184 : responsive.isLargePhone ? 224 : 200;
 
   const filteredItems = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
@@ -96,7 +97,7 @@ export default function NewsScreen() {
         data={visibleItems}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
-          <AnimatedEntrance>
+          <AnimatedEntrance preset="screen">
             <View
               style={[
                 styles.headerWrap,
@@ -175,7 +176,7 @@ export default function NewsScreen() {
           const isSaved = saved.includes(item.id);
 
           return (
-            <AnimatedEntrance delay={80 + index * 80}>
+            <AnimatedEntrance preset="card" delay={70} staggerIndex={index}>
               <View
                 style={[
                   styles.card,
@@ -212,7 +213,7 @@ export default function NewsScreen() {
                 </View>
 
                 <View style={styles.mediaWrap}>
-                  <Image source={{ uri: item.thumbnail }} style={styles.media} />
+                  <Image source={{ uri: item.thumbnail }} style={[styles.media, { height: mediaHeight }]} />
 
                   {item.type === "video" && (
                     <View style={styles.videoPlayWrap}>

@@ -18,6 +18,7 @@ export default function QRCodeScreen() {
   const responsive = useResponsive();
   const [activeTab, setActiveTab] = useState<"mycode" | "scan">("mycode");
   const [accentColor, setAccentColor] = useState(colors.primary);
+  const qrSize = responsive.isSmallPhone ? 216 : responsive.isLargePhone ? 264 : 240;
 
   const colors_list = [colors.primary, "#66BAFF", "#66FF9F", "#FF6BA6"];
 
@@ -68,8 +69,8 @@ export default function QRCodeScreen() {
                   {
                     borderColor: accentColor,
                     borderRadius: responsive.cardRadius,
-                    width: responsive.isTablet ? 280 : 240,
-                    height: responsive.isTablet ? 280 : 240,
+                    width: qrSize,
+                    height: qrSize,
                   },
                 ]}
               >

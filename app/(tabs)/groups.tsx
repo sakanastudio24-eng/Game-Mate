@@ -24,6 +24,7 @@ export default function GroupsScreen() {
   const [joinedGroupIds, setJoinedGroupIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(initialVisible);
+  const groupThumbSize = responsive.isSmallPhone ? 66 : responsive.isLargePhone ? 86 : 78;
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -65,7 +66,7 @@ export default function GroupsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
       >
-        <AnimatedEntrance>
+        <AnimatedEntrance preset="screen">
           <View
             style={[
               styles.headerWrap,
@@ -149,7 +150,7 @@ export default function GroupsScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={80}>
+        <AnimatedEntrance preset="section" delay={60}>
           <View
             style={[
               styles.sectionHead,
@@ -179,7 +180,7 @@ export default function GroupsScreen() {
         {visibleGroups.map((group, index) => {
           const isJoined = joinedGroupIds.includes(group.id);
           return (
-            <AnimatedEntrance key={group.id} delay={120 + index * 70}>
+            <AnimatedEntrance key={group.id} preset="card" delay={80} staggerIndex={index}>
               <Pressable
                 onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
                 style={[
@@ -196,7 +197,13 @@ export default function GroupsScreen() {
                 ]}
               >
                 <View style={styles.groupRow}>
-                  <Image source={{ uri: group.thumbnail }} style={styles.groupThumb} />
+                  <Image
+                    source={{ uri: group.thumbnail }}
+                    style={[
+                      styles.groupThumb,
+                      { width: groupThumbSize, height: groupThumbSize },
+                    ]}
+                  />
 
                   <View style={styles.groupInfo}>
                     <Text style={styles.groupName}>{group.name}</Text>

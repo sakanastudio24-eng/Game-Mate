@@ -1,104 +1,111 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useEffect, useMemo, useState } from "react";
-import {
-  Alert,
-  FlatList,
-  Image,
-  Pressable,
-  ScrollView,
-  Share,
-  StyleSheet,
-  View,
-} from "react-native";
-import { Searchbar, Text } from "react-native-paper";
+import React, { useCallback, useRef, useState } from "react";
+import { Alert, FlatList, Image, Pressable, Share, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
-import {
-  AUTHOR_AVATARS,
-  homeContentPrimed,
-  NEWS_FEED,
-  NEWS_PAGE_SIZE,
-  NewsCategoryId,
-  NewsFeedItem,
-} from "../../src/lib/content-data";
+import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-const categories: Array<{ id: NewsCategoryId; label: string }> = [
-  { id: "fyp", label: "For You" },
-  { id: "esports", label: "Esports" },
-  { id: "patches", label: "Updates" },
-  { id: "streams", label: "Streams" },
-];
+interface FeedEntry extends NewsFeedItem {
+  feedId: string;
+}
+
+const INITIAL_LOOP_COUNT = 3;
+
+function createLoop(loopIndex: number): FeedEntry[] {
+  return NEWS_FEED.map((item, index) => ({
+    ...item,
+    feedId: `${item.id}-${loopIndex}-${index}`,
+  }));
+}
+
+function createInitialFeed(): FeedEntry[] {
+  const items: FeedEntry[] = [];
+  for (let loop = 0; loop < INITIAL_LOOP_COUNT; loop += 1) {
+    items.push(...createLoop(loop));
+  }
+  return items;
+}
+
+function compactNumber(value: number): string {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}k`;
+  }
+  return String(value);
+}
 
 export default function NewsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
-  const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
-  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
-  const initialLoadCount = homeContentPrimed() ? NEWS_PAGE_SIZE * 2 : NEWS_PAGE_SIZE;
 
-  const [activeCategory, setActiveCategory] = useState<NewsCategoryId>("fyp");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [liked, setLiked] = useState<string[]>([]);
-  const [saved, setSaved] = useState<string[]>([]);
-  const [visibleCount, setVisibleCount] = useState(initialLoadCount);
-  const [activePostMenu, setActivePostMenu] = useState<NewsFeedItem | null>(null);
+  const [feedItems, setFeedItems] = useState<FeedEntry[]>(() => createInitialFeed());
+  const [likedIds, setLikedIds] = useState<string[]>([]);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [activePostMenu, setActivePostMenu] = useState<FeedEntry | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
-  const [categoryRowWidth, setCategoryRowWidth] = useState(0);
-  const [categoryContentWidth, setCategoryContentWidth] = useState(0);
-  const mediaHeight = responsive.isSmallPhone ? 184 : responsive.isLargePhone ? 224 : 200;
-  const centeredCategoryPadding = Math.max(0, (categoryRowWidth - categoryContentWidth) / 2);
+  const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
-  const filteredItems = useMemo(() => {
-    const normalized = searchQuery.trim().toLowerCase();
+  const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
+  const appendLockRef = useRef(false);
 
-    return NEWS_FEED.filter((item) => {
-      if (item.category !== activeCategory) return false;
-      if (!normalized) return true;
-      return [item.title, item.author].join(" ").toLowerCase().includes(normalized);
-    });
-  }, [activeCategory, searchQuery]);
+  const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
+  const tabClearance = Math.max(insets.bottom, responsive.safeBottomInset) + responsive.tabBarBaseHeight;
+  const horizontalPadding = responsive.horizontalPadding;
+  const itemHeight = Math.max(viewportHeight, 1);
 
-  useEffect(() => {
-    setVisibleCount(initialLoadCount);
-  }, [activeCategory, searchQuery, initialLoadCount]);
-
-  const visibleItems = useMemo(
-    () => filteredItems.slice(0, visibleCount),
-    [filteredItems, visibleCount],
+  const isLiked = useCallback(
+    (feedId: string) => likedIds.includes(feedId),
+    [likedIds],
   );
 
-  const toggleLike = (id: string) => {
-    setLiked((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+  const isSaved = useCallback(
+    (feedId: string) => savedIds.includes(feedId),
+    [savedIds],
+  );
+
+  const toggleLike = (feedId: string) => {
+    setLikedIds((prev) =>
+      prev.includes(feedId) ? prev.filter((item) => item !== feedId) : [...prev, feedId],
     );
   };
 
-  const toggleSave = (id: string) => {
-    setSaved((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+  const toggleSave = (feedId: string) => {
+    setSavedIds((prev) =>
+      prev.includes(feedId) ? prev.filter((item) => item !== feedId) : [...prev, feedId],
     );
+  };
+
+  const appendFeedItems = useCallback(() => {
+    if (appendLockRef.current) return;
+
+    appendLockRef.current = true;
+    const loop = nextLoopRef.current;
+    setFeedItems((prev) => [...prev, ...createLoop(loop)]);
+    nextLoopRef.current = loop + 1;
+
+    requestAnimationFrame(() => {
+      appendLockRef.current = false;
+    });
+  }, []);
+
+  const openChat = (item: FeedEntry) => {
+    router.push("/(tabs)/messages");
+    Alert.alert("Comments", `Opening comments for "${item.title}".`);
   };
 
   const handleSystemShare = async (message: string) => {
     try {
-      await Share.share({
-        message,
-      });
+      await Share.share({ message });
     } catch {
-      // no-op preview fallback
+      // no-op
     }
   };
 
-  const openPostMenu = (item: NewsFeedItem) => {
-    setActivePostMenu(item);
-  };
-
-  const openShareDrawer = (item: NewsFeedItem) => {
+  const openShareDrawer = (item: FeedEntry) => {
     setShareTarget({
       title: item.title,
       message: `${item.title} · ${item.author}`,
@@ -108,345 +115,143 @@ export default function NewsScreen() {
   const handleShareToFriendDrawer = () => {
     if (!shareTarget) return;
     router.push("/(tabs)/messages");
-    Alert.alert("Friend Drawer", `Choose a friend in Messages to share "${shareTarget.title}".`);
+    Alert.alert("Share", `Choose a friend to share "${shareTarget.title}".`);
   };
 
-  const handleReportPost = (item: NewsFeedItem) => {
-    Alert.alert("Report Submitted", `Thanks. "${item.title}" was reported for review.`);
-  };
-
-  const loadMore = () => {
-    setVisibleCount((prev) => Math.min(prev + NEWS_PAGE_SIZE, filteredItems.length));
+  const handleReportPost = (item: FeedEntry) => {
+    Alert.alert("Report Submitted", `Thanks. "${item.title}" was reported.`);
   };
 
   return (
-    <View style={styles.screen}>
+    <View
+      style={styles.screen}
+      onLayout={(event) => {
+        const nextHeight = Math.round(event.nativeEvent.layout.height);
+        if (nextHeight > 0 && nextHeight !== viewportHeight) {
+          setViewportHeight(nextHeight);
+        }
+      }}
+    >
       <FlatList
-        data={visibleItems}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <AnimatedEntrance preset="screen">
-            <View
-              style={[
-                styles.headerWrap,
-                {
-                  paddingTop: safeTop,
-                  paddingHorizontal: responsive.horizontalPadding,
-                  maxWidth: responsive.contentMaxWidth,
-                  alignSelf: "center",
-                  width: "100%",
-                },
-              ]}
-            >
-              <View style={styles.titleRow}>
-                <Text
-                  accessibilityRole="header"
-                  style={[
-                    styles.title,
-                    {
-                      fontSize: responsive.headerTitleSize + 8,
-                      lineHeight: Math.round((responsive.headerTitleSize + 8) * 1.14),
-                    },
-                  ]}
-                >
+        data={feedItems}
+        keyExtractor={(item) => item.feedId}
+        pagingEnabled
+        decelerationRate="fast"
+        disableIntervalMomentum
+        snapToAlignment="start"
+        showsVerticalScrollIndicator={false}
+        onEndReachedThreshold={0.35}
+        onEndReached={appendFeedItems}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        windowSize={4}
+        removeClippedSubviews
+        getItemLayout={(_, index) => ({
+          length: itemHeight,
+          offset: itemHeight * index,
+          index,
+        })}
+        renderItem={({ item }) => {
+          const liked = isLiked(item.feedId);
+
+          return (
+            <View style={[styles.feedItem, { height: itemHeight }]}>
+              <Image
+                source={{ uri: item.thumbnail }}
+                style={styles.media}
+                resizeMode="cover"
+                accessibilityLabel={`${item.title} preview image`}
+              />
+
+              <View style={styles.topScrim} />
+              <View style={styles.bottomScrim} />
+
+              <View style={[styles.topBar, { top: safeTop, paddingHorizontal: horizontalPadding }]}>
+                <Text accessibilityRole="header" style={styles.feedLabel}>
                   Feed
                 </Text>
+                {item.duration ? (
+                  <View style={styles.durationBadge}>
+                    <MaterialCommunityIcons name="play" size={12} color={colors.text} />
+                    <Text style={styles.durationText}>{item.duration}</Text>
+                  </View>
+                ) : null}
+              </View>
+
+              <View
+                style={[
+                  styles.actionRail,
+                  {
+                    right: horizontalPadding,
+                    bottom: tabClearance + spacing.xxl + 36,
+                  },
+                ]}
+              >
                 <Pressable
-                  onPress={() => router.push("/(tabs)/qr-code")}
+                  onPress={() => toggleLike(item.feedId)}
                   accessibilityRole="button"
-                  accessibilityLabel="Open QR code"
-                  style={({ pressed }) => [
-                    styles.iconButton,
-                    {
-                      width: responsive.iconButtonSize,
-                      height: responsive.iconButtonSize,
-                      borderRadius: responsive.iconButtonSize / 2,
-                    },
-                    pressed && styles.pressed,
-                  ]}
+                  accessibilityLabel={liked ? `Unlike ${item.title}` : `Like ${item.title}`}
+                  accessibilityState={{ selected: liked }}
+                  style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
                 >
-                  <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+                  <MaterialCommunityIcons
+                    name={liked ? "heart" : "heart-outline"}
+                    size={26}
+                    color={liked ? colors.destructive : colors.text}
+                  />
+                  <Text style={styles.railCount}>{compactNumber(item.likes + (liked ? 1 : 0))}</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => openChat(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open comments for ${item.title}`}
+                  style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="message-outline" size={26} color={colors.text} />
+                  <Text style={styles.railCount}>{compactNumber(item.comments)}</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => setActivePostMenu(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`More options for ${item.title}`}
+                  style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="dots-horizontal" size={26} color={colors.text} />
                 </Pressable>
               </View>
 
-              <Searchbar
-                placeholder="Search feed, creators, games..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                accessibilityLabel="Search feed"
-                style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
-                inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
-                placeholderTextColor={colors.textMuted}
-                iconColor={colors.textMuted}
-              />
-
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                onLayout={(event) => setCategoryRowWidth(event.nativeEvent.layout.width)}
-                onContentSizeChange={(width) => setCategoryContentWidth(width)}
-                contentContainerStyle={[
-                  styles.pillsRow,
+              <View
+                style={[
+                  styles.bottomMeta,
                   {
-                    minWidth: "100%",
-                    paddingHorizontal: centeredCategoryPadding,
+                    bottom: tabClearance + spacing.md,
+                    left: horizontalPadding,
+                    right: horizontalPadding + 76,
                   },
                 ]}
               >
-                {categories.map((category, index) => {
-                  const isActive = category.id === activeCategory;
-                  return (
-                    <Pressable
-                      key={category.id}
-                      onPress={() => setActiveCategory(category.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Show ${category.label} posts`}
-                      accessibilityState={{ selected: isActive }}
-                      style={[
-                        styles.pill,
-                        index > 0 ? styles.pillSpacing : undefined,
-                        { minHeight: responsive.buttonHeightSmall },
-                        isActive ? styles.pillActive : undefined,
-                      ]}
-                      >
-                      <Text
-                        numberOfLines={1}
-                        style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}
-                      >
-                        {category.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </AnimatedEntrance>
-        }
-        renderItem={({ item, index }) => {
-          const isLiked = liked.includes(item.id);
-          const isSaved = saved.includes(item.id);
-
-          return (
-            <AnimatedEntrance preset="card" delay={70} staggerIndex={index}>
-              <View
-                style={{
-                  paddingHorizontal: responsive.horizontalPadding,
-                  maxWidth: responsive.contentMaxWidth,
-                  alignSelf: "center",
-                  width: "100%",
-                }}
-              >
-                <View
-                  style={[
-                    styles.card,
-                    {
-                      borderRadius: responsive.cardRadius,
-                      width: "100%",
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.postHeader,
-                      {
-                        paddingHorizontal: responsive.cardPadding,
-                        paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
-                      },
-                    ]}
-                  >
-                    <Image
-                      source={{ uri: AUTHOR_AVATARS[item.author] }}
-                      style={styles.avatar}
-                      accessibilityLabel={`${item.author} avatar`}
-                    />
-                    <View style={styles.postHeaderText}>
-                      <Text style={styles.author}>{item.author}</Text>
-                      <Text style={styles.date}>{item.date}</Text>
-                    </View>
-                    <Pressable
-                      hitSlop={8}
-                      onPress={() => openPostMenu(item)}
-                      accessibilityRole="button"
-                      accessibilityLabel={`More options for ${item.title}`}
-                      style={{
-                        minWidth: responsive.touchTargetMin,
-                        minHeight: responsive.touchTargetMin,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <MaterialCommunityIcons
-                        name="dots-horizontal"
-                        size={18}
-                        color={colors.textSecondary}
-                      />
-                    </Pressable>
-                  </View>
-
-                  <View style={styles.mediaWrap}>
-                    <Image source={{ uri: item.thumbnail }} style={[styles.media, { height: mediaHeight }]} />
-
-                    {item.type === "video" && (
-                      <View style={styles.videoPlayWrap}>
-                        <View style={styles.videoPlayInner}>
-                          <MaterialCommunityIcons name="play" size={26} color="#1A1A1A" />
-                        </View>
-                      </View>
-                    )}
-
-                    {item.duration ? (
-                      <View style={styles.durationBadge}>
-                        <MaterialCommunityIcons name="play" size={12} color={colors.text} />
-                        <Text style={styles.durationText}>{item.duration}</Text>
-                      </View>
-                    ) : null}
-
-                    <View style={[styles.titleOverlay, { padding: responsive.cardPadding }]}>
-                      <Text style={[styles.itemTitle, { fontSize: responsive.sectionTitleSize - 3 }]}>
-                        {item.title}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.actionsRow,
-                      {
-                        paddingHorizontal: responsive.cardPadding,
-                        paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
-                      },
-                    ]}
-                  >
-                    <View style={styles.actionsLeft}>
-                      <Pressable
-                        onPress={() => toggleLike(item.id)}
-                        style={[
-                          styles.actionButton,
-                          {
-                            minWidth: responsive.touchTargetMin,
-                            minHeight: responsive.touchTargetMin,
-                          },
-                        ]}
-                        accessibilityRole="button"
-                        accessibilityLabel={isLiked ? `Unlike ${item.title}` : `Like ${item.title}`}
-                        accessibilityState={{ selected: isLiked }}
-                      >
-                        <MaterialCommunityIcons
-                          name={isLiked ? "heart" : "heart-outline"}
-                          size={20}
-                          color={isLiked ? colors.destructive : colors.textSecondary}
-                        />
-                        <Text style={styles.actionCount}>{item.likes + (isLiked ? 1 : 0)}</Text>
-                      </Pressable>
-
-                      <Pressable
-                        style={[
-                          styles.actionButton,
-                          {
-                            minWidth: responsive.touchTargetMin,
-                            minHeight: responsive.touchTargetMin,
-                          },
-                        ]}
-                        onPress={() => router.push("/(tabs)/messages")}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Open comments for ${item.title}`}
-                      >
-                        <MaterialCommunityIcons
-                          name="message-outline"
-                          size={20}
-                          color={colors.textSecondary}
-                        />
-                        <Text style={styles.actionCount}>{item.comments}</Text>
-                      </Pressable>
-
-                      <Pressable
-                        style={[
-                          styles.actionButton,
-                          {
-                            minWidth: responsive.touchTargetMin,
-                            minHeight: responsive.touchTargetMin,
-                          },
-                        ]}
-                        onPress={() => openShareDrawer(item)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Share ${item.title}`}
-                      >
-                        <MaterialCommunityIcons
-                          name="share-variant-outline"
-                          size={20}
-                          color={colors.textSecondary}
-                        />
-                      </Pressable>
-                    </View>
-
-                    <Pressable
-                      onPress={() => toggleSave(item.id)}
-                      accessibilityRole="button"
-                      accessibilityLabel={isSaved ? `Unsave ${item.title}` : `Save ${item.title}`}
-                      accessibilityState={{ selected: isSaved }}
-                      style={{
-                        minWidth: responsive.touchTargetMin,
-                        minHeight: responsive.touchTargetMin,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <MaterialCommunityIcons
-                        name={isSaved ? "bookmark" : "bookmark-outline"}
-                        size={20}
-                        color={isSaved ? colors.primary : colors.textSecondary}
-                      />
-                    </Pressable>
+                <View style={styles.authorRow}>
+                  <Image
+                    source={{ uri: AUTHOR_AVATARS[item.author] }}
+                    style={styles.avatar}
+                    accessibilityLabel={`${item.author} avatar`}
+                  />
+                  <View style={styles.authorText}>
+                    <Text style={styles.author}>{item.author}</Text>
+                    <Text style={styles.date}>{item.date}</Text>
                   </View>
                 </View>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.description}>
+                  {item.type === "video" ? "Live clip and highlights" : "Editorial update"} ·{" "}
+                  {item.category.toUpperCase()}
+                </Text>
               </View>
-            </AnimatedEntrance>
+            </View>
           );
         }}
-        ListFooterComponent={
-          filteredItems.length > visibleCount ? (
-            <View
-              style={{
-                paddingHorizontal: responsive.horizontalPadding,
-                maxWidth: responsive.contentMaxWidth,
-                alignSelf: "center",
-                width: "100%",
-              }}
-            >
-              <Pressable
-                onPress={loadMore}
-                accessibilityRole="button"
-                accessibilityLabel="Load more news posts"
-                style={[
-                  styles.loadMoreButton,
-                  {
-                    width: "100%",
-                    minHeight: responsive.buttonHeightMedium,
-                  },
-                ]}
-              >
-                <Text style={styles.loadMoreText}>Load More</Text>
-              </Pressable>
-            </View>
-          ) : null
-        }
-        ListEmptyComponent={
-          <View
-            style={{
-              paddingHorizontal: responsive.horizontalPadding,
-              maxWidth: responsive.contentMaxWidth,
-              alignSelf: "center",
-              width: "100%",
-            }}
-          >
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No posts found</Text>
-              <Text style={styles.emptyCopy}>Try a different search or category.</Text>
-            </View>
-          </View>
-        }
-        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
-        showsVerticalScrollIndicator={false}
       />
 
       <ActionSheet
@@ -464,9 +269,18 @@ export default function NewsScreen() {
                   onPress: () => openShareDrawer(activePostMenu),
                 },
                 {
+                  id: "save",
+                  label: isSaved(activePostMenu.feedId) ? "Remove from Saved" : "Save Post",
+                  icon: isSaved(activePostMenu.feedId)
+                    ? "bookmark-remove-outline"
+                    : "bookmark-outline",
+                  onPress: () => toggleSave(activePostMenu.feedId),
+                },
+                {
                   id: "report",
                   label: "Report",
                   icon: "flag-outline",
+                  destructive: true,
                   onPress: () => handleReportPost(activePostMenu),
                 },
               ]
@@ -496,14 +310,6 @@ export default function NewsScreen() {
                     void handleSystemShare(shareTarget.message);
                   },
                 },
-                {
-                  id: "system",
-                  label: "More Share Options",
-                  icon: "dots-horizontal-circle-outline",
-                  onPress: () => {
-                    void handleSystemShare(shareTarget.message);
-                  },
-                },
               ]
             : []
         }
@@ -517,207 +323,116 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  content: {
-    paddingBottom: 110,
+  feedItem: {
+    width: "100%",
+    backgroundColor: colors.background,
   },
-  headerWrap: {
-    paddingTop: spacing.lg,
+  media: {
+    ...StyleSheet.absoluteFillObject,
+    width: "100%",
+    height: "100%",
   },
-  titleRow: {
+  topScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.22)",
+  },
+  bottomScrim: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "55%",
+    backgroundColor: "rgba(0,0,0,0.50)",
+  },
+  topBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: spacing.md,
   },
-  title: {
+  feedLabel: {
     color: colors.text,
+    fontSize: 30,
+    lineHeight: 36,
     fontWeight: "800",
   },
-  iconButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#242424",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  searchbar: {
-    backgroundColor: "#242424",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  searchInput: {
-    color: colors.text,
-    fontSize: 14,
-  },
-  pillsRow: {
+  durationBadge: {
     flexDirection: "row",
-    paddingBottom: spacing.sm,
     alignItems: "center",
-  },
-  pill: {
-    minWidth: 112,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
     borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "rgba(26,26,26,0.72)",
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+  },
+  durationText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+    marginLeft: 4,
+  },
+  actionRail: {
+    position: "absolute",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  railButton: {
+    minWidth: 48,
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
   },
-  pillSpacing: {
-    marginLeft: spacing.sm,
-  },
-  pillActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  pillText: {
-    color: colors.textSecondary,
+  railCount: {
+    color: colors.text,
+    fontSize: 12,
     fontWeight: "700",
-    fontSize: 13,
+    marginTop: 2,
   },
-  pillTextActive: {
-    color: "#1A1A1A",
+  bottomMeta: {
+    position: "absolute",
   },
-  card: {
-    marginTop: spacing.md,
-    backgroundColor: "#242424",
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: "hidden",
-  },
-  postHeader: {
+  authorRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: spacing.sm,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: "rgba(255,255,255,0.42)",
+    marginRight: spacing.sm,
   },
-  postHeaderText: {
+  authorText: {
     flex: 1,
   },
   author: {
     color: colors.text,
+    fontSize: 16,
     fontWeight: "700",
-    fontSize: 13,
   },
   date: {
-    color: "#777",
-    marginTop: 2,
-    fontSize: 11,
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 1,
   },
-  mediaWrap: {
-    position: "relative",
-  },
-  media: {
-    width: "100%",
-    height: 200,
-  },
-  videoPlayWrap: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  videoPlayInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  durationBadge: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    borderRadius: 999,
-    backgroundColor: "rgba(26,26,26,0.8)",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  durationText: {
+  title: {
     color: colors.text,
-    marginLeft: 3,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  titleOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 12,
-    backgroundColor: "rgba(26,26,26,0.35)",
-  },
-  itemTitle: {
-    color: colors.text,
+    fontSize: 28,
+    lineHeight: 32,
     fontWeight: "800",
-    fontSize: 17,
+    marginTop: spacing.sm,
   },
-  actionsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingVertical: 11,
-  },
-  actionsLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  actionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: spacing.md,
-  },
-  actionCount: {
+  description: {
     color: colors.textSecondary,
-    marginLeft: 4,
-    fontSize: 12,
-  },
-  loadMoreButton: {
-    marginTop: spacing.md,
-    backgroundColor: "#242424",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  loadMoreText: {
-    color: colors.text,
-    fontWeight: "700",
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 48,
-  },
-  emptyTitle: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 16,
-  },
-  emptyCopy: {
-    marginTop: 4,
-    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: spacing.xs,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.72,
   },
 });

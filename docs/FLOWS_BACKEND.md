@@ -1,6 +1,6 @@
 # Backend API Contracts + Handoff (v1)
 
-Last updated: 2026-02-28
+Last updated: 2026-03-01
 Owner: Mobile + Backend handoff
 
 This is the canonical backend contract for the current Expo app state.
@@ -11,6 +11,7 @@ Covers all backend integration required for:
 - Feed (posts, engagement, reporting, comments)
 - Groups (discover, detail, create, join/leave, report/share)
 - Recommendation search + group swipe scoring
+- Video search ranking and autocomplete
 - Social (friends, requests, player search, user profile)
 - Messages, notifications, QR, account/settings
 - Platform connections and platform presence sync
@@ -105,7 +106,9 @@ Frontend references:
 
 ### Recommendations (Search + Group Swipe)
 - `POST /api/ai/recommendations`
+- `POST /api/ai/video-recommendations`
 - `POST /api/ai/suggested-tags`
+- `GET /api/ai/autocomplete`
 - `POST /api/ai/draft-intro`
 
 ### Social
@@ -185,6 +188,39 @@ Validation constraints:
 Rate limit:
 - `30 req/min/user`
 
+#### POST `/api/ai/video-recommendations`
+
+Request:
+```json
+{
+  "query": "ranked duo no mic",
+  "filters": ["fyp", "esports"],
+  "limit": 10
+}
+```
+
+Response:
+```json
+{
+  "results": [
+    {
+      "videoId": "n1",
+      "baseSearchScore": 88,
+      "aiScore": 92,
+      "isAiPick": true
+    }
+  ]
+}
+```
+
+Constraints:
+- `limit` default 10, max 20
+- top 2 by `aiScore` are AI picks
+- remaining sorted by `baseSearchScore`
+
+Rate limit:
+- `30 req/min/user`
+
 #### POST `/api/ai/suggested-tags`
 
 Request:
@@ -200,6 +236,23 @@ Response:
 Constraints:
 - `text.length <= 500`
 - return up to 6 tags
+
+#### GET `/api/ai/autocomplete`
+
+Query:
+- `q` required (1..500 chars)
+- `limit` optional, default 6, max 10
+
+Response:
+```json
+{
+  "items": ["ranked duo", "ranked chill", "scrim tonight"]
+}
+```
+
+Constraints:
+- unique, trimmed strings only
+- response target `<200ms` p95 for debounced typing UX
 
 #### POST `/api/ai/draft-intro`
 
@@ -443,16 +496,20 @@ Response:
 
 Backend responses must support these frontend behaviors:
 - Recommendations cannot block UI. On backend failure, client falls back locally.
+- Video search cannot block UI. On backend failure, client uses local ranking from seeded feed data.
 - Group swipe always advances card after decision.
 - Feed/list endpoints must tolerate repeated cursor requests.
 - Join/leave endpoints should be idempotent for repeated taps.
 - Search/tag endpoints must be resilient to noisy user text.
+- Autocomplete should be safe to call frequently under debounce.
 
 ## 6) Rate Limits
 
 Recommended defaults:
 - Recommendations: `30 req/min/user`
+- Video recommendations: `30 req/min/user`
 - Suggested tags: `60 req/min/user`
+- Autocomplete: `120 req/min/user`
 - Draft intro: `30 req/min/user`
 - Feed + groups list: `120 req/min/user`
 - Messaging send: `40 req/min/user`
@@ -491,4 +548,3 @@ Not required for P0 build parity, but define channel names now:
 - Recommendation route works with backend and local fallback.
 - Platform connections persist and reload correctly.
 - Error and rate-limit envelopes match contract.
-

@@ -46,12 +46,14 @@ Related routes:
 - `/(tabs)/qr-code` (from header actions on other tabs)
 - `/(tabs)/ai-advisor` (search/recommendation surface from feed header search icon)
 
-Recommendations search flow:
+Feed video-search flow:
 1. Tap feed header search icon.
-2. Route to `/(tabs)/ai-advisor` with source + optional query seed.
-3. Render loading/error/empty/result states in place.
-4. Tap result card -> `/(tabs)/group-detail?groupId=...`.
-5. Back returns to feed context via safe back helper.
+2. Route to `/(tabs)/ai-advisor`.
+3. Render loading/error/empty/result states with fixed search bar.
+4. Results are ranked as top 2 AI picks + top 8 query-ranked videos.
+5. Render 2-column vertical infinite grid by repeating top 10 ranking pages.
+6. Tap result card -> `/(tabs)/video-preview` with video params.
+7. Back returns to feed context via safe back helper.
 
 ## Groups Flow
 
@@ -63,6 +65,7 @@ Routes:
 - `/(tabs)/discover-groups`
 - `/(tabs)/group-detail?groupId=...`
 - `/(tabs)/messages` (group sharing/chat handoff)
+- `/(tabs)/settings` (global settings)
 
 Group swiper flow:
 1. Tap card icon next to Create in Groups header.
@@ -74,6 +77,13 @@ Group swiper flow:
 - Right side glow = green.
 - Left side glow = red.
 5. Button fallback remains available for non-gesture users (Join/Pass).
+6. Joined groups are removed from discover list in-session.
+
+Group detail flow:
+1. Open group card -> `/(tabs)/group-detail?groupId=...`.
+2. Tab sections are `Home`, `Events`, `Chat`, `Members`.
+3. Group settings menu includes `Notifications`, `Share`, `Report`, and `Leave group` at bottom.
+4. Back returns to the previous route context.
 
 Expected back behavior:
 - Create/discover/detail return to the previous screen in the real stack path.
@@ -118,6 +128,11 @@ Video preview route:
 Status flow:
 - Tap status row (`Online · Ready to play`, etc.) -> status ActionSheet
 - Pick status -> profile dot/text update immediately
+
+Collection flow:
+1. Videos/Games/Groups each have an add-first tile entry.
+2. Add flow routes to create collection/group screen.
+3. Saved profile collections persist through local cache hook.
 
 ## Settings and Account Flow
 

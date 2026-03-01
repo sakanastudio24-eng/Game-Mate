@@ -3,9 +3,11 @@ import { useMobileDesignTokens } from "./design-system";
 
 export interface ResponsiveInfo {
   platform: "ios" | "android";
+  phoneSizeClass: "compact" | "regular" | "large";
   width: number;
   height: number;
   isSmallPhone: boolean;
+  isLargePhone: boolean;
   isPhone: boolean;
   isTablet: boolean;
   bodySize: number;
@@ -29,6 +31,12 @@ export interface ResponsiveInfo {
   searchRadius: number;
   safeBottomInset: number;
   safeTopInset: number;
+  motionFast: number;
+  motionBase: number;
+  motionSlow: number;
+  motionStagger: number;
+  screenEntranceOffset: number;
+  cardEntranceOffset: number;
 }
 
 export function useResponsive(): ResponsiveInfo {
@@ -37,13 +45,16 @@ export function useResponsive(): ResponsiveInfo {
   return useMemo(() => {
     const isTablet = tokens.isTablet;
     const isSmallPhone = tokens.isCompact;
+    const isLargePhone = tokens.isLargePhone;
     const isPhone = !isTablet;
 
     return {
       platform: tokens.platform,
+      phoneSizeClass: tokens.phoneSizeClass,
       width: tokens.width,
       height: tokens.height,
       isSmallPhone,
+      isLargePhone,
       isPhone,
       isTablet,
       bodySize: tokens.bodySize,
@@ -67,6 +78,12 @@ export function useResponsive(): ResponsiveInfo {
       searchRadius: tokens.searchRadius,
       safeBottomInset: tokens.safeBottomInset,
       safeTopInset: tokens.safeTopInset,
+      motionFast: tokens.motionFast,
+      motionBase: tokens.motionBase,
+      motionSlow: tokens.motionSlow,
+      motionStagger: tokens.motionStagger,
+      screenEntranceOffset: tokens.screenEntranceOffset,
+      cardEntranceOffset: tokens.cardEntranceOffset,
     };
   }, [tokens]);
 }

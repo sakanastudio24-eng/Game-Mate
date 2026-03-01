@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Platform, useWindowDimensions } from "react-native";
 
 export type MobilePlatform = "ios" | "android";
+export type PhoneSizeClass = "compact" | "regular" | "large";
 
 interface PlatformPreset {
   horizontalPadding: number;
@@ -24,13 +25,21 @@ interface PlatformPreset {
   searchRadius: number;
   safeBottomInset: number;
   safeTopInset: number;
+  motionFast: number;
+  motionBase: number;
+  motionSlow: number;
+  motionStagger: number;
+  screenEntranceOffset: number;
+  cardEntranceOffset: number;
 }
 
 export interface MobileDesignTokens {
   platform: MobilePlatform;
+  phoneSizeClass: PhoneSizeClass;
   width: number;
   height: number;
   isCompact: boolean;
+  isLargePhone: boolean;
   isTablet: boolean;
   horizontalPadding: number;
   contentMaxWidth: number;
@@ -53,6 +62,12 @@ export interface MobileDesignTokens {
   searchRadius: number;
   safeBottomInset: number;
   safeTopInset: number;
+  motionFast: number;
+  motionBase: number;
+  motionSlow: number;
+  motionStagger: number;
+  screenEntranceOffset: number;
+  cardEntranceOffset: number;
 }
 
 const PLATFORM_PRESETS: Record<MobilePlatform, PlatformPreset> = {
@@ -77,6 +92,12 @@ const PLATFORM_PRESETS: Record<MobilePlatform, PlatformPreset> = {
     searchRadius: 14,
     safeBottomInset: 10,
     safeTopInset: 10,
+    motionFast: 165,
+    motionBase: 235,
+    motionSlow: 305,
+    motionStagger: 48,
+    screenEntranceOffset: 14,
+    cardEntranceOffset: 12,
   },
   android: {
     horizontalPadding: 16,
@@ -99,6 +120,12 @@ const PLATFORM_PRESETS: Record<MobilePlatform, PlatformPreset> = {
     searchRadius: 12,
     safeBottomInset: 8,
     safeTopInset: 8,
+    motionFast: 150,
+    motionBase: 220,
+    motionSlow: 290,
+    motionStagger: 42,
+    screenEntranceOffset: 12,
+    cardEntranceOffset: 10,
   },
 };
 
@@ -107,20 +134,25 @@ export function useMobileDesignTokens(): MobileDesignTokens {
 
   return useMemo(() => {
     const platform: MobilePlatform = Platform.OS === "ios" ? "ios" : "android";
-    const isTablet = width >= 768;
-    const isCompact = width < 360;
+    const phoneSizeClass: PhoneSizeClass =
+      width < 360 ? "compact" : width >= 430 ? "large" : "regular";
+    const isCompact = phoneSizeClass === "compact";
+    const isLargePhone = phoneSizeClass === "large";
+    const isTablet = false;
 
     const preset = PLATFORM_PRESETS[platform];
-    const sizeScale = isTablet ? 1.18 : isCompact ? 0.94 : 1;
+    const sizeScale = isCompact ? 0.94 : isLargePhone ? 1.06 : 1;
 
     return {
       platform,
+      phoneSizeClass,
       width,
       height,
       isCompact,
+      isLargePhone,
       isTablet,
       horizontalPadding: Math.round(preset.horizontalPadding * sizeScale),
-      contentMaxWidth: isTablet ? (platform === "ios" ? 680 : 640) : width,
+      contentMaxWidth: width,
       titleSize: Math.round(preset.titleSize * sizeScale),
       sectionTitleSize: Math.round(preset.sectionTitleSize * sizeScale),
       bodySize: Math.round(preset.bodySize * sizeScale),
@@ -149,6 +181,12 @@ export function useMobileDesignTokens(): MobileDesignTokens {
       searchRadius: Math.round(preset.searchRadius * sizeScale),
       safeBottomInset: preset.safeBottomInset,
       safeTopInset: preset.safeTopInset,
+      motionFast: preset.motionFast,
+      motionBase: preset.motionBase,
+      motionSlow: preset.motionSlow,
+      motionStagger: preset.motionStagger,
+      screenEntranceOffset: preset.screenEntranceOffset,
+      cardEntranceOffset: preset.cardEntranceOffset,
     };
   }, [height, width]);
 }

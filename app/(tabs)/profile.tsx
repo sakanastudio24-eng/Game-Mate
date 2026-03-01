@@ -651,20 +651,22 @@ export default function ProfileScreen() {
         </AnimatedEntrance>
       </ScrollView>
 
-      <ActionSheet
-        visible={statusPickerOpen}
-        title="Online Status"
-        subtitle="Choose how you appear"
-        onClose={() => setStatusPickerOpen(false)}
-        options={(Object.keys(statusConfig) as OnlineStatus[]).map((statusKey) => ({
-          id: statusKey,
-          label:
-            statusConfig[statusKey].label +
-            (onlineStatus === statusKey ? " (Selected)" : ""),
-          icon: statusConfig[statusKey].icon,
-          onPress: () => setOnlineStatus(statusKey),
-        }))}
-      />
+      {statusPickerOpen ? (
+        <ActionSheet
+          visible
+          title="Online Status"
+          subtitle="Choose how you appear"
+          onClose={() => setStatusPickerOpen(false)}
+          options={(Object.keys(statusConfig) as OnlineStatus[]).map((statusKey) => ({
+            id: statusKey,
+            label:
+              statusConfig[statusKey].label +
+              (onlineStatus === statusKey ? " (Selected)" : ""),
+            icon: statusConfig[statusKey].icon,
+            onPress: () => setOnlineStatus(statusKey),
+          }))}
+        />
+      ) : null}
     </View>
   );
 }

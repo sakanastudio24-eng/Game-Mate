@@ -441,160 +441,158 @@ export default function NewsScreen() {
         }}
       />
 
-      <Modal
-        visible={commentsTarget !== null}
-        transparent
-        animationType="slide"
-        onRequestClose={closeCommentsDrawer}
-      >
-        <KeyboardAvoidingView
-          style={styles.drawerRoot}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+      {commentsTarget ? (
+        <Modal
+          visible
+          transparent
+          animationType="slide"
+          onRequestClose={closeCommentsDrawer}
         >
-          <Pressable
-            style={styles.drawerScrim}
-            onPress={closeCommentsDrawer}
-            accessibilityRole="button"
-            accessibilityLabel="Close comments drawer"
-          />
-          <View style={styles.drawerSheet}>
-            <View style={styles.drawerHandle} />
-            <Text style={styles.drawerTitle}>Comments</Text>
-            <Text style={styles.drawerSubtitle}>{commentsTarget?.title}</Text>
-            <View style={styles.drawerListWrap}>
-              <FlatList
-                ref={commentsListRef}
-                data={activeComments}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.drawerListContent}
-                showsVerticalScrollIndicator
-                keyboardShouldPersistTaps="handled"
-                initialNumToRender={8}
-                maxToRenderPerBatch={10}
-                windowSize={5}
-                updateCellsBatchingPeriod={50}
-                removeClippedSubviews
-                renderItem={({ item }) => (
-                  <View style={styles.drawerComment}>
-                    <ExpoImage
-                      source={{ uri: item.avatar }}
-                      style={styles.drawerCommentAvatar}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                      accessibilityLabel={`${item.user} profile picture`}
-                    />
-                    <View style={styles.drawerCommentBody}>
-                      <Text style={styles.drawerUser}>{item.user}</Text>
-                      <Text style={styles.drawerMessage}>{item.message}</Text>
+          <KeyboardAvoidingView
+            style={styles.drawerRoot}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <Pressable
+              style={styles.drawerScrim}
+              onPress={closeCommentsDrawer}
+              accessibilityRole="button"
+              accessibilityLabel="Close comments drawer"
+            />
+            <View style={styles.drawerSheet}>
+              <View style={styles.drawerHandle} />
+              <Text style={styles.drawerTitle}>Comments</Text>
+              <Text style={styles.drawerSubtitle}>{commentsTarget.title}</Text>
+              <View style={styles.drawerListWrap}>
+                <FlatList
+                  ref={commentsListRef}
+                  data={activeComments}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={styles.drawerListContent}
+                  showsVerticalScrollIndicator
+                  keyboardShouldPersistTaps="handled"
+                  initialNumToRender={8}
+                  maxToRenderPerBatch={10}
+                  windowSize={5}
+                  updateCellsBatchingPeriod={50}
+                  removeClippedSubviews
+                  renderItem={({ item }) => (
+                    <View style={styles.drawerComment}>
+                      <ExpoImage
+                        source={{ uri: item.avatar }}
+                        style={styles.drawerCommentAvatar}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                        accessibilityLabel={`${item.user} profile picture`}
+                      />
+                      <View style={styles.drawerCommentBody}>
+                        <Text style={styles.drawerUser}>{item.user}</Text>
+                        <Text style={styles.drawerMessage}>{item.message}</Text>
+                      </View>
                     </View>
-                  </View>
-                )}
-              />
+                  )}
+                />
+              </View>
+              <View style={styles.drawerComposer}>
+                <TextInput
+                  value={commentDraft}
+                  onChangeText={setCommentDraft}
+                  placeholder="Reply to this post..."
+                  accessibilityLabel="Write a reply"
+                  mode="flat"
+                  style={styles.drawerInput}
+                  contentStyle={styles.drawerInputContent}
+                  textColor={colors.text}
+                  placeholderTextColor={colors.textSecondary}
+                  underlineColor={colors.border}
+                  activeUnderlineColor={colors.primary}
+                  returnKeyType="send"
+                  onSubmitEditing={handleSubmitComment}
+                  blurOnSubmit={false}
+                />
+                <Pressable
+                  onPress={handleSubmitComment}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send reply"
+                  disabled={!commentDraft.trim()}
+                  style={({ pressed }) => [
+                    styles.drawerSendButton,
+                    !commentDraft.trim() && styles.drawerSendButtonDisabled,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <MaterialCommunityIcons name="send" size={20} color="#1A1A1A" />
+                </Pressable>
+              </View>
             </View>
-            <View style={styles.drawerComposer}>
-              <TextInput
-                value={commentDraft}
-                onChangeText={setCommentDraft}
-                placeholder="Reply to this post..."
-                accessibilityLabel="Write a reply"
-                mode="flat"
-                style={styles.drawerInput}
-                contentStyle={styles.drawerInputContent}
-                textColor={colors.text}
-                placeholderTextColor={colors.textSecondary}
-                underlineColor={colors.border}
-                activeUnderlineColor={colors.primary}
-                returnKeyType="send"
-                onSubmitEditing={handleSubmitComment}
-                blurOnSubmit={false}
-              />
-              <Pressable
-                onPress={handleSubmitComment}
-                accessibilityRole="button"
-                accessibilityLabel="Send reply"
-                disabled={!commentDraft.trim()}
-                style={({ pressed }) => [
-                  styles.drawerSendButton,
-                  !commentDraft.trim() && styles.drawerSendButtonDisabled,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <MaterialCommunityIcons name="send" size={20} color="#1A1A1A" />
-              </Pressable>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+          </KeyboardAvoidingView>
+        </Modal>
+      ) : null}
 
-      <ActionSheet
-        visible={activePostMenu !== null}
-        title={activePostMenu?.title ?? "Post"}
-        subtitle="Post options"
-        onClose={() => setActivePostMenu(null)}
-        options={
-          activePostMenu
-            ? [
-                {
-                  id: "share",
-                  label: "Share",
-                  icon: "share-variant-outline",
-                  onPress: () => openShareDrawer(activePostMenu),
-                },
-                {
-                  id: "save",
-                  label: isSaved(activePostMenu.feedId) ? "Remove from Saved" : "Save Post",
-                  icon: isSaved(activePostMenu.feedId)
-                    ? "bookmark-remove-outline"
-                    : "bookmark-outline",
-                  onPress: () => toggleSave(activePostMenu.feedId),
-                },
-                {
-                  id: "report",
-                  label: "Report",
-                  icon: "flag-outline",
-                  destructive: true,
-                  onPress: () => handleReportPost(activePostMenu),
-                },
-              ]
-            : []
-        }
-      />
+      {activePostMenu ? (
+        <ActionSheet
+          visible
+          title={activePostMenu.title}
+          subtitle="Post options"
+          onClose={() => setActivePostMenu(null)}
+          options={[
+            {
+              id: "share",
+              label: "Share",
+              icon: "share-variant-outline",
+              onPress: () => openShareDrawer(activePostMenu),
+            },
+            {
+              id: "save",
+              label: isSaved(activePostMenu.feedId) ? "Remove from Saved" : "Save Post",
+              icon: isSaved(activePostMenu.feedId)
+                ? "bookmark-remove-outline"
+                : "bookmark-outline",
+              onPress: () => toggleSave(activePostMenu.feedId),
+            },
+            {
+              id: "report",
+              label: "Report",
+              icon: "flag-outline",
+              destructive: true,
+              onPress: () => handleReportPost(activePostMenu),
+            },
+          ]}
+        />
+      ) : null}
 
-      <ActionSheet
-        visible={shareTarget !== null}
-        title="Share"
-        subtitle={shareTarget?.title}
-        onClose={() => setShareTarget(null)}
-        options={
-          shareTarget
-            ? [
-                {
-                  id: "friends",
-                  label: "Share to Friends Drawer",
-                  icon: "account-group-outline",
-                  onPress: handleShareToFriendDrawer,
-                },
-                {
-                  id: "contacts",
-                  label: "Share to Contacts",
-                  icon: "account-box-outline",
-                  onPress: () => {
-                    void handleSystemShare(shareTarget.message);
-                  },
-                },
-                {
-                  id: "copy",
-                  label: "Copy Link",
-                  icon: "content-copy",
-                  onPress: () => {
-                    const link = shareTarget.message.split("\n").slice(-1)[0];
-                    Alert.alert("Link Ready", link);
-                  },
-                },
-              ]
-            : []
-        }
-      />
+      {shareTarget ? (
+        <ActionSheet
+          visible
+          title="Share"
+          subtitle={shareTarget.title}
+          onClose={() => setShareTarget(null)}
+          options={[
+            {
+              id: "friends",
+              label: "Share to Friends Drawer",
+              icon: "account-group-outline",
+              onPress: handleShareToFriendDrawer,
+            },
+            {
+              id: "contacts",
+              label: "Share to Contacts",
+              icon: "account-box-outline",
+              onPress: () => {
+                void handleSystemShare(shareTarget.message);
+              },
+            },
+            {
+              id: "copy",
+              label: "Copy Link",
+              icon: "content-copy",
+              onPress: () => {
+                const link = shareTarget.message.split("\n").slice(-1)[0];
+                Alert.alert("Link Ready", link);
+              },
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }

@@ -791,203 +791,201 @@ export default function GroupsScreen() {
         updateCellsBatchingPeriod={50}
       />
 
-      <Modal
-        visible={aiSwipeVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setAiSwipeVisible(false)}
-      >
-        <Pressable style={styles.aiModalBackdrop} onPress={() => setAiSwipeVisible(false)}>
-          <Animated.View pointerEvents="none" style={[styles.swipeScreenGlowLeft, { opacity: leftGlowOpacity }]} />
-          <Animated.View pointerEvents="none" style={[styles.swipeScreenGlowRight, { opacity: rightGlowOpacity }]} />
-          <Pressable
-            style={[styles.aiModalCard, { borderRadius: responsive.cardRadius }]}
-            onPress={() => null}
-          >
-            <View style={styles.aiModalHeader}>
-              <Text style={styles.aiModalTitle}>Group Swipe</Text>
-              <Pressable
-                onPress={() => setAiSwipeVisible(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Close group swipe"
-                style={({ pressed }) => [styles.aiModalClose, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="close" size={18} color={colors.textSecondary} />
-              </Pressable>
-            </View>
-
-            {aiSwipeLoading ? (
-              <View style={styles.aiLoadingWrap}>
-                <Skeleton width="45%" height={16} />
-                <Skeleton width="75%" height={12} style={styles.aiLoadingCopy} />
-                <Skeleton width="100%" height={168} borderRadius={14} style={styles.aiLoadingImage} />
-                <View style={styles.aiLoadingRow}>
-                  <Skeleton width="47%" height={44} borderRadius={999} />
-                  <Skeleton width="47%" height={44} borderRadius={999} />
-                </View>
-              </View>
-            ) : aiSwipeError ? (
-              <View style={styles.aiStateWrap}>
-                <Text style={styles.aiStateTitle}>Recommendation error</Text>
-                <Text style={styles.aiStateCopy}>{aiSwipeError}</Text>
+      {aiSwipeVisible ? (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setAiSwipeVisible(false)}
+        >
+          <Pressable style={styles.aiModalBackdrop} onPress={() => setAiSwipeVisible(false)}>
+            <Animated.View pointerEvents="none" style={[styles.swipeScreenGlowLeft, { opacity: leftGlowOpacity }]} />
+            <Animated.View pointerEvents="none" style={[styles.swipeScreenGlowRight, { opacity: rightGlowOpacity }]} />
+            <Pressable
+              style={[styles.aiModalCard, { borderRadius: responsive.cardRadius }]}
+              onPress={() => null}
+            >
+              <View style={styles.aiModalHeader}>
+                <Text style={styles.aiModalTitle}>Group Swipe</Text>
                 <Pressable
-                  onPress={() => void openAiSwipe()}
+                  onPress={() => setAiSwipeVisible(false)}
                   accessibilityRole="button"
-                  accessibilityLabel="Retry recommendations"
-                  style={({ pressed }) => [styles.aiRetryButton, pressed && styles.pressed]}
+                  accessibilityLabel="Close group swipe"
+                  style={({ pressed }) => [styles.aiModalClose, pressed && styles.pressed]}
                 >
-                  <Text style={styles.aiRetryButtonText}>Retry</Text>
+                  <MaterialCommunityIcons name="close" size={18} color={colors.textSecondary} />
                 </Pressable>
               </View>
-            ) : !activeAiItem ? (
-              <View style={styles.aiStateWrap}>
-                <Text style={styles.aiStateTitle}>No more groups</Text>
-                <Text style={styles.aiStateCopy}>Refresh later for more recommendations.</Text>
-              </View>
-            ) : (
-              <Animated.View
-                style={[
-                  styles.aiResultWrap,
-                  {
-                    transform: [{ translateX: swipeX }, { rotate: cardRotation }],
-                  },
-                ]}
-                {...panResponder.panHandlers}
-              >
-                <ExpoImage
-                  source={{ uri: activeAiItem.group.thumbnail }}
-                  style={styles.aiGroupImage}
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                />
-                <View style={styles.aiTitleRow}>
-                  <Text style={styles.aiGroupName}>{activeAiItem.group.name}</Text>
-                  <View style={styles.aiScorePill}>
-                    <Text style={styles.aiScoreText}>{activeAiItem.score}%</Text>
+
+              {aiSwipeLoading ? (
+                <View style={styles.aiLoadingWrap}>
+                  <Skeleton width="45%" height={16} />
+                  <Skeleton width="75%" height={12} style={styles.aiLoadingCopy} />
+                  <Skeleton width="100%" height={168} borderRadius={14} style={styles.aiLoadingImage} />
+                  <View style={styles.aiLoadingRow}>
+                    <Skeleton width="47%" height={44} borderRadius={999} />
+                    <Skeleton width="47%" height={44} borderRadius={999} />
                   </View>
                 </View>
-                <Text style={styles.aiGroupMeta}>
-                  {activeAiItem.group.game} · {activeAiItem.group.members} members ·{" "}
-                  {activeAiItem.group.online} online
-                </Text>
-                <Text style={styles.swipeHint}>Swipe left to pass, swipe right to join</Text>
-                <View style={styles.aiReasonWrap}>
-                  {activeAiItem.reasons.map((reason) => (
-                    <View key={`${activeAiItem.group.id}-${reason}`} style={styles.aiReasonChip}>
-                      <MaterialCommunityIcons
-                        name={"star-four-points" as any}
-                        size={12}
-                        color={colors.primary}
-                      />
-                      <Text style={styles.aiReasonText}>{reason}</Text>
-                    </View>
-                  ))}
-                </View>
-                <View style={styles.aiActionsRow}>
-                    <Pressable
-                      onPress={handleSwipeLeft}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Pass on ${activeAiItem.group.name}`}
-                      style={({ pressed }) => [styles.aiSkipButton, pressed && styles.pressed]}
-                    >
-                      <MaterialCommunityIcons name="close" size={18} color={colors.text} />
-                      <Text style={styles.aiSkipButtonText}>Pass</Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={handleSwipeRight}
+              ) : aiSwipeError ? (
+                <View style={styles.aiStateWrap}>
+                  <Text style={styles.aiStateTitle}>Recommendation error</Text>
+                  <Text style={styles.aiStateCopy}>{aiSwipeError}</Text>
+                  <Pressable
+                    onPress={() => void openAiSwipe()}
                     accessibilityRole="button"
-                    accessibilityLabel={`Join ${activeAiItem.group.name}`}
-                    style={({ pressed }) => [styles.aiJoinButton, pressed && styles.pressed]}
+                    accessibilityLabel="Retry recommendations"
+                    style={({ pressed }) => [styles.aiRetryButton, pressed && styles.pressed]}
                   >
-                    <MaterialCommunityIcons name="check" size={18} color="#1A1A1A" />
-                      <Text style={styles.aiJoinButtonText}>Join</Text>
-                    </Pressable>
+                    <Text style={styles.aiRetryButtonText}>Retry</Text>
+                  </Pressable>
+                </View>
+              ) : !activeAiItem ? (
+                <View style={styles.aiStateWrap}>
+                  <Text style={styles.aiStateTitle}>No more groups</Text>
+                  <Text style={styles.aiStateCopy}>Refresh later for more recommendations.</Text>
+                </View>
+              ) : (
+                <Animated.View
+                  style={[
+                    styles.aiResultWrap,
+                    {
+                      transform: [{ translateX: swipeX }, { rotate: cardRotation }],
+                    },
+                  ]}
+                  {...panResponder.panHandlers}
+                >
+                  <ExpoImage
+                    source={{ uri: activeAiItem.group.thumbnail }}
+                    style={styles.aiGroupImage}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                  />
+                  <View style={styles.aiTitleRow}>
+                    <Text style={styles.aiGroupName}>{activeAiItem.group.name}</Text>
+                    <View style={styles.aiScorePill}>
+                      <Text style={styles.aiScoreText}>{activeAiItem.score}%</Text>
+                    </View>
                   </View>
-              </Animated.View>
-            )}
+                  <Text style={styles.aiGroupMeta}>
+                    {activeAiItem.group.game} · {activeAiItem.group.members} members ·{" "}
+                    {activeAiItem.group.online} online
+                  </Text>
+                  <Text style={styles.swipeHint}>Swipe left to pass, swipe right to join</Text>
+                  <View style={styles.aiReasonWrap}>
+                    {activeAiItem.reasons.map((reason) => (
+                      <View key={`${activeAiItem.group.id}-${reason}`} style={styles.aiReasonChip}>
+                        <MaterialCommunityIcons
+                          name={"star-four-points" as any}
+                          size={12}
+                          color={colors.primary}
+                        />
+                        <Text style={styles.aiReasonText}>{reason}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.aiActionsRow}>
+                      <Pressable
+                        onPress={handleSwipeLeft}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Pass on ${activeAiItem.group.name}`}
+                        style={({ pressed }) => [styles.aiSkipButton, pressed && styles.pressed]}
+                      >
+                        <MaterialCommunityIcons name="close" size={18} color={colors.text} />
+                        <Text style={styles.aiSkipButtonText}>Pass</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={handleSwipeRight}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Join ${activeAiItem.group.name}`}
+                      style={({ pressed }) => [styles.aiJoinButton, pressed && styles.pressed]}
+                    >
+                      <MaterialCommunityIcons name="check" size={18} color="#1A1A1A" />
+                        <Text style={styles.aiJoinButtonText}>Join</Text>
+                      </Pressable>
+                    </View>
+                </Animated.View>
+              )}
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </Modal>
+      ) : null}
 
-      <ActionSheet
-        visible={activeGroupMenu !== null}
-        title={activeGroupMenu?.name ?? "Group"}
-        subtitle="Choose an action"
-        onClose={() => setActiveGroupMenu(null)}
-        options={
-          activeGroupMenu
-            ? [
-                {
-                  id: "share",
-                  label: "Share",
-                  icon: "share-variant-outline",
-                  onPress: () =>
-                    handleShareToFriends(
-                      activeGroupMenu.name,
-                      `Check out this Game Mate group: ${activeGroupMenu.name} (${activeGroupMenu.game}).\nhttps://gamemate.app/g/${activeGroupMenu.id}`,
-                    ),
-                },
-                {
-                  id: "report",
-                  label: "Report",
-                  icon: "flag-outline",
-                  onPress: () => handleReportGroup(activeGroupMenu.name),
-                },
-                {
-                  id: "delete",
-                  label: "Delete",
-                  icon: "trash-can-outline",
-                  destructive: true,
-                  onPress: () => handleDeleteGroup(activeGroupMenu.id),
-                },
-              ]
-            : []
-        }
-      />
+      {activeGroupMenu ? (
+        <ActionSheet
+          visible
+          title={activeGroupMenu.name}
+          subtitle="Choose an action"
+          onClose={() => setActiveGroupMenu(null)}
+          options={[
+            {
+              id: "share",
+              label: "Share",
+              icon: "share-variant-outline",
+              onPress: () =>
+                handleShareToFriends(
+                  activeGroupMenu.name,
+                  `Check out this Game Mate group: ${activeGroupMenu.name} (${activeGroupMenu.game}).\nhttps://gamemate.app/g/${activeGroupMenu.id}`,
+                ),
+            },
+            {
+              id: "report",
+              label: "Report",
+              icon: "flag-outline",
+              onPress: () => handleReportGroup(activeGroupMenu.name),
+            },
+            {
+              id: "delete",
+              label: "Delete",
+              icon: "trash-can-outline",
+              destructive: true,
+              onPress: () => handleDeleteGroup(activeGroupMenu.id),
+            },
+          ]}
+        />
+      ) : null}
 
-      <ActionSheet
-        visible={shareTarget !== null}
-        title="Share"
-        subtitle={shareTarget?.title}
-        onClose={() => setShareTarget(null)}
-        options={
-          shareTarget
-            ? [
-                {
-                  id: "friends",
-                  label: "Share to Friends Drawer",
-                  icon: "account-group-outline",
-                  onPress: handleShareToFriendDrawer,
-                },
-                {
-                  id: "contacts",
-                  label: "Share to Contacts",
-                  icon: "account-box-outline",
-                  onPress: () => {
-                    void handleShareGroupToContacts(shareTarget.message);
-                  },
-                },
-                {
-                  id: "system",
-                  label: "More Share Options",
-                  icon: "dots-horizontal-circle-outline",
-                  onPress: () => {
-                    void handleShareGroupToContacts(shareTarget.message);
-                  },
-                },
-                {
-                  id: "copy",
-                  label: "Copy Link",
-                  icon: "content-copy",
-                  onPress: () => {
-                    const link = shareTarget.message.split("\n").slice(-1)[0];
-                    Alert.alert("Link Ready", link);
-                  },
-                },
-              ]
-            : []
-        }
-      />
+      {shareTarget ? (
+        <ActionSheet
+          visible
+          title="Share"
+          subtitle={shareTarget.title}
+          onClose={() => setShareTarget(null)}
+          options={[
+            {
+              id: "friends",
+              label: "Share to Friends Drawer",
+              icon: "account-group-outline",
+              onPress: handleShareToFriendDrawer,
+            },
+            {
+              id: "contacts",
+              label: "Share to Contacts",
+              icon: "account-box-outline",
+              onPress: () => {
+                void handleShareGroupToContacts(shareTarget.message);
+              },
+            },
+            {
+              id: "system",
+              label: "More Share Options",
+              icon: "dots-horizontal-circle-outline",
+              onPress: () => {
+                void handleShareGroupToContacts(shareTarget.message);
+              },
+            },
+            {
+              id: "copy",
+              label: "Copy Link",
+              icon: "content-copy",
+              onPress: () => {
+                const link = shareTarget.message.split("\n").slice(-1)[0];
+                Alert.alert("Link Ready", link);
+              },
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }

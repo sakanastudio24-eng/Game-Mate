@@ -1,36 +1,64 @@
 import { useMemo } from "react";
-import { useWindowDimensions } from "react-native";
+import { useMobileDesignTokens } from "./design-system";
 
 export interface ResponsiveInfo {
+  platform: "ios" | "android";
   width: number;
   height: number;
   isSmallPhone: boolean;
   isPhone: boolean;
   isTablet: boolean;
+  bodySize: number;
+  bodySmallSize: number;
+  captionSize: number;
+  sectionTitleSize: number;
   horizontalPadding: number;
   contentMaxWidth: number;
   titleSize: number;
+  headerTopSpacing: number;
+  headerTitleSize: number;
+  iconButtonSize: number;
   cardRadius: number;
+  cardPadding: number;
+  tabBarBaseHeight: number;
+  tabBarLabelSize: number;
+  searchRadius: number;
+  safeBottomInset: number;
+  safeTopInset: number;
 }
 
 export function useResponsive(): ResponsiveInfo {
-  const { width, height } = useWindowDimensions();
+  const tokens = useMobileDesignTokens();
 
   return useMemo(() => {
-    const isTablet = width >= 768;
-    const isSmallPhone = width < 360;
+    const isTablet = tokens.isTablet;
+    const isSmallPhone = tokens.isCompact;
     const isPhone = !isTablet;
 
     return {
-      width,
-      height,
+      platform: tokens.platform,
+      width: tokens.width,
+      height: tokens.height,
       isSmallPhone,
       isPhone,
       isTablet,
-      horizontalPadding: isTablet ? 28 : isSmallPhone ? 14 : 16,
-      contentMaxWidth: isTablet ? 640 : width,
-      titleSize: isTablet ? 42 : isSmallPhone ? 32 : 36,
-      cardRadius: isTablet ? 24 : 20,
+      bodySize: tokens.bodySize,
+      bodySmallSize: tokens.bodySmallSize,
+      captionSize: tokens.captionSize,
+      sectionTitleSize: tokens.sectionTitleSize,
+      horizontalPadding: tokens.horizontalPadding,
+      contentMaxWidth: tokens.contentMaxWidth,
+      titleSize: tokens.titleSize,
+      headerTopSpacing: tokens.headerTopSpacing,
+      headerTitleSize: tokens.headerTitleSize,
+      iconButtonSize: tokens.iconButtonSize,
+      cardRadius: tokens.cardRadius,
+      cardPadding: tokens.cardPadding,
+      tabBarBaseHeight: tokens.tabBarBaseHeight,
+      tabBarLabelSize: tokens.tabBarLabelSize,
+      searchRadius: tokens.searchRadius,
+      safeBottomInset: tokens.safeBottomInset,
+      safeTopInset: tokens.safeTopInset,
     };
-  }, [width, height]);
+  }, [tokens]);
 }

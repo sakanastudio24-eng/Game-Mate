@@ -4,6 +4,7 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useResponsive } from "../../lib/responsive";
 import { colors, spacing, typography } from "../../lib/theme";
 
 // Header component with title, optional back button, and action buttons
@@ -44,13 +45,23 @@ export function Header({
 }: HeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const responsive = useResponsive();
   const resolvedRightIcon = rightAction?.icon ?? rightIcon;
   const resolvedRightPress = rightAction?.onPress ?? onRightPress;
   const resolvedRightIcon2 = rightAction2?.icon ?? rightIcon2;
   const resolvedRightPress2 = rightAction2?.onPress ?? onRightPress2;
+  const topPadding = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
 
   return (
-    <View style={[styles.header, { paddingTop: spacing.md + insets.top }]}>
+    <View
+      style={[
+        styles.header,
+        {
+          paddingTop: topPadding,
+          paddingHorizontal: responsive.horizontalPadding,
+        },
+      ]}
+    >
       <View style={styles.leftSection}>
         {showBackButton && (
           <Pressable onPress={onBack ?? (() => router.back())} style={styles.backButton}>
@@ -62,14 +73,24 @@ export function Header({
           </Pressable>
         )}
         <View style={styles.titleSection}>
-          <Text style={styles.title}>{title}</Text>
-          {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+          <Text style={[styles.title, { fontSize: responsive.headerTitleSize }]}>{title}</Text>
+          {subtitle && <Text style={[styles.subtitle, { fontSize: responsive.captionSize }]}>{subtitle}</Text>}
         </View>
       </View>
 
       <View style={styles.rightSection}>
         {resolvedRightIcon && (
-          <Pressable onPress={resolvedRightPress} style={styles.iconButton}>
+          <Pressable
+            onPress={resolvedRightPress}
+            style={[
+              styles.iconButton,
+              {
+                width: responsive.iconButtonSize,
+                height: responsive.iconButtonSize,
+                borderRadius: responsive.iconButtonSize / 2,
+              },
+            ]}
+          >
             <MaterialCommunityIcons
               name={resolvedRightIcon as any}
               size={24}
@@ -78,7 +99,17 @@ export function Header({
           </Pressable>
         )}
         {resolvedRightIcon2 && (
-          <Pressable onPress={resolvedRightPress2} style={styles.iconButton}>
+          <Pressable
+            onPress={resolvedRightPress2}
+            style={[
+              styles.iconButton,
+              {
+                width: responsive.iconButtonSize,
+                height: responsive.iconButtonSize,
+                borderRadius: responsive.iconButtonSize / 2,
+              },
+            ]}
+          >
             <MaterialCommunityIcons
               name={resolvedRightIcon2 as any}
               size={24}
@@ -96,7 +127,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -130,6 +160,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   iconButton: {
-    padding: spacing.sm,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

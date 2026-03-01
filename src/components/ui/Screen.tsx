@@ -8,7 +8,8 @@ import {
   ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, spacing } from "../../lib/theme";
+import { useResponsive } from "../../lib/responsive";
+import { colors } from "../../lib/theme";
 
 // Screen wrapper component for consistent padding and layout
 // Supports both scrollable and non-scrollable content
@@ -27,6 +28,7 @@ export function Screen({
   padded = true,
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const responsive = useResponsive();
   const entry = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -52,8 +54,8 @@ export function Screen({
 
   const containerStyle = [
     styles.container,
-    padded && styles.padded,
-    { paddingBottom: Math.max(insets.bottom, spacing.sm) },
+    padded && { paddingHorizontal: responsive.horizontalPadding },
+    { paddingBottom: Math.max(insets.bottom, responsive.safeBottomInset) },
     style,
   ];
 
@@ -84,9 +86,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  padded: {
-    paddingHorizontal: spacing.md,
   },
   fill: {
     flex: 1,

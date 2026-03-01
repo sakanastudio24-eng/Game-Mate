@@ -257,4 +257,5 @@ See [`docs/XCODE_MIGRATION.md`](docs/XCODE_MIGRATION.md) for a full component-by
 | `docs/ARCHITECTURE.md`        | State management, animation, theming patterns |
 | `docs/FLOWS.md`               | Detailed screen-by-screen navigation flows    |
 | `docs/COMPONENTS.md`          | Full component prop catalog                   |
+| `docs/DESIGN_SYSTEM_MOBILE.md`| iPhone + Android layout and typography system |
 | `docs/XCODE_MIGRATION.md`     | iOS / SwiftUI porting reference               |

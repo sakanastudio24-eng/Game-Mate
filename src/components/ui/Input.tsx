@@ -1,5 +1,6 @@
 import React from "react";
 import { TextInput, TextInputProps } from "react-native-paper";
+import { useResponsive } from "../../lib/responsive";
 import { colors, spacing } from "../../lib/theme";
 
 // Input wrapper around React Native Paper TextInput
@@ -20,6 +21,7 @@ export function Input({
   style,
   ...props
 }: InputProps) {
+  const responsive = useResponsive();
   return (
     <TextInput
       label={label}
@@ -29,8 +31,13 @@ export function Input({
       outlineColor={error ? colors.destructive : colors.border}
       activeOutlineColor={error ? colors.destructive : colors.primary}
       textColor={colors.text}
+      contentStyle={{ fontSize: responsive.bodySize }}
       style={[
-        { marginBottom: spacing.md, backgroundColor: colors.surface },
+        {
+          marginBottom: spacing.md,
+          backgroundColor: colors.surface,
+          borderRadius: responsive.searchRadius,
+        },
         fullWidth ? { width: "100%" as const } : undefined,
         style,
       ]}

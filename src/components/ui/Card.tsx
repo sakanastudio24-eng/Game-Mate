@@ -1,5 +1,12 @@
 import React from "react";
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
+import { useResponsive } from "../../lib/responsive";
 import { colors, spacing } from "../../lib/theme";
 
 // Card component for grouping content
@@ -13,20 +20,36 @@ interface CardProps {
 }
 
 export function Card({ children, style, onPress }: CardProps) {
-  return (
-    <View style={[styles.card, style]} onTouchEnd={onPress}>
-      {children}
-    </View>
-  );
+  const responsive = useResponsive();
+  const sharedStyle = [
+    styles.card,
+    {
+      borderRadius: responsive.cardRadius,
+      padding: responsive.cardPadding,
+    },
+    style,
+  ];
+
+  if (onPress) {
+    return (
+      <Pressable onPress={onPress} style={({ pressed }) => [sharedStyle, pressed && styles.pressed]}>
+        {children}
+      </Pressable>
+    );
+  }
+
+  return <View style={sharedStyle}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 8,
     padding: spacing.lg,
     borderColor: colors.border,
     borderWidth: 1,
     marginBottom: spacing.md,
+  },
+  pressed: {
+    opacity: 0.88,
   },
 });

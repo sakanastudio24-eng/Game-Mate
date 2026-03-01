@@ -3,6 +3,7 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { Friend } from "../lib/mockData";
+import { useResponsive } from "../lib/responsive";
 import { colors, spacing } from "../lib/theme";
 
 // FriendCard: Shows friend info, status, follow/unfollow button
@@ -21,37 +22,47 @@ export function FriendCard({
   onFollow,
   onPress,
 }: FriendCardProps) {
+  const responsive = useResponsive();
   const statusColor =
     friend.status === "online" ? colors.online : colors.textMuted;
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          borderRadius: responsive.cardRadius - 4,
+          padding: responsive.cardPadding,
+        },
+        pressed && styles.cardPressed,
+      ]}
     >
       <View style={styles.content}>
-        <Text style={styles.avatar}>{friend.avatar}</Text>
+        <Text style={[styles.avatar, { fontSize: responsive.titleSize + 4 }]}>{friend.avatar}</Text>
 
         <View style={styles.info}>
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{friend.username}</Text>
+            <Text style={[styles.name, { fontSize: responsive.bodySize + 1 }]}>{friend.username}</Text>
             <View
               style={[styles.statusDot, { backgroundColor: statusColor }]}
             />
           </View>
 
           {friend.currentGame && (
-            <Text style={styles.game}>Playing {friend.currentGame}</Text>
+            <Text style={[styles.game, { fontSize: responsive.bodySmallSize }]}>
+              Playing {friend.currentGame}
+            </Text>
           )}
 
           {friend.lastSeen && friend.status === "offline" && (
-            <Text style={styles.lastSeen}>
+            <Text style={[styles.lastSeen, { fontSize: responsive.captionSize }]}>
               Last seen {getTimeAgo(friend.lastSeen)}
             </Text>
           )}
 
           {friend.gamesPlayed.length > 0 && (
-            <Text style={styles.games}>
+            <Text style={[styles.games, { fontSize: responsive.captionSize }]}>
               {friend.gamesPlayed.slice(0, 2).join(", ")}
               {friend.gamesPlayed.length > 2
                 ? ` +${friend.gamesPlayed.length - 2}`

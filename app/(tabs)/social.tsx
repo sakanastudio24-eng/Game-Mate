@@ -164,6 +164,8 @@ export default function SocialScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
+  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
@@ -218,7 +220,7 @@ export default function SocialScreen() {
           style={[
             styles.headerWrap,
             {
-              paddingTop: insets.top + spacing.md,
+              paddingTop: safeTop,
               paddingHorizontal: responsive.horizontalPadding,
               maxWidth: responsive.contentMaxWidth,
               alignSelf: "center",
@@ -227,19 +229,45 @@ export default function SocialScreen() {
           ]}
         >
           <View style={styles.titleRow}>
-            <Text style={[styles.title, { fontSize: responsive.titleSize }]}>Social</Text>
+            <Text
+              style={[
+                styles.title,
+                {
+                  fontSize: responsive.titleSize,
+                  lineHeight: Math.round(responsive.titleSize * 1.14),
+                },
+              ]}
+            >
+              Social
+            </Text>
 
             <View style={styles.headerActions}>
               <Pressable
                 onPress={() => router.push("/(tabs)/search-players")}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  {
+                    width: responsive.iconButtonSize,
+                    height: responsive.iconButtonSize,
+                    borderRadius: responsive.iconButtonSize / 2,
+                  },
+                  pressed && styles.pressed,
+                ]}
               >
                 <MaterialCommunityIcons name="account-plus-outline" size={20} color={colors.text} />
               </Pressable>
 
               <Pressable
                 onPress={() => router.push("/(tabs)/qr-code")}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  {
+                    width: responsive.iconButtonSize,
+                    height: responsive.iconButtonSize,
+                    borderRadius: responsive.iconButtonSize / 2,
+                  },
+                  pressed && styles.pressed,
+                ]}
               >
                 <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
               </Pressable>
@@ -259,9 +287,22 @@ export default function SocialScreen() {
                 <Pressable
                   key={tab.id}
                   onPress={() => setActiveTab(tab.id)}
-                  style={[styles.tabButton, selected ? styles.tabButtonActive : undefined]}
+                  style={[
+                    styles.tabButton,
+                    {
+                      borderRadius: responsive.cardRadius - 6,
+                      paddingVertical: Math.max(9, responsive.cardPadding - 2),
+                    },
+                    selected ? styles.tabButtonActive : undefined,
+                  ]}
                 >
-                  <Text style={[styles.tabText, selected ? styles.tabTextActive : undefined]}>
+                  <Text
+                    style={[
+                      styles.tabText,
+                      { fontSize: responsive.bodySmallSize },
+                      selected ? styles.tabTextActive : undefined,
+                    ]}
+                  >
                     {tab.label}
                   </Text>
                 </Pressable>
@@ -273,8 +314,8 @@ export default function SocialScreen() {
             placeholder={searchPlaceholder}
             value={search}
             onChangeText={setSearch}
-            style={styles.searchbar}
-            inputStyle={styles.searchInput}
+            style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+            inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
             iconColor={colors.textSecondary}
             placeholderTextColor={colors.textSecondary}
           />
@@ -326,6 +367,10 @@ export default function SocialScreen() {
                     onPress={() => router.push(`/(tabs)/user-profile?userId=${item.id}`)}
                     style={({ pressed }) => [
                       styles.friendCard,
+                      {
+                        borderRadius: responsive.cardRadius,
+                        padding: responsive.cardPadding,
+                      },
                       !isOnline ? styles.friendCardOffline : undefined,
                       pressed && styles.pressed,
                     ]}
@@ -360,7 +405,7 @@ export default function SocialScreen() {
               </AnimatedEntrance>
             );
           }}
-          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -381,7 +426,14 @@ export default function SocialScreen() {
               >
                 <Pressable
                   onPress={() => router.push(`/(tabs)/chat?userId=${item.userId}`)}
-                  style={({ pressed }) => [styles.messageCard, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.messageCard,
+                    {
+                      borderRadius: responsive.cardRadius,
+                      padding: responsive.cardPadding,
+                    },
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <View style={styles.messageAvatarWrap}>
                     <Image source={{ uri: item.avatar }} style={styles.messageAvatar} />
@@ -413,7 +465,7 @@ export default function SocialScreen() {
               <Text style={styles.emptyCopy}>Try another search keyword.</Text>
             </View>
           }
-          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -432,7 +484,15 @@ export default function SocialScreen() {
                   width: "100%",
                 }}
               >
-                <View style={styles.requestCard}>
+                <View
+                  style={[
+                    styles.requestCard,
+                    {
+                      borderRadius: responsive.cardRadius,
+                      padding: responsive.cardPadding,
+                    },
+                  ]}
+                >
                   <Pressable
                     onPress={() => router.push(`/(tabs)/user-profile?userId=${item.userId}`)}
                     style={({ pressed }) => [styles.requestTop, pressed && styles.pressed]}
@@ -469,7 +529,7 @@ export default function SocialScreen() {
               <Text style={styles.emptyCopy}>New friend invites will appear here.</Text>
             </View>
           }
-          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + insets.bottom }]}
+          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
@@ -500,9 +560,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",

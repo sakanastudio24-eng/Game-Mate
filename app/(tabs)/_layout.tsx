@@ -3,10 +3,13 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Tabs } from "expo-router";
 import React from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useResponsive } from "../../src/lib/responsive";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const bottomInset = Math.max(insets.bottom, 8);
+  const responsive = useResponsive();
+  const bottomInset = Math.max(insets.bottom, responsive.safeBottomInset);
+  const iconSize = responsive.platform === "ios" ? 24 : 23;
 
   return (
     <Tabs
@@ -17,13 +20,16 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 58 + bottomInset,
-          paddingTop: 6,
+          height: responsive.tabBarBaseHeight + bottomInset,
+          paddingTop: responsive.platform === "ios" ? 7 : 6,
           paddingBottom: bottomInset,
         },
         tabBarHideOnKeyboard: true,
         headerShown: false,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: {
+          fontSize: responsive.tabBarLabelSize,
+          fontWeight: "700",
+        },
       }}
     >
       <Tabs.Screen
@@ -31,7 +37,7 @@ export default function TabLayout() {
         options={{
           title: "News",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="newspaper" size={24} color={color} />
+            <MaterialCommunityIcons name="newspaper" size={iconSize} color={color} />
           ),
         }}
       />
@@ -42,7 +48,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons
               name={"account-group" as any}
-              size={24}
+              size={iconSize}
               color={color}
             />
           ),
@@ -53,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: "Social",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="account-multiple" size={24} color={color} />
+            <MaterialCommunityIcons name="account-multiple" size={iconSize} color={color} />
           ),
         }}
       />
@@ -62,7 +68,7 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="account" size={24} color={color} />
+            <MaterialCommunityIcons name="account" size={iconSize} color={color} />
           ),
         }}
       />

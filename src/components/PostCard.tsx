@@ -3,6 +3,7 @@ import React from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { Post } from "../lib/mockData";
+import { useResponsive } from "../lib/responsive";
 import { Chip } from "./ui/Chip";
 import { colors, spacing } from "../lib/theme";
 
@@ -25,23 +26,44 @@ export function PostCard({
   onLike,
   onSave,
 }: PostCardProps) {
+  const responsive = useResponsive();
   const timeAgo = getTimeAgo(post.timestamp);
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        {
+          borderRadius: responsive.cardRadius - 4,
+          padding: responsive.cardPadding,
+        },
+      ]}
+    >
       {/* Author header */}
       <View style={styles.header}>
         <View style={styles.authorInfo}>
           <Text style={styles.authorAvatar}>{post.authorAvatar}</Text>
           <View>
-            <Text style={styles.authorName}>{post.authorName}</Text>
-            <Text style={styles.timestamp}>{timeAgo}</Text>
+            <Text style={[styles.authorName, { fontSize: responsive.bodySize }]}>
+              {post.authorName}
+            </Text>
+            <Text style={[styles.timestamp, { fontSize: responsive.captionSize }]}>{timeAgo}</Text>
           </View>
         </View>
       </View>
 
       {/* Content */}
-      <Text style={styles.content}>{post.content}</Text>
+      <Text
+        style={[
+          styles.content,
+          {
+            fontSize: responsive.bodySize,
+            lineHeight: Math.round(responsive.bodySize * 1.4),
+          },
+        ]}
+      >
+        {post.content}
+      </Text>
 
       {/* Hashtags */}
       <ScrollView
@@ -56,7 +78,7 @@ export function PostCard({
             mode="flat"
             size="small"
             style={styles.hashtag}
-            textStyle={styles.hashtagText}
+            textStyle={[styles.hashtagText, { fontSize: responsive.captionSize }]}
           />
         ))}
       </ScrollView>
@@ -76,7 +98,11 @@ export function PostCard({
             color={isLiked ? colors.primary : colors.textMuted}
           />
           <Text
-            style={[styles.actionText, isLiked && { color: colors.primary }]}
+            style={[
+              styles.actionText,
+              { fontSize: responsive.captionSize },
+              isLiked && { color: colors.primary },
+            ]}
           >
             {post.likes}
           </Text>
@@ -88,7 +114,9 @@ export function PostCard({
             size={20}
             color={colors.textMuted}
           />
-          <Text style={styles.actionText}>{post.comments}</Text>
+          <Text style={[styles.actionText, { fontSize: responsive.captionSize }]}>
+            {post.comments}
+          </Text>
         </Pressable>
 
         <Pressable

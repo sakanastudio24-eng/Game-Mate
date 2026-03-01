@@ -3,6 +3,7 @@ import React from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { Group } from "../lib/mockData";
+import { useResponsive } from "../lib/responsive";
 import { colors, spacing } from "../lib/theme";
 
 // GroupCard: Shows group info, members, join button
@@ -21,17 +22,25 @@ export function GroupCard({
   onJoin,
   isJoined = false,
 }: GroupCardProps) {
+  const responsive = useResponsive();
   const modeColor = group.mode === "ranked" ? colors.primary : colors.secondary;
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          borderRadius: responsive.cardRadius - 4,
+          padding: responsive.cardPadding,
+        },
+        pressed && styles.cardPressed,
+      ]}
     >
       <View style={styles.header}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{group.name}</Text>
-          <Text style={styles.game}>{group.game}</Text>
+          <Text style={[styles.title, { fontSize: responsive.bodySize + 2 }]}>{group.name}</Text>
+          <Text style={[styles.game, { fontSize: responsive.bodySmallSize }]}>{group.game}</Text>
         </View>
         <View style={[styles.modeBadge, { backgroundColor: modeColor }]}>
           <Text style={styles.modeText}>
@@ -47,7 +56,9 @@ export function GroupCard({
             size={16}
             color={colors.primary}
           />
-          <Text style={styles.infoText}>{group.memberCount} members</Text>
+          <Text style={[styles.infoText, { fontSize: responsive.bodySmallSize }]}>
+            {group.memberCount} members
+          </Text>
         </View>
 
         {group.micRequired && (
@@ -57,20 +68,31 @@ export function GroupCard({
               size={16}
               color={colors.primary}
             />
-            <Text style={styles.infoText}>Mic required</Text>
+            <Text style={[styles.infoText, { fontSize: responsive.bodySmallSize }]}>
+              Mic required
+            </Text>
           </View>
         )}
 
         {group.minRank && (
           <View style={styles.infoItem}>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { fontSize: responsive.bodySmallSize }]}>
               {group.minRank} - {group.maxRank || "Max"}
             </Text>
           </View>
         )}
       </View>
 
-      <Text style={styles.description} numberOfLines={2}>
+      <Text
+        style={[
+          styles.description,
+          {
+            fontSize: responsive.bodySmallSize,
+            lineHeight: Math.round(responsive.bodySize * 1.25),
+          },
+        ]}
+        numberOfLines={2}
+      >
         {group.description}
       </Text>
 
@@ -86,7 +108,11 @@ export function GroupCard({
         ]}
       >
         <Text
-          style={[styles.joinButtonText, isJoined && styles.joinedButtonText]}
+          style={[
+            styles.joinButtonText,
+            { fontSize: responsive.bodySmallSize },
+            isJoined && styles.joinedButtonText,
+          ]}
         >
           {isJoined ? "✓ Joined" : "Join"}
         </Text>

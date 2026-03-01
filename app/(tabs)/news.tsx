@@ -35,6 +35,8 @@ export default function NewsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
+  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const initialLoadCount = homeContentPrimed() ? NEWS_PAGE_SIZE * 2 : NEWS_PAGE_SIZE;
 
   const [activeCategory, setActiveCategory] = useState<NewsCategoryId>("fyp");
@@ -99,7 +101,7 @@ export default function NewsScreen() {
               style={[
                 styles.headerWrap,
                 {
-                  paddingTop: insets.top + spacing.md,
+                  paddingTop: safeTop,
                   paddingHorizontal: responsive.horizontalPadding,
                   maxWidth: responsive.contentMaxWidth,
                   alignSelf: "center",
@@ -108,10 +110,22 @@ export default function NewsScreen() {
               ]}
             >
               <View style={styles.titleRow}>
-                <Text style={[styles.title, { fontSize: responsive.titleSize }]}>News</Text>
+                <Text
+                  style={[styles.title, { fontSize: responsive.titleSize, lineHeight: Math.round(responsive.titleSize * 1.14) }]}
+                >
+                  News
+                </Text>
                 <Pressable
                   onPress={() => router.push("/(tabs)/qr-code")}
-                  style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.iconButton,
+                    {
+                      width: responsive.iconButtonSize,
+                      height: responsive.iconButtonSize,
+                      borderRadius: responsive.iconButtonSize / 2,
+                    },
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
                 </Pressable>
@@ -121,8 +135,8 @@ export default function NewsScreen() {
                 placeholder="Search news, creators, games..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                style={styles.searchbar}
-                inputStyle={styles.searchInput}
+                style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+                inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
                 placeholderTextColor={colors.textMuted}
                 iconColor={colors.textMuted}
               />
@@ -168,7 +182,15 @@ export default function NewsScreen() {
                   },
                 ]}
               >
-                <View style={styles.postHeader}>
+                <View
+                  style={[
+                    styles.postHeader,
+                    {
+                      paddingHorizontal: responsive.cardPadding,
+                      paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
+                    },
+                  ]}
+                >
                   <Image source={{ uri: AUTHOR_AVATARS[item.author] }} style={styles.avatar} />
                   <View style={styles.postHeaderText}>
                     <Text style={styles.author}>{item.author}</Text>
@@ -201,12 +223,22 @@ export default function NewsScreen() {
                     </View>
                   ) : null}
 
-                  <View style={styles.titleOverlay}>
-                    <Text style={styles.itemTitle}>{item.title}</Text>
+                  <View style={[styles.titleOverlay, { padding: responsive.cardPadding }]}>
+                    <Text style={[styles.itemTitle, { fontSize: responsive.sectionTitleSize - 3 }]}>
+                      {item.title}
+                    </Text>
                   </View>
                 </View>
 
-                <View style={styles.actionsRow}>
+                <View
+                  style={[
+                    styles.actionsRow,
+                    {
+                      paddingHorizontal: responsive.cardPadding,
+                      paddingVertical: Math.max(10, Math.round(responsive.cardPadding * 0.8)),
+                    },
+                  ]}
+                >
                   <View style={styles.actionsLeft}>
                     <Pressable onPress={() => toggleLike(item.id)} style={styles.actionButton}>
                       <MaterialCommunityIcons
@@ -274,7 +306,7 @@ export default function NewsScreen() {
             <Text style={styles.emptyCopy}>Try a different search or category.</Text>
           </View>
         }
-        contentContainerStyle={[styles.content, { paddingBottom: 96 + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
         showsVerticalScrollIndicator={false}
       />
     </View>
@@ -303,9 +335,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
@@ -358,7 +387,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 11,
   },
   avatar: {
     width: 40,
@@ -440,7 +469,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: spacing.md,
-    paddingVertical: 12,
+    paddingVertical: 11,
   },
   actionsLeft: {
     flexDirection: "row",

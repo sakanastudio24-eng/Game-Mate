@@ -25,6 +25,8 @@ export default function GroupsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
+  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
 
   const initialVisible = homeContentPrimed() ? GROUPS_PAGE_SIZE + 1 : GROUPS_PAGE_SIZE;
 
@@ -73,14 +75,14 @@ export default function GroupsScreen() {
     <View style={styles.screen}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: 96 + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
       >
         <AnimatedEntrance>
           <View
             style={[
               styles.headerWrap,
               {
-                paddingTop: insets.top + spacing.md,
+                paddingTop: safeTop,
                 paddingHorizontal: responsive.horizontalPadding,
                 maxWidth: responsive.contentMaxWidth,
                 alignSelf: "center",
@@ -89,17 +91,43 @@ export default function GroupsScreen() {
             ]}
           >
             <View style={styles.titleRow}>
-              <Text style={[styles.title, { fontSize: responsive.titleSize }]}>Groups</Text>
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    fontSize: responsive.titleSize,
+                    lineHeight: Math.round(responsive.titleSize * 1.14),
+                  },
+                ]}
+              >
+                Groups
+              </Text>
               <View style={styles.headerActions}>
                 <Pressable
                   onPress={() => router.push("/(tabs)/discover-groups")}
-                  style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.iconButton,
+                    {
+                      width: responsive.iconButtonSize,
+                      height: responsive.iconButtonSize,
+                      borderRadius: responsive.iconButtonSize / 2,
+                    },
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <MaterialCommunityIcons name="magnify" size={20} color={colors.text} />
                 </Pressable>
                 <Pressable
                   onPress={() => router.push("/(tabs)/qr-code")}
-                  style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+                  style={({ pressed }) => [
+                    styles.iconButton,
+                    {
+                      width: responsive.iconButtonSize,
+                      height: responsive.iconButtonSize,
+                      borderRadius: responsive.iconButtonSize / 2,
+                    },
+                    pressed && styles.pressed,
+                  ]}
                 >
                   <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
                 </Pressable>
@@ -120,8 +148,8 @@ export default function GroupsScreen() {
               placeholder="Search groups..."
               value={query}
               onChangeText={setQuery}
-              style={styles.searchbar}
-              inputStyle={styles.searchInput}
+              style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
+              inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
               placeholderTextColor={colors.textSecondary}
             />
           </View>
@@ -139,7 +167,9 @@ export default function GroupsScreen() {
               },
             ]}
           >
-            <Text style={styles.sectionTitle}>My Groups</Text>
+            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+              My Groups
+            </Text>
             <Pressable
               onPress={() => router.push("/(tabs)/create-group")}
               style={({ pressed }) => [styles.createButton, pressed && styles.pressed]}
@@ -181,7 +211,7 @@ export default function GroupsScreen() {
                 </View>
               </View>
 
-              <View style={styles.groupBody}>
+              <View style={[styles.groupBody, { padding: responsive.cardPadding }]}>
                 <View style={styles.groupTopRow}>
                   <View style={styles.groupTitleWrap}>
                     <Text style={styles.groupTitle}>{group.name}</Text>
@@ -229,6 +259,7 @@ export default function GroupsScreen() {
             style={[
               styles.sectionTitle,
               styles.suggestedTitle,
+              { fontSize: responsive.sectionTitleSize },
               {
                 paddingHorizontal: responsive.horizontalPadding,
                 maxWidth: responsive.contentMaxWidth,
@@ -251,6 +282,7 @@ export default function GroupsScreen() {
                   {
                     marginHorizontal: responsive.horizontalPadding,
                     borderRadius: responsive.cardRadius - 2,
+                    padding: responsive.cardPadding,
                     maxWidth: responsive.contentMaxWidth,
                     alignSelf: "center",
                     width: "100%",
@@ -314,9 +346,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",

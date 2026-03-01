@@ -66,6 +66,8 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const safeTop = Math.max(insets.top, responsive.safeTopInset);
+  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const [step, setStep] = useState<Step>("welcome");
   const [email, setEmail] = useState("");
   const [birthdate, setBirthdate] = useState("02/24/1999");
@@ -152,12 +154,15 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingBottom: safeBottom + 20 }]}
+    >
         <View
           style={[
             styles.inner,
             {
-              paddingTop: insets.top + 20,
+              paddingTop: safeTop + 14,
               paddingHorizontal: responsive.horizontalPadding,
               maxWidth: responsive.contentMaxWidth,
               alignSelf: "center",
@@ -167,7 +172,7 @@ export default function OnboardingScreen() {
       >
         <View style={styles.headerBlock}>
           <Text style={styles.brandText}>Welcome to Game Mate</Text>
-          <Text style={[styles.heading, { fontSize: responsive.isTablet ? 42 : 34 }]}>Create Account</Text>
+          <Text style={[styles.heading, { fontSize: responsive.titleSize }]}>Create Account</Text>
 
           {step !== "welcome" && (
             <View style={styles.progressRow}>

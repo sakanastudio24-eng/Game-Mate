@@ -83,35 +83,53 @@ export default function ProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
+  const safeTop = Math.max(insets.top, responsive.safeTopInset);
 
   return (
     <View style={styles.screen}>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.content, { paddingBottom: 96 + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
       >
         <AnimatedEntrance>
           <View style={styles.cover}>
             <View style={styles.coverPattern} />
 
             <View
-              style={[
-                styles.headerActions,
-                { right: responsive.horizontalPadding, top: insets.top + 12 },
+            style={[
+              styles.headerActions,
+              { right: responsive.horizontalPadding, top: safeTop + responsive.headerTopSpacing },
+            ]}
+          >
+            <Pressable
+              onPress={() => router.push("/(tabs)/qr-code")}
+              style={({ pressed }) => [
+                styles.headerIcon,
+                {
+                  width: responsive.iconButtonSize,
+                  height: responsive.iconButtonSize,
+                  borderRadius: responsive.iconButtonSize / 2,
+                },
+                pressed && styles.pressed,
               ]}
             >
-              <Pressable
-                onPress={() => router.push("/(tabs)/qr-code")}
-                style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
-              </Pressable>
-              <Pressable
-                onPress={() => router.push("/(tabs)/settings")}
-                style={({ pressed }) => [styles.headerIcon, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
-              </Pressable>
+              <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
+            </Pressable>
+            <Pressable
+              onPress={() => router.push("/(tabs)/settings")}
+              style={({ pressed }) => [
+                styles.headerIcon,
+                {
+                  width: responsive.iconButtonSize,
+                  height: responsive.iconButtonSize,
+                  borderRadius: responsive.iconButtonSize / 2,
+                },
+                pressed && styles.pressed,
+              ]}
+            >
+              <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
+            </Pressable>
             </View>
           </View>
         </AnimatedEntrance>
@@ -134,16 +152,36 @@ export default function ProfileScreen() {
             <View style={styles.onlineDot} />
 
             <View style={styles.nameRow}>
-              <Text style={[styles.name, { fontSize: responsive.isTablet ? 34 : 30 }]}>PlayerMaker34</Text>
+              <Text
+                style={[
+                  styles.name,
+                  {
+                    fontSize: responsive.titleSize - 4,
+                    lineHeight: Math.round((responsive.titleSize - 4) * 1.1),
+                  },
+                ]}
+              >
+                PlayerMaker34
+              </Text>
               <MaterialCommunityIcons name="check-decagram" size={18} color={colors.primary} />
             </View>
 
             <View style={styles.statusRow}>
               <MaterialCommunityIcons name="controller-classic-outline" size={15} color={colors.textSecondary} />
-              <Text style={styles.statusText}>Online · Playing Overwatch</Text>
+              <Text style={[styles.statusText, { fontSize: responsive.bodySmallSize }]}>
+                Online · Playing Overwatch
+              </Text>
             </View>
 
-            <Text style={styles.bio}>
+            <Text
+              style={[
+                styles.bio,
+                {
+                  fontSize: responsive.bodySize,
+                  lineHeight: Math.round(responsive.bodySize * 1.45),
+                },
+              ]}
+            >
               Competitive gamer · Tournament organizer · Always looking for new challenges
             </Text>
 
@@ -152,7 +190,9 @@ export default function ProfileScreen() {
               style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
             >
               <MaterialCommunityIcons name="pencil-outline" size={16} color="#1A1A1A" />
-              <Text style={styles.editButtonText}>Edit Profile</Text>
+              <Text style={[styles.editButtonText, { fontSize: responsive.bodySize + 1 }]}>
+                Edit Profile
+              </Text>
             </Pressable>
           </View>
         </AnimatedEntrance>
@@ -169,7 +209,9 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <Text style={styles.sectionTitle}>Stats</Text>
+            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+              Stats
+            </Text>
             <View style={styles.statsGrid}>
               {statRows.map((stat) => (
                 <View key={stat.label} style={styles.statCard}>
@@ -194,7 +236,9 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <Text style={styles.sectionTitle}>Achievements</Text>
+            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+              Achievements
+            </Text>
             <View style={styles.achievementsGrid}>
               {achievements.map((achievement) => (
                 <View
@@ -239,7 +283,9 @@ export default function ProfileScreen() {
             ]}
           >
             <View style={styles.gamesHeader}>
-              <Text style={styles.sectionTitle}>My Games</Text>
+              <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+                My Games
+              </Text>
               <Text style={styles.gamesCount}>{games.length} games</Text>
             </View>
 
@@ -303,9 +349,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   headerIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
     marginLeft: spacing.sm,
     alignItems: "center",
     justifyContent: "center",

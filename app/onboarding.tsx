@@ -14,6 +14,7 @@ import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { androidKeyboardCompatProps } from "../src/lib/androidInput";
 import { useResponsive } from "../src/lib/responsive";
+import { colors } from "../src/lib/theme";
 import { primeHomeContentCache } from "../src/lib/content-data";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
 import { useReducedMotionPreference } from "../src/lib/accessibility";
@@ -76,6 +77,34 @@ function sanitizeBirthdateInput(value: string): string {
   return value.replace(/\D/g, "").slice(0, 8);
 }
 
+function isBirthdateBeforeToday(value: string): boolean {
+  if (value.length !== 8) return false;
+
+  const month = Number(value.slice(0, 2));
+  const day = Number(value.slice(2, 4));
+  const year = Number(value.slice(4, 8));
+
+  if (!Number.isInteger(month) || !Number.isInteger(day) || !Number.isInteger(year)) {
+    return false;
+  }
+  if (month < 1 || month > 12) return false;
+  if (day < 1 || day > 31) return false;
+  if (year < 1900) return false;
+
+  const candidate = new Date(year, month - 1, day);
+  if (
+    candidate.getFullYear() !== year ||
+    candidate.getMonth() !== month - 1 ||
+    candidate.getDate() !== day
+  ) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return candidate.getTime() < today.getTime();
+}
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const responsive = useResponsive();
@@ -130,12 +159,24 @@ export default function OnboardingScreen() {
     return 0;
   }, [step]);
 
+  const isValidBirthdate = useMemo(
+    () => isBirthdateBeforeToday(birthdate),
+    [birthdate],
+  );
+
+  const birthdateHintMessage = useMemo(() => {
+    if (birthdate.length === 0) return "Use 8 digits only (MMDDYYYY)";
+    if (birthdate.length < 8) return "Date of birth must be 8 digits (MMDDYYYY).";
+    if (!isValidBirthdate) return "Enter a valid date in MMDDYYYY format before today.";
+    return "Date format looks good.";
+  }, [birthdate.length, isValidBirthdate]);
+
   const canContinue = useMemo(() => {
     if (step === "welcome") return true;
     if (step === "email") return email.includes("@");
-    if (step === "birthdate") return acceptTerms && birthdate.length === 8;
+    if (step === "birthdate") return acceptTerms && isValidBirthdate;
     return selectedGenres.length > 0 && playStyle.length > 0 && platform.length > 0;
-  }, [acceptTerms, birthdate.length, email, platform.length, playStyle, selectedGenres.length, step]);
+  }, [acceptTerms, email, isValidBirthdate, platform.length, playStyle, selectedGenres.length, step]);
 
   const finishOnboarding = async () => {
     primeHomeContentCache();
@@ -357,7 +398,14 @@ export default function OnboardingScreen() {
                   style={styles.inputTrailingIcon}
                 />
               </View>
-              <Text style={styles.birthdateHint}>Use 8 digits only (MMDDYYYY)</Text>
+              <Text
+                style={[
+                  styles.birthdateHint,
+                  birthdate.length === 8 && !isValidBirthdate ? styles.birthdateHintError : undefined,
+                ]}
+              >
+                {birthdateHintMessage}
+              </Text>
 
               <Pressable
                 onPress={() => setAcceptTerms((prev) => !prev)}
@@ -708,6 +756,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: -8,
     marginBottom: 12,
+  },
+  birthdateHintError: {
+    color: colors.destructive,
   },
   input: {
     backgroundColor: "#E8E8E8",

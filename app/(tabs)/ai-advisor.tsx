@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
+import { Skeleton, SkeletonCard } from "../../src/components/ui/Skeleton";
 import { Screen } from "../../src/components/ui/Screen";
 import {
   AIGroupCandidate,
@@ -159,9 +160,13 @@ export default function AIAdvisorScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>Finding your best matches...</Text>
-          <Text style={styles.stateCopy}>Running profile + group fit scoring.</Text>
+        <View style={styles.skeletonStack}>
+          <View style={styles.loadingHeader}>
+            <Skeleton width="44%" height={16} />
+            <Skeleton width="70%" height={12} style={styles.loadingHeaderCopy} />
+          </View>
+          <SkeletonCard />
+          <SkeletonCard />
         </View>
       ) : error ? (
         <View style={styles.stateBox}>
@@ -220,6 +225,19 @@ const styles = StyleSheet.create({
   section: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
+  },
+  skeletonStack: {
+    gap: spacing.sm,
+  },
+  loadingHeader: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: "#242424",
+    padding: spacing.md,
+  },
+  loadingHeaderCopy: {
+    marginTop: 8,
   },
   searchbar: {
     backgroundColor: "#242424",

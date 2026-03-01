@@ -23,6 +23,7 @@ import {
 } from "../../src/ai/advisorClient";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
+import { Skeleton } from "../../src/components/ui/Skeleton";
 import {
   GROUPS_PAGE_SIZE,
   homeContentPrimed,
@@ -605,9 +606,14 @@ export default function GroupsScreen() {
             </View>
 
             {aiSwipeLoading ? (
-              <View style={styles.aiStateWrap}>
-                <Text style={styles.aiStateTitle}>Loading recommendations...</Text>
-                <Text style={styles.aiStateCopy}>Matching groups to your preferences.</Text>
+              <View style={styles.aiLoadingWrap}>
+                <Skeleton width="45%" height={16} />
+                <Skeleton width="75%" height={12} style={styles.aiLoadingCopy} />
+                <Skeleton width="100%" height={168} borderRadius={14} style={styles.aiLoadingImage} />
+                <View style={styles.aiLoadingRow}>
+                  <Skeleton width="47%" height={44} borderRadius={999} />
+                  <Skeleton width="47%" height={44} borderRadius={999} />
+                </View>
               </View>
             ) : aiSwipeError ? (
               <View style={styles.aiStateWrap}>
@@ -1041,6 +1047,25 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#242424",
     padding: spacing.md,
+  },
+  aiLoadingWrap: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: "#242424",
+    padding: spacing.md,
+  },
+  aiLoadingCopy: {
+    marginTop: 8,
+  },
+  aiLoadingImage: {
+    marginTop: spacing.sm,
+  },
+  aiLoadingRow: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.sm,
   },
   aiStateTitle: {
     color: colors.text,

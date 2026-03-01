@@ -89,6 +89,45 @@ export function SkeletonCard({ style }: SkeletonCardProps) {
   );
 }
 
+interface SkeletonLineProps {
+  width?: number | `${number}%`;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function SkeletonLine({ width = "100%", style }: SkeletonLineProps) {
+  return <Skeleton width={width} height={12} borderRadius={8} style={style} />;
+}
+
+interface SkeletonAvatarProps {
+  size?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function SkeletonAvatar({ size = 40, style }: SkeletonAvatarProps) {
+  return <Skeleton width={size} height={size} borderRadius={size / 2} style={style} />;
+}
+
+interface SkeletonListProps {
+  rows?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function SkeletonList({ rows = 3, style }: SkeletonListProps) {
+  return (
+    <View style={[styles.listWrap, style]}>
+      {Array.from({ length: rows }).map((_, index) => (
+        <View key={`sk-row-${index}`} style={styles.listRow}>
+          <SkeletonAvatar size={42} />
+          <View style={styles.listTextWrap}>
+            <SkeletonLine width="62%" />
+            <SkeletonLine width="40%" style={styles.gapSm} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   block: {
     backgroundColor: colors.border,
@@ -110,5 +149,16 @@ const styles = StyleSheet.create({
   },
   gapMd: {
     marginTop: 12,
+  },
+  listWrap: {
+    gap: 12,
+  },
+  listRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  listTextWrap: {
+    flex: 1,
   },
 });

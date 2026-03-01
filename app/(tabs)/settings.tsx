@@ -2,11 +2,12 @@ import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Image, StyleSheet, View } from "react-native";
-import { List, Text } from "react-native-paper";
+import { Dialog, List, Portal, Text } from "react-native-paper";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useToast } from "../../src/components/ui/ToastProvider";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -17,6 +18,18 @@ const SELF_AVATAR =
 export default function SettingsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const { showToast } = useToast();
+  const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
+
+  const handleDeleteAccount = () => {
+    setDeleteDialogVisible(false);
+    showToast({
+      message: "Account delete request submitted (preview).",
+      icon: "alert-circle-outline",
+      durationMs: 2800,
+    });
+    router.replace("/onboarding" as any);
+  };
 
   return (
     <Screen scrollable>
@@ -118,6 +131,53 @@ export default function SettingsScreen() {
       >
         Logout
       </Button>
+
+      <Card style={styles.dangerSection}>
+        <Text style={[styles.dangerTitle, { fontSize: responsive.captionSize }]}>Danger Zone</Text>
+        <Text style={[styles.dangerCopy, { fontSize: responsive.bodySmallSize }]}>
+          Delete your account and remove your profile data from this device flow.
+        </Text>
+        <Button
+          mode="outlined"
+          fullWidth
+          size="large"
+          style={styles.deleteButton}
+          labelStyle={styles.deleteButtonLabel}
+          onPress={() => setDeleteDialogVisible(true)}
+        >
+          Delete Account
+        </Button>
+      </Card>
+
+      <Portal>
+        <Dialog
+          visible={deleteDialogVisible}
+          onDismiss={() => setDeleteDialogVisible(false)}
+          style={styles.dialog}
+        >
+          <Dialog.Title style={[styles.dialogTitle, { fontSize: responsive.sectionTitleSize }]}>
+            Are you sure?
+          </Dialog.Title>
+          <Dialog.Content>
+            <Text style={[styles.dialogCopy, { fontSize: responsive.bodySize }]}>
+              This will remove your account in this preview flow and sign you out.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button mode="text" onPress={() => setDeleteDialogVisible(false)}>
+              Cancel
+            </Button>
+            <Button
+              mode="contained"
+              onPress={handleDeleteAccount}
+              style={styles.confirmDeleteButton}
+              labelStyle={styles.confirmDeleteLabel}
+            >
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Screen>
   );
 }
@@ -163,6 +223,45 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   logoutButton: {
+    marginBottom: spacing.md,
+  },
+  dangerSection: {
     marginBottom: spacing.xl,
+    borderColor: "rgba(239,68,68,0.35)",
+  },
+  dangerTitle: {
+    color: colors.destructive,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    marginBottom: spacing.xs,
+    letterSpacing: 0.5,
+  },
+  dangerCopy: {
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  deleteButton: {
+    borderColor: colors.destructive,
+  },
+  deleteButtonLabel: {
+    color: colors.destructive,
+  },
+  dialog: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dialogTitle: {
+    color: colors.text,
+    fontWeight: "800",
+  },
+  dialogCopy: {
+    color: colors.textSecondary,
+  },
+  confirmDeleteButton: {
+    backgroundColor: colors.destructive,
+  },
+  confirmDeleteLabel: {
+    color: "#FFFFFF",
   },
 });

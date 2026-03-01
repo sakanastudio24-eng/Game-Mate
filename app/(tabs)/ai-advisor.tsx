@@ -1,86 +1,58 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
-import { Skeleton, SkeletonCard } from "../../src/components/ui/Skeleton";
+import { Skeleton } from "../../src/components/ui/Skeleton";
 import { Screen } from "../../src/components/ui/Screen";
-import {
-  AIGroupCandidate,
-  AIRecommendationsResponse,
-  AIUserProfile,
-  getRecommendations,
-  getSuggestedTags,
-} from "../../src/ai/advisorClient";
-import { SUGGESTED_GROUPS } from "../../src/lib/content-data";
-import { mockCurrentUser } from "../../src/lib/mockData";
+import { getSuggestedTags } from "../../src/ai/advisorClient";
+import { NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-type RankedSearchResult = {
-  group: (typeof SUGGESTED_GROUPS)[number];
-  result: AIRecommendationsResponse["results"][number];
-  searchScore: number;
+type VideoSearchItem = NewsFeedItem;
+
+type RankedVideoResult = {
+  video: VideoSearchItem;
+  baseSearchScore: number;
+  aiScore: number;
+  isAiPick: boolean;
 };
 
-type GridSearchItem = RankedSearchResult & {
+type PagedVideoResult = RankedVideoResult & {
   listKey: string;
+  pageIndex: number;
+  slotIndex: number;
 };
 
 const TOP_RESULTS_LIMIT = 10;
+const AI_PICK_COUNT = 2;
 
-function mapGroupCandidate(group: (typeof SUGGESTED_GROUPS)[number]): AIGroupCandidate {
-  const gameKey = group.game.toLowerCase();
-  const inferredTags = gameKey.includes("valorant")
-    ? ["competitive", "ranked", "mic"]
-    : gameKey.includes("various")
-      ? ["casual", "chill"]
-      : gameKey.includes("forza")
-        ? ["casual", "teamplay"]
-        : ["casual", "teamplay"];
-
-  return {
-    id: group.id,
-    game: group.game,
-    rankMin: gameKey.includes("counter") ? "silver" : "gold",
-    rankMax: gameKey.includes("counter") ? "diamond" : "platinum",
-    tags: inferredTags,
-    slots: Math.max(1, Math.round(group.members * 0.12)),
-    micRequired: inferredTags.includes("mic"),
-  };
+function compactNumber(value: number): string {
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}K`;
+  }
+  return String(value);
 }
 
-function buildProfile(): AIUserProfile {
-  return {
-    games: mockCurrentUser.gamesPlayed,
-    rank: mockCurrentUser.rank,
-    mic: true,
-    tags: ["casual", "teamplay"],
-  };
+function normalizedDate(dateText: string, fallbackIndex: number): number {
+  const parsed = Date.parse(dateText);
+  if (Number.isNaN(parsed)) {
+    return Date.now() - fallbackIndex * 86_400_000;
+  }
+  return parsed;
 }
 
-function computeSearchScore(
-  normalizedQuery: string,
-  group: (typeof SUGGESTED_GROUPS)[number],
-  result: AIRecommendationsResponse["results"][number],
-): number {
-  if (!normalizedQuery) return result.score;
-
-  const groupName = group.name.toLowerCase();
-  const game = group.game.toLowerCase();
-  const reasons = result.reasons.join(" ").toLowerCase();
-  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
-
-  let score = result.score;
-  tokens.forEach((token) => {
-    if (groupName.startsWith(token)) score += 10;
-    if (groupName.includes(token)) score += 6;
-    if (game.includes(token)) score += 5;
-    if (reasons.includes(token)) score += 3;
-  });
-
-  return score;
+function normalizeTokens(value: string): string[] {
+  return value
+    .toLowerCase()
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter(Boolean);
 }
 
 export default function AIAdvisorScreen() {
@@ -91,99 +63,174 @@ export default function AIAdvisorScreen() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [results, setResults] = useState<AIRecommendationsResponse["results"]>([]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [pageCount, setPageCount] = useState(1);
 
-  const candidates = useMemo(() => SUGGESTED_GROUPS.map(mapGroupCandidate), []);
+  const maxLikes = useMemo(
+    () => NEWS_FEED.reduce((max, item) => Math.max(max, item.likes), 1),
+    [],
+  );
+  const maxComments = useMemo(
+    () => NEWS_FEED.reduce((max, item) => Math.max(max, item.comments), 1),
+    [],
+  );
 
-  const loadRecommendations = useCallback(async () => {
+  const freshnessById = useMemo(() => {
+    const ordered = NEWS_FEED.map((item, index) => ({
+      id: item.id,
+      score: normalizedDate(item.date, index),
+    })).sort((a, b) => b.score - a.score);
+
+    const divisor = Math.max(1, ordered.length - 1);
+    const map = new Map<string, number>();
+    ordered.forEach((entry, index) => {
+      map.set(entry.id, 1 - index / divisor);
+    });
+    return map;
+  }, []);
+
+  const refreshSearch = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await getRecommendations({
-        userProfile: buildProfile(),
-        groups: candidates,
-      });
-      setResults(response.results);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to load recommendations");
-      setResults([]);
+      await new Promise((resolve) => setTimeout(resolve, 280));
+      if (!query.trim()) {
+        setSuggestedTags([]);
+      } else {
+        const response = await getSuggestedTags(query);
+        setSuggestedTags(response.tags);
+      }
+    } catch {
+      setError("Unable to refresh video search results.");
+      setSuggestedTags([]);
     } finally {
       setLoading(false);
     }
-  }, [candidates]);
+  }, [query]);
 
   useEffect(() => {
-    void loadRecommendations();
-  }, [loadRecommendations]);
+    void refreshSearch();
+  }, [refreshSearch]);
 
   useEffect(() => {
-    let isCancelled = false;
+    let cancelled = false;
 
-    const run = async () => {
+    const loadTags = async () => {
       if (!query.trim()) {
         setSuggestedTags([]);
         return;
       }
-      const res = await getSuggestedTags(query);
-      if (!isCancelled) setSuggestedTags(res.tags);
+
+      try {
+        const response = await getSuggestedTags(query);
+        if (!cancelled) {
+          setSuggestedTags(response.tags);
+        }
+      } catch {
+        if (!cancelled) {
+          setSuggestedTags([]);
+        }
+      }
     };
 
-    void run();
+    void loadTags();
     return () => {
-      isCancelled = true;
+      cancelled = true;
     };
   }, [query]);
 
-  const rankedTopResults = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    const mapped = results
-      .map((result) => {
-        const group = SUGGESTED_GROUPS.find((item) => item.id === result.groupId);
-        if (!group) return null;
-        const searchScore = computeSearchScore(normalized, group, result);
-        return { group, result, searchScore };
-      })
-      .filter((item): item is RankedSearchResult => Boolean(item));
+  const rankedTopTen = useMemo(() => {
+    const queryTokens = normalizeTokens(query);
+    const normalizedSuggestedTags = suggestedTags.map((tag) => tag.toLowerCase());
 
-    const filtered = normalized
-      ? mapped.filter(({ group, result }) => {
-          const haystack = `${group.name} ${group.game} ${result.reasons.join(" ")}`.toLowerCase();
-          return haystack.includes(normalized);
-        })
-      : mapped;
+    const ranked = NEWS_FEED.map((video, index) => {
+      const title = video.title.toLowerCase();
+      const author = video.author.toLowerCase();
+      const category = video.category.toLowerCase();
+      const likesNorm = video.likes / maxLikes;
+      const commentsNorm = video.comments / maxComments;
+      const freshnessNorm = freshnessById.get(video.id) ?? Math.max(0, 1 - index * 0.1);
 
-    return filtered
-      .sort((a, b) => {
-        if (b.searchScore !== a.searchScore) return b.searchScore - a.searchScore;
-        return b.result.score - a.result.score;
-      })
-      .slice(0, TOP_RESULTS_LIMIT);
-  }, [query, results]);
+      let baseSearchScore = 10 + likesNorm * 6 + commentsNorm * 4;
+
+      queryTokens.forEach((token) => {
+        if (title.startsWith(token)) {
+          baseSearchScore += 12;
+        } else if (title.includes(token)) {
+          baseSearchScore += 8;
+        }
+
+        if (author.includes(token)) {
+          baseSearchScore += 5;
+        }
+      });
+
+      const categoryMatchesToken = queryTokens.some((token) => category.includes(token));
+      const categoryMatchesTag = normalizedSuggestedTags.some((tag) => category.includes(tag));
+      if (categoryMatchesToken || categoryMatchesTag) {
+        baseSearchScore += 4;
+      }
+
+      const queryIntentBoost = normalizedSuggestedTags
+        .filter((tag) => `${title} ${author} ${category}`.includes(tag))
+        .length;
+
+      const aiScore =
+        baseSearchScore +
+        likesNorm * 3 +
+        commentsNorm * 3 +
+        freshnessNorm * 8 +
+        Math.min(10, queryIntentBoost * 3);
+
+      return {
+        video,
+        baseSearchScore,
+        aiScore,
+        isAiPick: false,
+      } satisfies RankedVideoResult;
+    });
+
+    const topAi = [...ranked]
+      .sort((a, b) => b.aiScore - a.aiScore)
+      .slice(0, AI_PICK_COUNT)
+      .map((item) => ({ ...item, isAiPick: true }));
+
+    const aiIds = new Set(topAi.map((item) => item.video.id));
+
+    const restSearch = ranked
+      .filter((item) => !aiIds.has(item.video.id))
+      .sort((a, b) => b.baseSearchScore - a.baseSearchScore)
+      .slice(0, TOP_RESULTS_LIMIT - AI_PICK_COUNT);
+
+    return [...topAi, ...restSearch];
+  }, [freshnessById, maxComments, maxLikes, query, suggestedTags]);
 
   useEffect(() => {
     setPageCount(1);
-  }, [query, rankedTopResults.length]);
+  }, [query, rankedTopTen]);
 
-  const gridItems = useMemo(() => {
-    if (rankedTopResults.length === 0) return [];
+  const pagedResults = useMemo(() => {
+    if (rankedTopTen.length === 0) {
+      return [];
+    }
 
-    const items: GridSearchItem[] = [];
+    const pages: PagedVideoResult[] = [];
     for (let page = 0; page < pageCount; page += 1) {
-      rankedTopResults.forEach((item, index) => {
-        items.push({
+      rankedTopTen.forEach((item, slotIndex) => {
+        pages.push({
           ...item,
-          listKey: `${item.group.id}-p${page}-i${index}`,
+          pageIndex: page,
+          slotIndex,
+          listKey: `${item.video.id}-${page}-${slotIndex}`,
         });
       });
     }
-    return items;
-  }, [pageCount, rankedTopResults]);
+    return pages;
+  }, [pageCount, rankedTopTen]);
 
   const handleEndReached = () => {
-    if (!loading && !error && rankedTopResults.length > 0) {
+    if (!loading && !error && rankedTopTen.length > 0) {
       setPageCount((prev) => prev + 1);
     }
   };
@@ -192,16 +239,16 @@ export default function AIAdvisorScreen() {
     <Screen scrollable={false}>
       <Header
         title="Search"
-        subtitle={typeof params.source === "string" ? `Source: ${params.source}` : "Recommendations"}
+        subtitle={typeof params.source === "string" ? `Source: ${params.source}` : "Video search"}
         showBackButton
       />
 
       <View style={styles.fixedSearchWrap}>
         <Searchbar
-          placeholder="Search recommendations..."
+          placeholder="Search videos..."
           value={query}
           onChangeText={setQuery}
-          accessibilityLabel="Search recommendations"
+          accessibilityLabel="Search videos"
           style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
           inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
           placeholderTextColor={colors.textSecondary}
@@ -218,11 +265,11 @@ export default function AIAdvisorScreen() {
         ) : null}
 
         <View style={styles.searchMetaRow}>
-          <Text style={styles.resultLabel}>Top {TOP_RESULTS_LIMIT} Results</Text>
+          <Text style={styles.resultLabel}>Top {TOP_RESULTS_LIMIT} Video Results</Text>
           <Pressable
-            onPress={() => void loadRecommendations()}
+            onPress={() => void refreshSearch()}
             accessibilityRole="button"
-            accessibilityLabel="Refresh recommendations"
+            accessibilityLabel="Refresh video results"
             style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}
           >
             <MaterialCommunityIcons name="refresh" size={16} color="#1A1A1A" />
@@ -233,87 +280,155 @@ export default function AIAdvisorScreen() {
 
       {loading ? (
         <View style={styles.skeletonStack}>
-          <View style={styles.loadingHeader}>
-            <Skeleton width="44%" height={16} />
-            <Skeleton width="70%" height={12} style={styles.loadingHeaderCopy} />
+          <View style={styles.skeletonGridRow}>
+            <View style={styles.skeletonGridItem}>
+              <View style={styles.skeletonCard}>
+                <Skeleton width="100%" height={122} borderRadius={12} />
+                <Skeleton width="72%" height={12} style={styles.skeletonGap} />
+                <Skeleton width="52%" height={10} style={styles.skeletonGapSm} />
+                <View style={styles.skeletonStatsRow}>
+                  <Skeleton width="30%" height={10} />
+                  <Skeleton width="24%" height={10} />
+                </View>
+              </View>
+            </View>
+            <View style={styles.skeletonGridItem}>
+              <View style={styles.skeletonCard}>
+                <Skeleton width="100%" height={122} borderRadius={12} />
+                <Skeleton width="72%" height={12} style={styles.skeletonGap} />
+                <Skeleton width="52%" height={10} style={styles.skeletonGapSm} />
+                <View style={styles.skeletonStatsRow}>
+                  <Skeleton width="30%" height={10} />
+                  <Skeleton width="24%" height={10} />
+                </View>
+              </View>
+            </View>
           </View>
           <View style={styles.skeletonGridRow}>
             <View style={styles.skeletonGridItem}>
-              <SkeletonCard />
+              <View style={styles.skeletonCard}>
+                <Skeleton width="100%" height={122} borderRadius={12} />
+                <Skeleton width="72%" height={12} style={styles.skeletonGap} />
+                <Skeleton width="52%" height={10} style={styles.skeletonGapSm} />
+                <View style={styles.skeletonStatsRow}>
+                  <Skeleton width="30%" height={10} />
+                  <Skeleton width="24%" height={10} />
+                </View>
+              </View>
             </View>
             <View style={styles.skeletonGridItem}>
-              <SkeletonCard />
-            </View>
-          </View>
-          <View style={styles.skeletonGridRow}>
-            <View style={styles.skeletonGridItem}>
-              <SkeletonCard />
-            </View>
-            <View style={styles.skeletonGridItem}>
-              <SkeletonCard />
+              <View style={styles.skeletonCard}>
+                <Skeleton width="100%" height={122} borderRadius={12} />
+                <Skeleton width="72%" height={12} style={styles.skeletonGap} />
+                <Skeleton width="52%" height={10} style={styles.skeletonGapSm} />
+                <View style={styles.skeletonStatsRow}>
+                  <Skeleton width="30%" height={10} />
+                  <Skeleton width="24%" height={10} />
+                </View>
+              </View>
             </View>
           </View>
         </View>
       ) : error ? (
         <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>Recommendation error</Text>
+          <Text style={styles.stateTitle}>Video search error</Text>
           <Text style={styles.stateCopy}>{error}</Text>
           <Pressable
-            onPress={() => void loadRecommendations()}
+            onPress={() => void refreshSearch()}
             accessibilityRole="button"
-            accessibilityLabel="Retry loading recommendations"
+            accessibilityLabel="Retry video search"
             style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </Pressable>
         </View>
-      ) : rankedTopResults.length === 0 ? (
+      ) : rankedTopTen.length === 0 ? (
         <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>No matches found</Text>
-          <Text style={styles.stateCopy}>Try a broader search or refresh recommendations.</Text>
+          <Text style={styles.stateTitle}>No videos found</Text>
+          <Text style={styles.stateCopy}>Try: ranked duo, no mic, chill, scrim.</Text>
         </View>
       ) : (
         <FlatList
-          data={gridItems}
+          data={pagedResults}
           keyExtractor={(item) => item.listKey}
           numColumns={2}
-          onEndReachedThreshold={0.4}
+          initialNumToRender={4}
+          maxToRenderPerBatch={6}
+          windowSize={6}
+          onEndReachedThreshold={0.45}
           onEndReached={handleEndReached}
+          removeClippedSubviews
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.gridContent}
           columnWrapperStyle={styles.gridRow}
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(tabs)/group-detail?groupId=${item.group.id}`)}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.group.name}, match score ${item.result.score}`}
-              style={({ pressed }) => [styles.gridCard, pressed && styles.pressed]}
-            >
-              <View style={styles.cardTop}>
-                <Text style={styles.cardTitle} numberOfLines={2}>
-                  {item.group.name}
-                </Text>
-                <View style={styles.scorePill}>
-                  <Text style={styles.scoreText}>{item.result.score}%</Text>
+          renderItem={({ item }) => {
+            const showAiBadge = item.pageIndex === 0 && item.slotIndex < AI_PICK_COUNT && item.isAiPick;
+
+            return (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/video-preview",
+                    params: {
+                      videoId: item.video.id,
+                      title: item.video.title,
+                      image: item.video.thumbnail,
+                      duration: item.video.duration ?? "0:00",
+                      views: compactNumber(item.video.likes),
+                    },
+                  } as any)
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`Open video ${item.video.title}`}
+                style={({ pressed }) => [styles.videoCard, pressed && styles.pressed]}
+              >
+                <View style={styles.mediaWrap}>
+                  <Image
+                    source={{ uri: item.video.thumbnail }}
+                    style={styles.media}
+                    accessibilityLabel={`${item.video.title} thumbnail`}
+                  />
+
+                  {item.video.duration ? (
+                    <View style={styles.durationPill}>
+                      <MaterialCommunityIcons name="play" size={10} color={colors.text} />
+                      <Text style={styles.durationText}>{item.video.duration}</Text>
+                    </View>
+                  ) : null}
+
+                  {showAiBadge ? (
+                    <View style={styles.aiBadge}>
+                      <MaterialCommunityIcons name={"star-four-points" as any} size={11} color="#1A1A1A" />
+                      <Text style={styles.aiBadgeText}>AI Pick</Text>
+                    </View>
+                  ) : null}
                 </View>
-              </View>
-              <Text style={styles.cardGame}>{item.group.game}</Text>
-              <View style={styles.reasonWrap}>
-                {item.result.reasons.slice(0, 2).map((reason) => (
-                  <View key={`${item.listKey}-${reason}`} style={styles.reasonChip}>
-                    <MaterialCommunityIcons
-                      name={"star-four-points" as any}
-                      size={11}
-                      color={colors.primary}
-                    />
-                    <Text style={styles.reasonText} numberOfLines={1}>
-                      {reason}
-                    </Text>
+
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                  {item.video.title}
+                </Text>
+
+                <Text style={styles.cardMeta} numberOfLines={1}>
+                  {item.video.author} · {item.video.date}
+                </Text>
+
+                <View style={styles.statRow}>
+                  <View style={styles.statInline}>
+                    <MaterialCommunityIcons name="heart-outline" size={13} color={colors.textSecondary} />
+                    <Text style={styles.statText}>{compactNumber(item.video.likes)}</Text>
                   </View>
-                ))}
-              </View>
-            </Pressable>
-          )}
+                  <View style={styles.statInline}>
+                    <MaterialCommunityIcons
+                      name="message-outline"
+                      size={13}
+                      color={colors.textSecondary}
+                    />
+                    <Text style={styles.statText}>{compactNumber(item.video.comments)}</Text>
+                  </View>
+                </View>
+              </Pressable>
+            );
+          }}
         />
       )}
     </Screen>
@@ -324,27 +439,6 @@ const styles = StyleSheet.create({
   fixedSearchWrap: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
-  },
-  skeletonStack: {
-    gap: spacing.sm,
-    flex: 1,
-  },
-  skeletonGridRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  skeletonGridItem: {
-    flex: 1,
-  },
-  loadingHeader: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: "#242424",
-    padding: spacing.md,
-  },
-  loadingHeaderCopy: {
-    marginTop: 8,
   },
   searchbar: {
     backgroundColor: "#242424",
@@ -360,17 +454,6 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.xs,
   },
-  searchMetaRow: {
-    marginTop: spacing.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  resultLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
-  },
   tagChip: {
     borderRadius: 999,
     borderWidth: 1,
@@ -382,6 +465,17 @@ const styles = StyleSheet.create({
   tagChipText: {
     color: colors.textSecondary,
     fontSize: 11,
+    fontWeight: "700",
+  },
+  searchMetaRow: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  resultLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
     fontWeight: "700",
   },
   refreshButton: {
@@ -397,6 +491,35 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginLeft: 6,
     fontSize: 13,
+  },
+  skeletonStack: {
+    gap: spacing.sm,
+    flex: 1,
+  },
+  skeletonGridRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  skeletonGridItem: {
+    flex: 1,
+  },
+  skeletonCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: "#242424",
+    padding: spacing.sm,
+  },
+  skeletonGap: {
+    marginTop: spacing.sm,
+  },
+  skeletonGapSm: {
+    marginTop: spacing.xs,
+  },
+  skeletonStatsRow: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   stateBox: {
     borderWidth: 1,
@@ -438,64 +561,85 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: spacing.sm,
   },
-  gridCard: {
+  videoCard: {
+    width: "48.5%",
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
-    borderRadius: 16,
-    padding: spacing.md,
-    width: "48.5%",
-    minHeight: 152,
+    borderRadius: 14,
+    padding: spacing.sm,
   },
-  cardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  mediaWrap: {
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
   },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "800",
-    flex: 1,
-    marginRight: spacing.xs,
+  media: {
+    width: "100%",
+    height: 122,
   },
-  scorePill: {
-    borderRadius: 999,
-    backgroundColor: "rgba(255,159,102,0.2)",
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  scoreText: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  cardGame: {
-    color: colors.textSecondary,
-    marginTop: 3,
-    fontSize: 12,
-  },
-  reasonWrap: {
-    marginTop: spacing.sm,
-    gap: spacing.xs,
-  },
-  reasonChip: {
+  durationPill: {
+    position: "absolute",
+    right: 8,
+    bottom: 8,
     flexDirection: "row",
     alignItems: "center",
     borderRadius: 999,
+    backgroundColor: "rgba(26,26,26,0.75)",
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#1F1F1F",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
   },
-  reasonText: {
-    marginLeft: 4,
+  durationText: {
     color: colors.text,
+    marginLeft: 4,
     fontSize: 11,
-    fontWeight: "600",
+    fontWeight: "700",
+  },
+  aiBadge: {
+    position: "absolute",
+    left: 8,
+    top: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    backgroundColor: colors.primary,
+  },
+  aiBadgeText: {
+    marginLeft: 4,
+    color: "#1A1A1A",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  cardTitle: {
+    marginTop: spacing.sm,
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 18,
+  },
+  cardMeta: {
+    marginTop: 4,
+    color: colors.textSecondary,
+    fontSize: 11,
+  },
+  statRow: {
+    marginTop: spacing.xs,
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  statInline: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statText: {
+    marginLeft: 4,
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "700",
   },
   pressed: {
     opacity: 0.78,

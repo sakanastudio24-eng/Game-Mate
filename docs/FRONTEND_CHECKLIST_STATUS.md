@@ -40,6 +40,15 @@ Last updated: 2026-03-01
 - Birthdate requires valid `MMDDYYYY`.
 - Date must be strictly before current day.
 
+9. Settings safety actions
+- Profile Settings includes bottom `Delete Account` action.
+- Confirmation dialog (`Are you sure?`) is required before destructive action.
+
+10. Notification control model
+- Added preset profile controls (`minimal`, `balanced`, `all`).
+- Added delivery flow modes (`instant`, `batch_30m`, `hourly_digest`).
+- Added time-sheet controls with quiet-hours presets and per-day active selection.
+
 ## Partially Complete
 
 1. Offline cache durability verification
@@ -48,6 +57,9 @@ Last updated: 2026-03-01
 
 2. Toast migration breadth
 - Shared toast is in place, but some screens still use non-toast local feedback patterns.
+
+3. Backend wiring for new settings controls
+- Delete account and notification presets are still frontend-preview behavior until API wiring is completed.
 
 ## Not Complete (Planned)
 

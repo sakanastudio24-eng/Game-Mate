@@ -109,7 +109,7 @@ const statusConfig: Record<
 > = {
   online: {
     label: "Online",
-    color: colors.primary,
+    color: "#4ADE80",
     icon: "checkbox-marked-circle-outline",
     detail: "Ready to play",
   },
@@ -301,9 +301,21 @@ export default function ProfileScreen() {
                 size={15}
                 color={colors.textSecondary}
               />
-              <Text style={[styles.statusText, { fontSize: responsive.bodySmallSize }]}>
-                {activeStatus.label} · {activeStatus.detail}
-              </Text>
+              <View style={styles.statusTextRow}>
+                <Text style={[styles.statusText, styles.statusLabel, { fontSize: responsive.bodySmallSize }]}>
+                  {activeStatus.label} ·{" "}
+                </Text>
+                <Text
+                  style={[
+                    styles.statusText,
+                    styles.statusDetail,
+                    onlineStatus === "online" && styles.statusDetailReady,
+                    { fontSize: responsive.bodySmallSize },
+                  ]}
+                >
+                  {activeStatus.detail}
+                </Text>
+              </View>
               <MaterialCommunityIcons name="chevron-down" size={16} color={colors.textSecondary} />
             </Pressable>
 
@@ -715,6 +727,22 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginLeft: 6,
     fontSize: 13,
+  },
+  statusTextRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: 6,
+    flex: 1,
+  },
+  statusLabel: {
+    marginLeft: 0,
+  },
+  statusDetail: {
+    marginLeft: 0,
+  },
+  statusDetailReady: {
+    color: colors.primary,
+    fontWeight: "700",
   },
   bio: {
     color: colors.textSecondary,

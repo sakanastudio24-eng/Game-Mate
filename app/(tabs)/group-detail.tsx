@@ -19,7 +19,12 @@ export default function GroupDetailScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
-  const group = mockGroups.find((item) => item.id === groupId) ?? mockGroups[0];
+  const normalizedGroupId = typeof groupId === "string" ? groupId : undefined;
+  const resolvedGroupId =
+    normalizedGroupId?.startsWith("s") ? normalizedGroupId.slice(1) : normalizedGroupId;
+  const group =
+    mockGroups.find((item) => item.id === normalizedGroupId || item.id === resolvedGroupId) ??
+    mockGroups[0];
   const initialMembers = Array.isArray(group.members) ? group.members : [];
   const [members] = useState<string[]>(initialMembers);
   const [activeTab, setActiveTab] = useState<"home" | "events" | "chat" | "members">(

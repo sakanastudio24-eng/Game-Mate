@@ -71,6 +71,26 @@ const onlineFriends: FriendItem[] = [
     avatar:
       "https://images.unsplash.com/photo-1759701546655-d90ec831aa52?w=200&h=200&fit=crop",
   },
+  {
+    id: "7",
+    name: "RiftRunner",
+    game: "Playing Valorant",
+    statusText: "In Ranked",
+    level: 49,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=200&h=200&fit=crop",
+  },
+  {
+    id: "8",
+    name: "StormByte",
+    game: "Playing Overwatch 2",
+    statusText: "In Party",
+    level: 36,
+    online: true,
+    avatar:
+      "https://images.unsplash.com/photo-1615109398623-88346a601842?w=200&h=200&fit=crop",
+  },
 ];
 
 const offlineFriends: FriendItem[] = [
@@ -100,6 +120,24 @@ const offlineFriends: FriendItem[] = [
     online: false,
     avatar:
       "https://images.unsplash.com/photo-1633286464918-4d78c8424b59?w=200&h=200&fit=crop",
+  },
+  {
+    id: "9",
+    name: "ZenCrate",
+    statusText: "4 hours ago",
+    level: 40,
+    online: false,
+    avatar:
+      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop",
+  },
+  {
+    id: "10",
+    name: "NeonPulse",
+    statusText: "Yesterday",
+    level: 27,
+    online: false,
+    avatar:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
   },
 ];
 

@@ -288,7 +288,7 @@ export default function SocialScreen() {
                 { id: "messages", label: "Messages" },
                 { id: "requests", label: `Requests (${requests.length})` },
               ] as const
-            ).map((tab) => {
+            ).map((tab, index) => {
               const selected = activeTab === tab.id;
               return (
                 <Pressable
@@ -299,6 +299,7 @@ export default function SocialScreen() {
                   accessibilityState={{ selected }}
                   style={[
                     styles.tabButton,
+                    index > 0 ? styles.tabButtonSpacing : undefined,
                     {
                       borderRadius: responsive.cardRadius - 6,
                       paddingVertical: Math.max(9, responsive.cardPadding - 2),
@@ -653,6 +654,7 @@ const styles = StyleSheet.create({
   tabRow: {
     flexDirection: "row",
     marginBottom: spacing.md,
+    justifyContent: "center",
   },
   tabButton: {
     flex: 1,
@@ -661,8 +663,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#242424",
     borderRadius: 12,
     paddingVertical: 10,
-    marginRight: 8,
     alignItems: "center",
+  },
+  tabButtonSpacing: {
+    marginLeft: 8,
   },
   tabButtonActive: {
     backgroundColor: colors.primary,

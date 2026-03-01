@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   FlatList,
   Image,
   Pressable,
@@ -13,6 +14,7 @@ import {
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import {
   AUTHOR_AVATARS,
   homeContentPrimed,
@@ -44,6 +46,8 @@ export default function NewsScreen() {
   const [liked, setLiked] = useState<string[]>([]);
   const [saved, setSaved] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(initialLoadCount);
+  const [activePostMenu, setActivePostMenu] = useState<NewsFeedItem | null>(null);
+  const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
   const mediaHeight = responsive.isSmallPhone ? 184 : responsive.isLargePhone ? 224 : 200;
 
   const filteredItems = useMemo(() => {
@@ -77,14 +81,35 @@ export default function NewsScreen() {
     );
   };
 
-  const handleShare = async (item: NewsFeedItem) => {
+  const handleSystemShare = async (message: string) => {
     try {
       await Share.share({
-        message: `${item.title} · ${item.author}`,
+        message,
       });
     } catch {
       // no-op preview fallback
     }
+  };
+
+  const openPostMenu = (item: NewsFeedItem) => {
+    setActivePostMenu(item);
+  };
+
+  const openShareDrawer = (item: NewsFeedItem) => {
+    setShareTarget({
+      title: item.title,
+      message: `${item.title} · ${item.author}`,
+    });
+  };
+
+  const handleShareToFriendDrawer = () => {
+    if (!shareTarget) return;
+    router.push("/(tabs)/messages");
+    Alert.alert("Friend Drawer", `Choose a friend in Messages to share "${shareTarget.title}".`);
+  };
+
+  const handleReportPost = (item: NewsFeedItem) => {
+    Alert.alert("Report Submitted", `Thanks. "${item.title}" was reported for review.`);
   };
 
   const loadMore = () => {
@@ -155,9 +180,9 @@ export default function NewsScreen() {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.pillsRow}
+                contentContainerStyle={[styles.pillsRow, { minWidth: "100%" }]}
               >
-                {categories.map((category) => {
+                {categories.map((category, index) => {
                   const isActive = category.id === activeCategory;
                   return (
                     <Pressable
@@ -168,6 +193,7 @@ export default function NewsScreen() {
                       accessibilityState={{ selected: isActive }}
                       style={[
                         styles.pill,
+                        index > 0 && styles.pillSpacing,
                         { minHeight: responsive.buttonHeightSmall },
                         isActive ? styles.pillActive : undefined,
                       ]}
@@ -225,9 +251,9 @@ export default function NewsScreen() {
                     </View>
                     <Pressable
                       hitSlop={8}
-                      onPress={() => handleShare(item)}
+                      onPress={() => openPostMenu(item)}
                       accessibilityRole="button"
-                      accessibilityLabel={`Share options for ${item.title}`}
+                      accessibilityLabel={`More options for ${item.title}`}
                       style={{
                         minWidth: responsive.touchTargetMin,
                         minHeight: responsive.touchTargetMin,
@@ -327,7 +353,7 @@ export default function NewsScreen() {
                             minHeight: responsive.touchTargetMin,
                           },
                         ]}
-                        onPress={() => handleShare(item)}
+                        onPress={() => openShareDrawer(item)}
                         accessibilityRole="button"
                         accessibilityLabel={`Share ${item.title}`}
                       >
@@ -408,6 +434,66 @@ export default function NewsScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: 96 + safeBottom }]}
         showsVerticalScrollIndicator={false}
       />
+
+      <ActionSheet
+        visible={activePostMenu !== null}
+        title={activePostMenu?.title ?? "Post"}
+        subtitle="Post options"
+        onClose={() => setActivePostMenu(null)}
+        options={
+          activePostMenu
+            ? [
+                {
+                  id: "share",
+                  label: "Share",
+                  icon: "share-variant-outline",
+                  onPress: () => openShareDrawer(activePostMenu),
+                },
+                {
+                  id: "report",
+                  label: "Report",
+                  icon: "flag-outline",
+                  onPress: () => handleReportPost(activePostMenu),
+                },
+              ]
+            : []
+        }
+      />
+
+      <ActionSheet
+        visible={shareTarget !== null}
+        title="Share"
+        subtitle={shareTarget?.title}
+        onClose={() => setShareTarget(null)}
+        options={
+          shareTarget
+            ? [
+                {
+                  id: "friends",
+                  label: "Share to Friends Drawer",
+                  icon: "account-group-outline",
+                  onPress: handleShareToFriendDrawer,
+                },
+                {
+                  id: "contacts",
+                  label: "Share to Contacts",
+                  icon: "account-box-outline",
+                  onPress: () => {
+                    void handleSystemShare(shareTarget.message);
+                  },
+                },
+                {
+                  id: "system",
+                  label: "More Share Options",
+                  icon: "dots-horizontal-circle-outline",
+                  onPress: () => {
+                    void handleSystemShare(shareTarget.message);
+                  },
+                },
+              ]
+            : []
+        }
+      />
     </View>
   );
 }
@@ -453,15 +539,19 @@ const styles = StyleSheet.create({
   },
   pillsRow: {
     paddingBottom: spacing.sm,
+    justifyContent: "center",
+    alignItems: "center",
   },
   pill: {
-    marginRight: spacing.sm,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
+  },
+  pillSpacing: {
+    marginLeft: spacing.sm,
   },
   pillActive: {
     backgroundColor: colors.primary,

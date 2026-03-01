@@ -5,6 +5,7 @@ import { Alert, Image, Pressable, ScrollView, Share, StyleSheet, View } from "re
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import {
   GROUPS_PAGE_SIZE,
   homeContentPrimed,
@@ -25,6 +26,12 @@ export default function GroupsScreen() {
   const [deletedGroupIds, setDeletedGroupIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(initialVisible);
+  const [activeGroupMenu, setActiveGroupMenu] = useState<{
+    id: string;
+    name: string;
+    game: string;
+  } | null>(null);
+  const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
   const groupThumbSize = responsive.isSmallPhone ? 66 : responsive.isLargePhone ? 86 : 78;
 
   const filteredGroups = useMemo(() => {
@@ -64,10 +71,10 @@ export default function GroupsScreen() {
     setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, discoverableGroups.length));
   };
 
-  const handleShareGroup = async (name: string, game: string) => {
+  const handleShareGroupToContacts = async (message: string) => {
     try {
       await Share.share({
-        message: `Check out this Game Mate group: ${name} (${game}).`,
+        message,
       });
     } catch {
       // no-op preview fallback
@@ -80,20 +87,29 @@ export default function GroupsScreen() {
   };
 
   const openGroupOptions = (groupId: string, groupName: string, game: string) => {
-    Alert.alert(groupName, "Choose an action", [
-      {
-        text: "Share",
-        onPress: () => {
-          void handleShareGroup(groupName, game);
-        },
-      },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => handleDeleteGroup(groupId),
-      },
-      { text: "Cancel", style: "cancel" },
-    ]);
+    setActiveGroupMenu({
+      id: groupId,
+      name: groupName,
+      game,
+    });
+  };
+
+  const openShareDrawer = (title: string, message: string) => {
+    setShareTarget({ title, message });
+  };
+
+  const handleShareToFriends = (title: string, message: string) => {
+    openShareDrawer(title, message);
+  };
+
+  const handleShareToFriendDrawer = () => {
+    if (!shareTarget) return;
+    router.push("/(tabs)/messages");
+    Alert.alert("Friend Drawer", `Choose a friend in Messages to share "${shareTarget.title}".`);
+  };
+
+  const handleReportGroup = (groupName: string) => {
+    Alert.alert("Report Submitted", `Thanks. "${groupName}" was reported for review.`);
   };
 
   return (
@@ -365,6 +381,77 @@ export default function GroupsScreen() {
           </View>
         ) : null}
       </ScrollView>
+
+      <ActionSheet
+        visible={activeGroupMenu !== null}
+        title={activeGroupMenu?.name ?? "Group"}
+        subtitle="Choose an action"
+        onClose={() => setActiveGroupMenu(null)}
+        options={
+          activeGroupMenu
+            ? [
+                {
+                  id: "share",
+                  label: "Share",
+                  icon: "share-variant-outline",
+                  onPress: () =>
+                    handleShareToFriends(
+                      activeGroupMenu.name,
+                      `Check out this Game Mate group: ${activeGroupMenu.name} (${activeGroupMenu.game}).`,
+                    ),
+                },
+                {
+                  id: "report",
+                  label: "Report",
+                  icon: "flag-outline",
+                  onPress: () => handleReportGroup(activeGroupMenu.name),
+                },
+                {
+                  id: "delete",
+                  label: "Delete",
+                  icon: "trash-can-outline",
+                  destructive: true,
+                  onPress: () => handleDeleteGroup(activeGroupMenu.id),
+                },
+              ]
+            : []
+        }
+      />
+
+      <ActionSheet
+        visible={shareTarget !== null}
+        title="Share"
+        subtitle={shareTarget?.title}
+        onClose={() => setShareTarget(null)}
+        options={
+          shareTarget
+            ? [
+                {
+                  id: "friends",
+                  label: "Share to Friends Drawer",
+                  icon: "account-group-outline",
+                  onPress: handleShareToFriendDrawer,
+                },
+                {
+                  id: "contacts",
+                  label: "Share to Contacts",
+                  icon: "account-box-outline",
+                  onPress: () => {
+                    void handleShareGroupToContacts(shareTarget.message);
+                  },
+                },
+                {
+                  id: "system",
+                  label: "More Share Options",
+                  icon: "dots-horizontal-circle-outline",
+                  onPress: () => {
+                    void handleShareGroupToContacts(shareTarget.message);
+                  },
+                },
+              ]
+            : []
+        }
+      />
     </View>
   );
 }

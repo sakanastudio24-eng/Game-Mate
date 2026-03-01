@@ -14,7 +14,6 @@ import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { androidKeyboardCompatProps } from "../src/lib/androidInput";
 import { useResponsive } from "../src/lib/responsive";
-import { colors } from "../src/lib/theme";
 import { primeHomeContentCache } from "../src/lib/content-data";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
 import { useReducedMotionPreference } from "../src/lib/accessibility";
@@ -759,10 +758,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   birthdateHintError: {
-    color: colors.destructive,
+    color: "#EF4444",
   },
   birthdateHintSuccess: {
-    color: colors.online,
+    color: "#22C55E",
   },
   input: {
     backgroundColor: "#E8E8E8",

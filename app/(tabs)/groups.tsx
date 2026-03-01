@@ -81,6 +81,7 @@ export default function GroupsScreen() {
           >
             <View style={styles.titleRow}>
               <Text
+                accessibilityRole="header"
                 style={[
                   styles.title,
                   {
@@ -94,6 +95,8 @@ export default function GroupsScreen() {
               <View style={styles.headerActions}>
                 <Pressable
                   onPress={() => router.push("/(tabs)/discover-groups")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Search groups"
                   style={({ pressed }) => [
                     styles.iconButton,
                     {
@@ -111,6 +114,8 @@ export default function GroupsScreen() {
                 </Pressable>
                 <Pressable
                   onPress={() => router.push("/(tabs)/qr-code")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open QR code"
                   style={({ pressed }) => [
                     styles.iconButton,
                     {
@@ -143,6 +148,7 @@ export default function GroupsScreen() {
               placeholder="Search groups..."
               value={query}
               onChangeText={setQuery}
+              accessibilityLabel="Search groups"
               style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
               inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
               placeholderTextColor={colors.textSecondary}
@@ -165,6 +171,8 @@ export default function GroupsScreen() {
             <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>Discover Groups</Text>
             <Pressable
               onPress={() => router.push("/(tabs)/create-group")}
+              accessibilityRole="button"
+              accessibilityLabel="Create a new group"
               style={({ pressed }) => [
                 styles.createButton,
                 { minHeight: responsive.buttonHeightSmall },
@@ -183,6 +191,9 @@ export default function GroupsScreen() {
             <AnimatedEntrance key={group.id} preset="card" delay={80} staggerIndex={index}>
               <Pressable
                 onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
+                accessibilityHint="Open group details"
                 style={[
                   styles.groupCard,
                   {
@@ -218,6 +229,8 @@ export default function GroupsScreen() {
                       event.stopPropagation();
                       router.push(`/(tabs)/group-detail?groupId=${group.id}`);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`More options for ${group.name}`}
                     style={({ pressed }) => [
                       styles.groupOptionsButton,
                       {
@@ -243,6 +256,9 @@ export default function GroupsScreen() {
                       event.stopPropagation();
                       toggleJoin(group.id);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={isJoined ? `Leave ${group.name}` : `Join ${group.name}`}
+                    accessibilityState={{ selected: isJoined }}
                     style={({ pressed }) => [
                       styles.groupJoinButton,
                       { minHeight: responsive.buttonHeightSmall },
@@ -268,6 +284,8 @@ export default function GroupsScreen() {
         {discoverableGroups.length > visibleCount ? (
           <Pressable
             onPress={loadMoreGroups}
+            accessibilityRole="button"
+            accessibilityLabel="Load more groups"
             style={[
               styles.loadMoreButton,
               {

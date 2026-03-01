@@ -112,6 +112,7 @@ export default function NewsScreen() {
             >
               <View style={styles.titleRow}>
                 <Text
+                  accessibilityRole="header"
                   style={[
                     styles.title,
                     {
@@ -124,6 +125,8 @@ export default function NewsScreen() {
                 </Text>
                 <Pressable
                   onPress={() => router.push("/(tabs)/qr-code")}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open QR code"
                   style={({ pressed }) => [
                     styles.iconButton,
                     {
@@ -142,6 +145,7 @@ export default function NewsScreen() {
                 placeholder="Search news, creators, games..."
                 value={searchQuery}
                 onChangeText={setSearchQuery}
+                accessibilityLabel="Search news"
                 style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
                 inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
                 placeholderTextColor={colors.textMuted}
@@ -159,7 +163,14 @@ export default function NewsScreen() {
                     <Pressable
                       key={category.id}
                       onPress={() => setActiveCategory(category.id)}
-                      style={[styles.pill, isActive ? styles.pillActive : undefined]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Show ${category.label} posts`}
+                      accessibilityState={{ selected: isActive }}
+                      style={[
+                        styles.pill,
+                        { minHeight: responsive.buttonHeightSmall },
+                        isActive ? styles.pillActive : undefined,
+                      ]}
                     >
                       <Text style={[styles.pillText, isActive ? styles.pillTextActive : undefined]}>
                         {category.label}
@@ -198,12 +209,27 @@ export default function NewsScreen() {
                     },
                   ]}
                 >
-                  <Image source={{ uri: AUTHOR_AVATARS[item.author] }} style={styles.avatar} />
+                  <Image
+                    source={{ uri: AUTHOR_AVATARS[item.author] }}
+                    style={styles.avatar}
+                    accessibilityLabel={`${item.author} avatar`}
+                  />
                   <View style={styles.postHeaderText}>
                     <Text style={styles.author}>{item.author}</Text>
                     <Text style={styles.date}>{item.date}</Text>
                   </View>
-                  <Pressable hitSlop={8} onPress={() => handleShare(item)}>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() => handleShare(item)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Share options for ${item.title}`}
+                    style={{
+                      minWidth: responsive.touchTargetMin,
+                      minHeight: responsive.touchTargetMin,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <MaterialCommunityIcons
                       name="dots-horizontal"
                       size={18}
@@ -247,7 +273,19 @@ export default function NewsScreen() {
                   ]}
                 >
                   <View style={styles.actionsLeft}>
-                    <Pressable onPress={() => toggleLike(item.id)} style={styles.actionButton}>
+                    <Pressable
+                      onPress={() => toggleLike(item.id)}
+                      style={[
+                        styles.actionButton,
+                        {
+                          minWidth: responsive.touchTargetMin,
+                          minHeight: responsive.touchTargetMin,
+                        },
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={isLiked ? `Unlike ${item.title}` : `Like ${item.title}`}
+                      accessibilityState={{ selected: isLiked }}
+                    >
                       <MaterialCommunityIcons
                         name={isLiked ? "heart" : "heart-outline"}
                         size={20}
@@ -257,8 +295,16 @@ export default function NewsScreen() {
                     </Pressable>
 
                     <Pressable
-                      style={styles.actionButton}
+                      style={[
+                        styles.actionButton,
+                        {
+                          minWidth: responsive.touchTargetMin,
+                          minHeight: responsive.touchTargetMin,
+                        },
+                      ]}
                       onPress={() => router.push("/(tabs)/messages")}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open comments for ${item.title}`}
                     >
                       <MaterialCommunityIcons
                         name="message-outline"
@@ -268,7 +314,18 @@ export default function NewsScreen() {
                       <Text style={styles.actionCount}>{item.comments}</Text>
                     </Pressable>
 
-                    <Pressable style={styles.actionButton} onPress={() => handleShare(item)}>
+                    <Pressable
+                      style={[
+                        styles.actionButton,
+                        {
+                          minWidth: responsive.touchTargetMin,
+                          minHeight: responsive.touchTargetMin,
+                        },
+                      ]}
+                      onPress={() => handleShare(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Share ${item.title}`}
+                    >
                       <MaterialCommunityIcons
                         name="share-variant-outline"
                         size={20}
@@ -277,7 +334,18 @@ export default function NewsScreen() {
                     </Pressable>
                   </View>
 
-                  <Pressable onPress={() => toggleSave(item.id)}>
+                  <Pressable
+                    onPress={() => toggleSave(item.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={isSaved ? `Unsave ${item.title}` : `Save ${item.title}`}
+                    accessibilityState={{ selected: isSaved }}
+                    style={{
+                      minWidth: responsive.touchTargetMin,
+                      minHeight: responsive.touchTargetMin,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
                     <MaterialCommunityIcons
                       name={isSaved ? "bookmark" : "bookmark-outline"}
                       size={20}
@@ -293,6 +361,8 @@ export default function NewsScreen() {
           filteredItems.length > visibleCount ? (
             <Pressable
               onPress={loadMore}
+              accessibilityRole="button"
+              accessibilityLabel="Load more news posts"
               style={[
                 styles.loadMoreButton,
                 {
@@ -300,6 +370,7 @@ export default function NewsScreen() {
                   maxWidth: responsive.contentMaxWidth,
                   alignSelf: "center",
                   width: "100%",
+                  minHeight: responsive.buttonHeightMedium,
                 },
               ]}
             >

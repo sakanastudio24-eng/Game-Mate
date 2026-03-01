@@ -111,6 +111,8 @@ export default function ProfileScreen() {
           >
             <Pressable
               onPress={() => router.push("/(tabs)/qr-code")}
+              accessibilityRole="button"
+              accessibilityLabel="Open QR code"
               style={({ pressed }) => [
                 styles.headerIcon,
                 {
@@ -128,6 +130,8 @@ export default function ProfileScreen() {
             </Pressable>
             <Pressable
               onPress={() => router.push("/(tabs)/settings")}
+              accessibilityRole="button"
+              accessibilityLabel="Open settings"
               style={({ pressed }) => [
                 styles.headerIcon,
                 {
@@ -166,6 +170,7 @@ export default function ProfileScreen() {
 
             <View style={styles.nameRow}>
               <Text
+                accessibilityRole="header"
                 style={[
                   styles.name,
                   {
@@ -200,6 +205,8 @@ export default function ProfileScreen() {
 
             <Pressable
               onPress={() => router.push("/(tabs)/edit-profile")}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
               style={({ pressed }) => [
                 styles.editButton,
                 { minHeight: responsive.buttonHeightMedium },
@@ -226,7 +233,10 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}
+            >
               Stats
             </Text>
             <View style={styles.statsGrid}>
@@ -255,7 +265,10 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+            <Text
+              accessibilityRole="header"
+              style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}
+            >
               Achievements
             </Text>
             <View style={styles.achievementsGrid}>
@@ -313,6 +326,9 @@ export default function ProfileScreen() {
                   <Pressable
                     key={tab.id}
                     onPress={() => setActiveCollectionTab(tab.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Show ${tab.label}`}
+                    accessibilityState={{ selected: isActive }}
                     style={({ pressed }) => [
                       styles.collectionTabButton,
                       {
@@ -334,7 +350,12 @@ export default function ProfileScreen() {
             {activeCollectionTab === "games" ? (
               <View style={styles.gamesGrid}>
                 {games.map((game) => (
-                  <View key={game.name} style={[styles.gameCard, { width: gameCardWidth }]}>
+                  <View
+                    key={game.name}
+                    accessible
+                    accessibilityLabel={`${game.name}, ${game.hours} hours played`}
+                    style={[styles.gameCard, { width: gameCardWidth }]}
+                  >
                     <Image source={{ uri: game.image }} style={styles.gameImage} />
                     <View style={styles.gameOverlay}>
                       <Text style={styles.gameName}>{game.name}</Text>
@@ -352,6 +373,9 @@ export default function ProfileScreen() {
                 <Pressable
                   key={group.id}
                   onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
+                  accessibilityHint="Open group details"
                   style={({ pressed }) => [styles.myGroupCard, pressed && styles.pressed]}
                 >
                   <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
@@ -364,6 +388,8 @@ export default function ProfileScreen() {
                           event.stopPropagation();
                           router.push(`/(tabs)/group-detail?groupId=${group.id}`);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`More options for ${group.name}`}
                         style={({ pressed }) => [
                           styles.groupOptionsButton,
                           {
@@ -391,6 +417,8 @@ export default function ProfileScreen() {
                         event.stopPropagation();
                         leaveGroup(group.id);
                       }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Leave ${group.name}`}
                       style={({ pressed }) => [
                         styles.groupLeaveButton,
                         { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },

@@ -170,7 +170,7 @@ export default function SocialScreen() {
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
   const profileAvatarSize = responsive.isSmallPhone ? 48 : responsive.isLargePhone ? 58 : 54;
-  const actionCircleSize = responsive.isSmallPhone ? responsive.touchTargetMin : 42;
+  const actionCircleSize = Math.max(responsive.touchTargetMin, 42);
 
   const filteredOnline = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -232,6 +232,7 @@ export default function SocialScreen() {
         >
           <View style={styles.titleRow}>
             <Text
+              accessibilityRole="header"
               style={[
                 styles.title,
                 {
@@ -246,6 +247,8 @@ export default function SocialScreen() {
             <View style={styles.headerActions}>
               <Pressable
                 onPress={() => router.push("/(tabs)/search-players")}
+                accessibilityRole="button"
+                accessibilityLabel="Find players"
                 style={({ pressed }) => [
                   styles.iconButton,
                   {
@@ -261,6 +264,8 @@ export default function SocialScreen() {
 
               <Pressable
                 onPress={() => router.push("/(tabs)/qr-code")}
+                accessibilityRole="button"
+                accessibilityLabel="Open QR code"
                 style={({ pressed }) => [
                   styles.iconButton,
                   {
@@ -289,11 +294,15 @@ export default function SocialScreen() {
                 <Pressable
                   key={tab.id}
                   onPress={() => setActiveTab(tab.id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Show ${tab.label}`}
+                  accessibilityState={{ selected }}
                   style={[
                     styles.tabButton,
                     {
                       borderRadius: responsive.cardRadius - 6,
                       paddingVertical: Math.max(9, responsive.cardPadding - 2),
+                      minHeight: responsive.buttonHeightSmall,
                     },
                     selected ? styles.tabButtonActive : undefined,
                   ]}
@@ -316,6 +325,7 @@ export default function SocialScreen() {
             placeholder={searchPlaceholder}
             value={search}
             onChangeText={setSearch}
+            accessibilityLabel={searchPlaceholder}
             style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
             inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
             iconColor={colors.textSecondary}
@@ -379,6 +389,9 @@ export default function SocialScreen() {
                         },
                       })
                     }
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.name}, level ${item.level}, ${isOnline ? item.game : item.statusText}`}
+                    accessibilityHint="Open player profile"
                     style={({ pressed }) => [
                       styles.friendCard,
                       {
@@ -419,6 +432,8 @@ export default function SocialScreen() {
                           event.stopPropagation();
                           router.push(`/(tabs)/chat?userId=${item.id}`);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Message ${item.name}`}
                         style={({ pressed }) => [
                           styles.chatButton,
                           {
@@ -458,6 +473,8 @@ export default function SocialScreen() {
               >
                 <Pressable
                   onPress={() => router.push(`/(tabs)/chat?userId=${item.userId}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open chat with ${item.user}. ${item.message}`}
                   style={({ pressed }) => [
                     styles.messageCard,
                     {
@@ -547,6 +564,8 @@ export default function SocialScreen() {
                         },
                       })
                     }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open profile for ${item.name}`}
                     style={({ pressed }) => [styles.requestTop, pressed && styles.pressed]}
                   >
                     <Image source={{ uri: item.avatar }} style={styles.requestAvatar} />
@@ -560,13 +579,25 @@ export default function SocialScreen() {
                   <View style={styles.requestActions}>
                     <Pressable
                       onPress={() => handleAcceptRequest(item.id)}
-                      style={({ pressed }) => [styles.acceptButton, pressed && styles.pressed]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Accept request from ${item.name}`}
+                      style={({ pressed }) => [
+                        styles.acceptButton,
+                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin },
+                        pressed && styles.pressed,
+                      ]}
                     >
                       <Text style={styles.acceptText}>Accept</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => handleDeclineRequest(item.id)}
-                      style={({ pressed }) => [styles.declineButton, pressed && styles.pressed]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Decline request from ${item.name}`}
+                      style={({ pressed }) => [
+                        styles.declineButton,
+                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin },
+                        pressed && styles.pressed,
+                      ]}
                     >
                       <Text style={styles.declineText}>Decline</Text>
                     </Pressable>

@@ -64,6 +64,7 @@ export default function ChatScreen() {
         rightAction={{
           icon: "phone",
           onPress: () => {},
+          label: `Call ${friend.username}`,
         }}
       />
 
@@ -110,12 +111,14 @@ export default function ChatScreen() {
       {/* Message composer */}
       <View style={styles.composer}>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Attach file"
           style={[
             styles.attachButton,
             {
-              width: responsive.iconButtonSize - 4,
-              height: responsive.iconButtonSize - 4,
-              borderRadius: (responsive.iconButtonSize - 4) / 2,
+              width: responsive.touchTargetMin,
+              height: responsive.touchTargetMin,
+              borderRadius: responsive.touchTargetMin / 2,
             },
           ]}
         >
@@ -134,16 +137,19 @@ export default function ChatScreen() {
           onChangeText={setMessageInput}
           multiline
           maxLength={500}
+          accessibilityLabel="Message input"
         />
 
         <Pressable
           onPress={handleSendMessage}
+          accessibilityRole="button"
+          accessibilityLabel="Send message"
           style={({ pressed }) => [
             styles.sendButton,
             {
-              width: responsive.iconButtonSize - 4,
-              height: responsive.iconButtonSize - 4,
-              borderRadius: (responsive.iconButtonSize - 4) / 2,
+              width: responsive.touchTargetMin,
+              height: responsive.touchTargetMin,
+              borderRadius: responsive.touchTargetMin / 2,
             },
             pressed && { opacity: 0.7 },
           ]}

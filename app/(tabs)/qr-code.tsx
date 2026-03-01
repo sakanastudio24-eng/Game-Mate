@@ -39,9 +39,15 @@ export default function QRCodeScreen() {
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
+            accessibilityRole="button"
+            accessibilityLabel={tab === "mycode" ? "Show my QR code" : "Show scanner"}
+            accessibilityState={{ selected: activeTab === tab }}
             style={[
               styles.tabButton,
-              { paddingVertical: Math.max(10, responsive.cardPadding - 2) },
+              {
+                paddingVertical: Math.max(10, responsive.cardPadding - 2),
+                minHeight: responsive.buttonHeightSmall,
+              },
               activeTab === tab && styles.tabButtonActive,
             ]}
           >
@@ -102,6 +108,9 @@ export default function QRCodeScreen() {
                   <Pressable
                     key={color}
                     onPress={() => setAccentColor(color)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Set QR accent color ${color}`}
+                    accessibilityState={{ selected: accentColor === color }}
                     style={[
                       styles.colorOption,
                       {

@@ -65,6 +65,7 @@ export default function ExploreScreen() {
         placeholder="Search routes..."
         value={query}
         onChangeText={setQuery}
+        accessibilityLabel="Search routes"
         style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
         inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
         placeholderTextColor={colors.textSecondary}
@@ -77,9 +78,15 @@ export default function ExploreScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => router.push(item.path as any)}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${item.label} route`}
             style={({ pressed }) => [
               styles.routeCard,
-              { borderRadius: responsive.cardRadius, padding: responsive.cardPadding },
+              {
+                borderRadius: responsive.cardRadius,
+                padding: responsive.cardPadding,
+                minHeight: responsive.buttonHeightSmall,
+              },
               pressed && styles.routeCardPressed,
             ]}
           >

@@ -32,7 +32,12 @@ export default function PrivacySettingsScreen() {
       <Header title="Privacy & Security" showBackButton />
 
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Profile Visibility</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}
+        >
+          Profile Visibility
+        </Text>
 
         <List.Item
           title="Public Profile"
@@ -42,6 +47,7 @@ export default function PrivacySettingsScreen() {
               value={privacySettings.profilePublic}
               onValueChange={() => toggleSetting("profilePublic")}
               color={colors.primary}
+              accessibilityLabel="Public profile"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -56,6 +62,7 @@ export default function PrivacySettingsScreen() {
               value={privacySettings.showOnlineStatus}
               onValueChange={() => toggleSetting("showOnlineStatus")}
               color={colors.primary}
+              accessibilityLabel="Show online status"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -70,6 +77,7 @@ export default function PrivacySettingsScreen() {
               value={privacySettings.searchable}
               onValueChange={() => toggleSetting("searchable")}
               color={colors.primary}
+              accessibilityLabel="Searchable profile"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -78,7 +86,12 @@ export default function PrivacySettingsScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Interactions</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}
+        >
+          Interactions
+        </Text>
 
         <List.Item
           title="Allow Direct Messages"
@@ -88,6 +101,7 @@ export default function PrivacySettingsScreen() {
               value={privacySettings.allowMessages}
               onValueChange={() => toggleSetting("allowMessages")}
               color={colors.primary}
+              accessibilityLabel="Allow direct messages"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -102,6 +116,7 @@ export default function PrivacySettingsScreen() {
               value={privacySettings.allowGroupInvites}
               onValueChange={() => toggleSetting("allowGroupInvites")}
               color={colors.primary}
+              accessibilityLabel="Allow group invites"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -110,7 +125,12 @@ export default function PrivacySettingsScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Safety</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}
+        >
+          Safety
+        </Text>
 
         <List.Item
           title="Blocked Users"

@@ -101,6 +101,9 @@ export default function GroupDetailScreen() {
 
         <Pressable
           onPress={handleJoinGroup}
+          accessibilityRole="button"
+          accessibilityLabel={isJoined ? `${group.name} joined` : `Join ${group.name}`}
+          accessibilityState={{ selected: isJoined }}
           style={({ pressed }) => [
             styles.joinButton,
             {
@@ -129,6 +132,9 @@ export default function GroupDetailScreen() {
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
+            accessibilityRole="button"
+            accessibilityLabel={`Show ${tab} tab`}
+            accessibilityState={{ selected: activeTab === tab }}
             style={({ pressed }) => [
               styles.tabButton,
               { minHeight: responsive.buttonHeightSmall },
@@ -167,6 +173,8 @@ export default function GroupDetailScreen() {
                   );
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`${item} member profile`}
             >
               <Text style={styles.memberAvatar}>👤</Text>
               <Text style={[styles.memberName, { fontSize: responsive.bodySize }]}>{item}</Text>
@@ -218,9 +226,13 @@ export default function GroupDetailScreen() {
               onChangeText={setChatMessage}
               multiline
               editable={isJoined}
+              accessibilityLabel="Group message"
             />
             <Pressable
               onPress={handleSendMessage}
+              accessibilityRole="button"
+              accessibilityLabel="Send message"
+              accessibilityState={{ disabled: !isJoined }}
               style={({ pressed }) => [
                 styles.sendButton,
                 {

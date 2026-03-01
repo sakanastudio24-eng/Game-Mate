@@ -36,7 +36,12 @@ export default function PrivacyDetailScreen() {
       <Header title="Privacy Settings" showBackButton />
 
       <View style={styles.sectionContainer}>
-        <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Profile Visibility</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}
+        >
+          Profile Visibility
+        </Text>
         <SettingRow
           name="Public Profile"
           description="Others can view your profile"
@@ -70,7 +75,12 @@ export default function PrivacyDetailScreen() {
       </View>
 
       <View style={styles.sectionContainer}>
-        <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Data & Analytics</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}
+        >
+          Data & Analytics
+        </Text>
         <SettingRow
           name="Allow Analytics"
           description="Help us improve with usage analytics"
@@ -81,7 +91,12 @@ export default function PrivacyDetailScreen() {
 
       <View style={styles.sectionContainer}>
         <View style={styles.blockedHeader}>
-          <Text style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}>Blocked Users</Text>
+          <Text
+            accessibilityRole="header"
+            style={[styles.sectionLabel, { fontSize: responsive.bodySize }]}
+          >
+            Blocked Users
+          </Text>
           {blockedUsers.length > 0 && (
             <View style={styles.badgeCount}>
               <Text style={[styles.badgeCountText, { fontSize: responsive.captionSize }]}>
@@ -106,7 +121,11 @@ export default function PrivacyDetailScreen() {
                     {item.username}
                   </Text>
                 </View>
-                <Pressable onPress={() => handleUnblock(item.id)}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Unblock ${item.username}`}
+                  onPress={() => handleUnblock(item.id)}
+                >
                   <MaterialCommunityIcons
                     name="close"
                     size={20}
@@ -144,7 +163,12 @@ function SettingRow({
         <Text style={[styles.settingName, { fontSize: responsive.bodySize + 1 }]}>{name}</Text>
         <Text style={[styles.settingDesc, { fontSize: responsive.bodySmallSize }]}>{description}</Text>
       </View>
-      <Switch value={value} onValueChange={onValueChange} color={colors.primary} />
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        color={colors.primary}
+        accessibilityLabel={name}
+      />
     </View>
   );
 }

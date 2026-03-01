@@ -31,7 +31,12 @@ export default function NotificationSettingsScreen() {
       <Header title="Notifications" showBackButton />
 
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Social</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}
+        >
+          Social
+        </Text>
 
         <List.Item
           title="Friend Requests"
@@ -41,6 +46,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.friendRequests}
               onValueChange={() => toggleSetting("friendRequests")}
               color={colors.primary}
+              accessibilityLabel="Friend requests notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -55,6 +61,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.friendOnline}
               onValueChange={() => toggleSetting("friendOnline")}
               color={colors.primary}
+              accessibilityLabel="Friend online notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -69,6 +76,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.friendActivity}
               onValueChange={() => toggleSetting("friendActivity")}
               color={colors.primary}
+              accessibilityLabel="Friend activity notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -83,6 +91,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.messages}
               onValueChange={() => toggleSetting("messages")}
               color={colors.primary}
+              accessibilityLabel="Direct message notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -91,7 +100,12 @@ export default function NotificationSettingsScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Groups</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}
+        >
+          Groups
+        </Text>
 
         <List.Item
           title="Group Invites"
@@ -101,6 +115,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.groupInvites}
               onValueChange={() => toggleSetting("groupInvites")}
               color={colors.primary}
+              accessibilityLabel="Group invite notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -115,6 +130,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.matchmaking}
               onValueChange={() => toggleSetting("matchmaking")}
               color={colors.primary}
+              accessibilityLabel="Matchmaking notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}
@@ -123,7 +139,12 @@ export default function NotificationSettingsScreen() {
       </Card>
 
       <Card style={styles.section}>
-        <Text style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>Achievements</Text>
+        <Text
+          accessibilityRole="header"
+          style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}
+        >
+          Achievements
+        </Text>
 
         <List.Item
           title="Achievements"
@@ -133,6 +154,7 @@ export default function NotificationSettingsScreen() {
               value={notifSettings.achievements}
               onValueChange={() => toggleSetting("achievements")}
               color={colors.primary}
+              accessibilityLabel="Achievements notifications"
             />
           )}
           titleStyle={[styles.listTitle, { fontSize: responsive.bodySize }]}

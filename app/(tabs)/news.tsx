@@ -17,6 +17,7 @@ import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
+import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -32,14 +33,12 @@ interface CommentItem {
 }
 
 const INITIAL_LOOP_COUNT = 3;
-const LOCAL_USER_AVATAR =
-  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&h=100&fit=crop";
 const COMMENT_AVATARS: Record<string, string> = {
   Nova: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
   RiftKing:
     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
   Echo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
-  You: LOCAL_USER_AVATAR,
+  You: CURRENT_USER_AVATAR,
 };
 
 function createLoop(loopIndex: number): FeedEntry[] {
@@ -181,7 +180,7 @@ export default function NewsScreen() {
     const newThreadComment: CommentItem = {
       id: `${feedId}-u-${Date.now()}`,
       user: "You",
-      avatar: LOCAL_USER_AVATAR,
+      avatar: CURRENT_USER_AVATAR,
       message: nextComment,
     };
 

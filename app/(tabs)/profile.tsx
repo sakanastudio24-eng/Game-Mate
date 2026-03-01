@@ -6,11 +6,9 @@ import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { MY_GROUPS } from "../../src/lib/content-data";
+import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
-
-const SELF_AVATAR =
-  "https://images.unsplash.com/photo-1579975979101-7a3c3909d659?w=400&h=400&fit=crop";
 
 const achievements = [
   {
@@ -211,7 +209,7 @@ export default function ProfileScreen() {
             ]}
           >
             <View style={styles.avatarRing}>
-              <Image source={{ uri: SELF_AVATAR }} style={styles.avatar} />
+              <Image source={{ uri: CURRENT_USER_AVATAR }} style={styles.avatar} />
             </View>
             <View style={styles.onlineDot} />
 

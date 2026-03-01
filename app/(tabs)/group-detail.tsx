@@ -104,45 +104,49 @@ export default function GroupDetailScreen() {
       {activeTab === "home" && (
         <View style={styles.homeWrap}>
           <Card style={styles.homeCard}>
-            <Text style={[styles.homeTitle, { fontSize: responsive.bodySize + 2 }]}>
-              Group Home
-            </Text>
+            <Text style={[styles.homeTitle, { fontSize: responsive.bodySize + 2 }]}>Group Home</Text>
+
+            <View style={styles.homeHero}>
+              <View style={styles.homeGameRow}>
+                <MaterialCommunityIcons name="controller" size={15} color={colors.primary} />
+                <Text style={[styles.gameName, { fontSize: responsive.bodySize + 2 }]}>{group.game}</Text>
+              </View>
+              <View style={styles.homeCountPill}>
+                <Text style={[styles.homeCountValue, { fontSize: responsive.bodySize }]}>
+                  {group.memberCount}
+                </Text>
+                <Text style={[styles.homeCountLabel, { fontSize: responsive.captionSize }]}>
+                  Members
+                </Text>
+              </View>
+            </View>
 
             <View style={styles.headerRow}>
               <View>
-                <Text style={[styles.gameName, { fontSize: responsive.bodySize + 2 }]}>{group.game}</Text>
                 <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>
                   {group.description}
                 </Text>
               </View>
-              <Text style={[styles.memberCount, { fontSize: responsive.titleSize - 10 }]}>
-                {group.memberCount}
-              </Text>
             </View>
 
-            <View style={styles.badges}>
+            <View style={styles.homeTagRow}>
               {group.mode === "ranked" && (
-                <Chip
-                  icon="star"
-                  label="Ranked"
-                  size="small"
-                  style={styles.badge}
-                />
+                <View style={styles.homeTag}>
+                  <MaterialCommunityIcons name="star-outline" size={13} color={colors.primary} />
+                  <Text style={styles.homeTagText}>Ranked</Text>
+                </View>
               )}
               {group.micRequired && (
-                <Chip
-                  icon="microphone"
-                  label="Mic Required"
-                  size="small"
-                  style={styles.badge}
-                />
+                <View style={styles.homeTag}>
+                  <MaterialCommunityIcons name="microphone-outline" size={13} color={colors.primary} />
+                  <Text style={styles.homeTagText}>Mic Required</Text>
+                </View>
               )}
               {group.minRank && (
-                <Chip
-                  label={`${group.minRank}+`}
-                  size="small"
-                  style={styles.badge}
-                />
+                <View style={styles.homeTag}>
+                  <MaterialCommunityIcons name="signal-cellular-2" size={13} color={colors.primary} />
+                  <Text style={styles.homeTagText}>{group.minRank}+</Text>
+                </View>
               )}
             </View>
 
@@ -172,9 +176,7 @@ export default function GroupDetailScreen() {
               </Text>
             </Pressable>
 
-            <Text style={[styles.homeCopy, { fontSize: responsive.bodySmallSize }]}>
-              Overview
-            </Text>
+            <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Overview</Text>
             <View style={styles.homeStatsRow}>
               <View style={styles.homeStatPill}>
                 <Text style={styles.homeStatValue}>{members.length}</Text>
@@ -365,34 +367,19 @@ function formatChatTime(date: Date): string {
 
 const styles = StyleSheet.create({
   headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: spacing.md,
+    marginTop: spacing.sm,
   },
   gameName: {
     color: colors.text,
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 16,
-    marginBottom: spacing.xs,
+    marginBottom: 0,
+    marginLeft: 6,
   },
   description: {
-    color: colors.textMuted,
-    fontSize: 12,
-    maxWidth: 200,
-  },
-  memberCount: {
-    color: colors.primary,
-    fontWeight: "600",
-    fontSize: 24,
-  },
-  badges: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  badge: {
-    marginRight: spacing.xs,
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 20,
   },
   joinButton: {
     marginTop: spacing.md,
@@ -479,15 +466,80 @@ const styles = StyleSheet.create({
   },
   homeCard: {
     marginBottom: 0,
+    borderColor: "#454545",
+    backgroundColor: "#212121",
   },
   homeTitle: {
     color: colors.text,
     fontWeight: "800",
   },
-  homeCopy: {
+  homeHero: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: "#171717",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  homeGameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  homeCountPill: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: "rgba(255,159,102,0.18)",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: 78,
+  },
+  homeCountValue: {
+    color: colors.primary,
+    fontWeight: "800",
+    lineHeight: 16,
+  },
+  homeCountLabel: {
+    color: colors.primary,
+    fontWeight: "700",
+    lineHeight: 14,
+  },
+  homeTagRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+  },
+  homeTag: {
+    borderWidth: 1,
+    borderColor: "#5A5A5A",
+    backgroundColor: "#151515",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  homeTagText: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: "700",
+    textTransform: "capitalize",
+  },
+  homeSectionTitle: {
     color: colors.textSecondary,
-    marginTop: spacing.xs,
+    marginTop: spacing.md,
     lineHeight: 19,
+    fontWeight: "700",
   },
   homeStatsRow: {
     flexDirection: "row",
@@ -497,10 +549,10 @@ const styles = StyleSheet.create({
   homeStatPill: {
     flex: 1,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#242424",
+    borderColor: "#4B4B4B",
+    backgroundColor: "#181818",
     borderRadius: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
     justifyContent: "center",
   },

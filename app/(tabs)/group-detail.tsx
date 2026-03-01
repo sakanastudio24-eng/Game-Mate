@@ -30,10 +30,20 @@ export default function GroupDetailScreen() {
   );
   const [chatMessage, setChatMessage] = useState("");
   const [messages, setMessages] = useState<
-    Array<{ id: string; user: string; text: string }>
+    Array<{ id: string; user: string; text: string; timestamp: Date }>
   >([
-    { id: "1", user: "ProPlayer_X", text: "Who wants to ranked grind today?" },
-    { id: "2", user: "You", text: "I'm in! Let's go." },
+    {
+      id: "1",
+      user: "ProPlayer_X",
+      text: "Who wants to ranked grind today?",
+      timestamp: new Date(Date.now() - 14 * 60000),
+    },
+    {
+      id: "2",
+      user: "You",
+      text: "I'm in! Let's go.",
+      timestamp: new Date(Date.now() - 12 * 60000),
+    },
   ]);
 
   const handleSendMessage = () => {
@@ -41,7 +51,7 @@ export default function GroupDetailScreen() {
       if (!isJoined) return;
       setMessages([
         ...messages,
-        { id: Date.now().toString(), user: "You", text: chatMessage },
+        { id: Date.now().toString(), user: "You", text: chatMessage, timestamp: new Date() },
       ]);
       setChatMessage("");
     }
@@ -202,8 +212,35 @@ export default function GroupDetailScreen() {
                   item.user === "You" && styles.messageItemOwn,
                 ]}
               >
-                <Text style={[styles.messageUser, { fontSize: responsive.captionSize }]}>{item.user}</Text>
-                <Text style={[styles.messageText, { fontSize: responsive.bodySize }]}>{item.text}</Text>
+                <View style={styles.messageMetaRow}>
+                  <Text
+                    style={[
+                      styles.messageUser,
+                      { fontSize: responsive.captionSize },
+                      item.user === "You" && styles.messageUserOwn,
+                    ]}
+                  >
+                    {item.user}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.messageTime,
+                      { fontSize: responsive.captionSize },
+                      item.user === "You" && styles.messageTimeOwn,
+                    ]}
+                  >
+                    {formatChatTime(item.timestamp)}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.messageText,
+                    { fontSize: responsive.bodySize },
+                    item.user === "You" && styles.messageTextOwn,
+                  ]}
+                >
+                  {item.text}
+                </Text>
               </View>
             )}
             scrollEnabled={true}
@@ -267,6 +304,13 @@ export default function GroupDetailScreen() {
       )}
     </Screen>
   );
+}
+
+function formatChatTime(date: Date): string {
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const styles = StyleSheet.create({
@@ -396,11 +440,32 @@ const styles = StyleSheet.create({
   messageUser: {
     color: colors.textMuted,
     fontSize: 11,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  messageUserOwn: {
+    color: "#1A1A1A",
+  },
+  messageMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
     marginBottom: spacing.xs,
+  },
+  messageTime: {
+    color: colors.textMuted,
+    fontWeight: "600",
+  },
+  messageTimeOwn: {
+    color: "#1A1A1A",
   },
   messageText: {
     color: colors.text,
     fontSize: 14,
+  },
+  messageTextOwn: {
+    color: "#1A1A1A",
   },
   composer: {
     flexDirection: "row",

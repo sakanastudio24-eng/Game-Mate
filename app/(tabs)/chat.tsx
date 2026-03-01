@@ -88,6 +88,26 @@ export default function ChatScreen() {
                   : styles.messageBubbleOther,
               ]}
             >
+              <View style={styles.messageMetaRow}>
+                <Text
+                  style={[
+                    styles.messageAuthor,
+                    { fontSize: responsive.captionSize },
+                    item.user === "You" && styles.messageAuthorOwn,
+                  ]}
+                >
+                  {item.user}
+                </Text>
+                <Text
+                  style={[
+                    styles.messageTime,
+                    { fontSize: responsive.captionSize },
+                    item.user === "You" && styles.messageTimeOwn,
+                  ]}
+                >
+                  {formatChatTime(item.timestamp)}
+                </Text>
+              </View>
               <Text
                 style={[
                   styles.messageText,
@@ -96,9 +116,6 @@ export default function ChatScreen() {
                 ]}
               >
                 {item.text}
-              </Text>
-              <Text style={[styles.messageTime, { fontSize: responsive.captionSize }]}>
-                {getTimeAgo(item.timestamp)}
               </Text>
             </View>
           </View>
@@ -165,14 +182,11 @@ export default function ChatScreen() {
   );
 }
 
-function getTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-
-  if (diffMins < 1) return "now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  return `${Math.floor(diffMins / 60)}h ago`;
+function formatChatTime(date: Date): string {
+  return date.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 const styles = StyleSheet.create({
@@ -211,10 +225,27 @@ const styles = StyleSheet.create({
   messageTextOwn: {
     color: colors.background,
   },
+  messageMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.xs,
+    gap: spacing.md,
+  },
+  messageAuthor: {
+    color: colors.textSecondary,
+    fontWeight: "700",
+    flexShrink: 1,
+  },
+  messageAuthorOwn: {
+    color: "#1A1A1A",
+  },
   messageTime: {
     color: colors.textMuted,
-    fontSize: 10,
-    marginTop: spacing.xs,
+    fontWeight: "600",
+  },
+  messageTimeOwn: {
+    color: "#1A1A1A",
   },
   composer: {
     flexDirection: "row",

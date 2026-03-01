@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -97,6 +97,7 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 
 export default function NewsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ focusVideoId?: string; focusFrom?: string }>();
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -138,6 +139,8 @@ export default function NewsScreen() {
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
   const appendLockRef = useRef(false);
+  const handledFocusVideoIdRef = useRef<string | null>(null);
+  const feedListRef = useRef<FlatList<FeedEntry> | null>(null);
   const commentsListRef = useRef<FlatList<CommentItem> | null>(null);
 
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
@@ -145,8 +148,9 @@ export default function NewsScreen() {
   const horizontalPadding = responsive.horizontalPadding;
   const itemHeight = Math.max(viewportHeight, 1);
   const actionRailBottom = bottomSafeInset + 74;
-  const actionRailRight = horizontalPadding + Math.max(16, Math.round(responsive.width * 0.05));
+  const actionRailRight = Math.max(8, Math.round(horizontalPadding * 0.4));
   const bottomMetaOffset = bottomSafeInset + 10;
+  const focusVideoId = typeof params.focusVideoId === "string" ? params.focusVideoId : "";
 
   const activeComments = useMemo(() => {
     if (!commentsTarget) return [];
@@ -165,6 +169,22 @@ export default function NewsScreen() {
   useEffect(() => {
     setLikedIds(likedCache);
   }, [likedCache, setLikedIds]);
+
+  useEffect(() => {
+    if (!focusVideoId || feedItems.length === 0 || itemHeight <= 1) return;
+    if (handledFocusVideoIdRef.current === focusVideoId) return;
+    const focusIndex = feedItems.findIndex((item) => item.id === focusVideoId);
+    if (focusIndex < 0) return;
+    handledFocusVideoIdRef.current = focusVideoId;
+
+    requestAnimationFrame(() => {
+      feedListRef.current?.scrollToIndex({
+        index: focusIndex,
+        animated: true,
+        viewPosition: 0,
+      });
+    });
+  }, [feedItems, focusVideoId, itemHeight]);
 
   const toggleLike = (feedId: string) => {
     const wasLiked = likedIds.includes(feedId);
@@ -288,6 +308,7 @@ export default function NewsScreen() {
       }}
     >
       <FlatList
+        ref={feedListRef}
         data={feedItems}
         keyExtractor={(item) => item.feedId}
         pagingEnabled
@@ -307,6 +328,15 @@ export default function NewsScreen() {
           offset: itemHeight * index,
           index,
         })}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            feedListRef.current?.scrollToIndex({
+              index: Math.min(info.index, feedItems.length - 1),
+              animated: true,
+              viewPosition: 0,
+            });
+          }, 80);
+        }}
         renderItem={({ item }) => {
           const liked = isLiked(item.feedId);
 

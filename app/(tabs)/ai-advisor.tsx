@@ -353,13 +353,10 @@ export default function AIAdvisorScreen() {
     }));
 
     router.push({
-      pathname: "/(tabs)/video-preview",
+      pathname: "/(tabs)/news",
       params: {
-        videoId: item.video.id,
-        title: item.video.title,
-        image: item.video.thumbnail,
-        duration: item.video.duration ?? "0:00",
-        views: compactNumber(item.video.likes),
+        focusVideoId: item.video.id,
+        focusFrom: "search",
       },
     } as any);
   };

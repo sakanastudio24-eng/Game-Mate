@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useResponsive } from "../src/lib/responsive";
 import { primeHomeContentCache } from "../src/lib/content-data";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
+import { useReducedMotionPreference } from "../src/lib/accessibility";
 
 type Step = "welcome" | "email" | "birthdate" | "preferences";
 
@@ -86,10 +87,16 @@ export default function OnboardingScreen() {
   const [platform, setPlatform] = useState("");
   const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
   const platformChipWidth = responsive.isSmallPhone ? "100%" : "48.5%";
+  const reduceMotion = useReducedMotionPreference();
 
   const stepTransition = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      stepTransition.setValue(1);
+      return;
+    }
+
     stepTransition.setValue(0);
     Animated.timing(stepTransition, {
       toValue: 1,
@@ -97,7 +104,7 @@ export default function OnboardingScreen() {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
-  }, [responsive.motionBase, step, stepTransition]);
+  }, [reduceMotion, responsive.motionBase, step, stepTransition]);
 
   const stepAnimatedStyle = {
     opacity: stepTransition,
@@ -183,7 +190,12 @@ export default function OnboardingScreen() {
       >
         <View style={styles.headerBlock}>
           <Text style={styles.brandText}>Welcome to Game Mate</Text>
-          <Text style={[styles.heading, { fontSize: responsive.titleSize }]}>Create Account</Text>
+          <Text
+            accessibilityRole="header"
+            style={[styles.heading, { fontSize: responsive.titleSize }]}
+          >
+            Create Account
+          </Text>
 
           {step !== "welcome" && (
             <View style={styles.progressRow}>
@@ -217,6 +229,8 @@ export default function OnboardingScreen() {
                   <View key={provider.id} style={{ marginTop: index === 0 ? 0 : 0 }}>
                     <Pressable
                       onPress={handleSocialAuth}
+                      accessibilityRole="button"
+                      accessibilityLabel={provider.label}
                       style={({ pressed }) => [
                         styles.authButton,
                         { minHeight: responsive.buttonHeightMedium },
@@ -243,6 +257,8 @@ export default function OnboardingScreen() {
 
               <Pressable
                 onPress={handleNext}
+                accessibilityRole="button"
+                accessibilityLabel="Continue with email"
                 style={({ pressed }) => [
                   styles.primaryWideButton,
                   { minHeight: responsive.buttonHeightLarge },
@@ -257,7 +273,12 @@ export default function OnboardingScreen() {
 
           {step === "email" && (
             <View style={styles.stepSection}>
-              <Text style={[styles.stepTitle, { fontSize: stepTitleSize }]}>What's Your Email?</Text>
+              <Text
+                accessibilityRole="header"
+                style={[styles.stepTitle, { fontSize: stepTitleSize }]}
+              >
+                What's Your Email?
+              </Text>
               <Text style={styles.stepCopy}>We'll use this to keep your account secure</Text>
 
               <Text style={styles.fieldLabel}>Email Address</Text>
@@ -269,6 +290,7 @@ export default function OnboardingScreen() {
                   placeholderTextColor="#999"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  accessibilityLabel="Email address"
                   style={styles.input}
                 />
                 {email.includes("@") && (
@@ -280,6 +302,9 @@ export default function OnboardingScreen() {
 
               <Pressable
                 onPress={() => setAcceptEmails((prev) => !prev)}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Send product and gaming updates"
+                accessibilityState={{ checked: acceptEmails }}
                 style={({ pressed }) => [
                   styles.checkboxRow,
                   acceptEmails ? styles.checkboxRowActive : undefined,
@@ -298,7 +323,12 @@ export default function OnboardingScreen() {
 
           {step === "birthdate" && (
             <View style={styles.stepSection}>
-              <Text style={[styles.stepTitle, { fontSize: stepTitleSize }]}>When Were You Born?</Text>
+              <Text
+                accessibilityRole="header"
+                style={[styles.stepTitle, { fontSize: stepTitleSize }]}
+              >
+                When Were You Born?
+              </Text>
               <Text style={styles.stepCopy}>We need this to verify your age</Text>
 
               <Text style={styles.fieldLabel}>Date of Birth</Text>
@@ -308,6 +338,7 @@ export default function OnboardingScreen() {
                   onChangeText={setBirthdate}
                   placeholder="MM/DD/YYYY"
                   placeholderTextColor="#999"
+                  accessibilityLabel="Date of birth"
                   style={styles.input}
                 />
                 <MaterialCommunityIcons
@@ -320,6 +351,9 @@ export default function OnboardingScreen() {
 
               <Pressable
                 onPress={() => setAcceptTerms((prev) => !prev)}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Agree to terms and privacy policy"
+                accessibilityState={{ checked: acceptTerms }}
                 style={({ pressed }) => [
                   styles.checkboxRow,
                   acceptTerms ? styles.checkboxRowActive : undefined,
@@ -342,7 +376,12 @@ export default function OnboardingScreen() {
 
           {step === "preferences" && (
             <View style={styles.stepSection}>
-              <Text style={[styles.stepTitle, { fontSize: stepTitleSize }]}>What Do You Like to Play?</Text>
+              <Text
+                accessibilityRole="header"
+                style={[styles.stepTitle, { fontSize: stepTitleSize }]}
+              >
+                What Do You Like to Play?
+              </Text>
               <Text style={styles.stepCopy}>Select up to 5 genres (minimum 1)</Text>
 
               <View style={styles.genreGrid}>
@@ -352,6 +391,9 @@ export default function OnboardingScreen() {
                     <Pressable
                       key={genre}
                       onPress={() => toggleGenre(genre)}
+                      accessibilityRole="checkbox"
+                      accessibilityLabel={`Genre ${genre}`}
+                      accessibilityState={{ checked: selected }}
                       style={({ pressed }) => [
                         styles.genreChip,
                         selected ? styles.genreChipSelected : undefined,
@@ -366,7 +408,10 @@ export default function OnboardingScreen() {
                 })}
               </View>
 
-              <Text style={[styles.stepTitle, styles.playStyleTitle, { fontSize: stepTitleSize }]}>
+              <Text
+                accessibilityRole="header"
+                style={[styles.stepTitle, styles.playStyleTitle, { fontSize: stepTitleSize }]}
+              >
                 How Do You Play?
               </Text>
               <Text style={styles.stepCopy}>Choose your primary play style</Text>
@@ -378,6 +423,9 @@ export default function OnboardingScreen() {
                     <Pressable
                       key={style.id}
                       onPress={() => setPlayStyle(style.id)}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${style.label} play style`}
+                      accessibilityState={{ selected }}
                       style={({ pressed }) => [
                         styles.playStyleRow,
                         selected ? styles.playStyleRowSelected : undefined,
@@ -414,7 +462,10 @@ export default function OnboardingScreen() {
                 })}
               </View>
 
-              <Text style={[styles.stepTitle, styles.platformTitle, { fontSize: stepTitleSize }]}>
+              <Text
+                accessibilityRole="header"
+                style={[styles.stepTitle, styles.platformTitle, { fontSize: stepTitleSize }]}
+              >
                 Where Do You Play?
               </Text>
               <Text style={styles.stepCopy}>Choose your primary platform</Text>
@@ -426,6 +477,9 @@ export default function OnboardingScreen() {
                     <Pressable
                       key={item.id}
                       onPress={() => setPlatform(item.id)}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${item.label} platform`}
+                      accessibilityState={{ selected }}
                       style={({ pressed }) => [
                         styles.platformChip,
                         {
@@ -461,6 +515,15 @@ export default function OnboardingScreen() {
           <View style={styles.footer}>
             <Pressable
               onPress={handleNext}
+              accessibilityRole="button"
+              accessibilityLabel={
+                step === "email"
+                  ? "Continue to date of birth step"
+                  : step === "birthdate"
+                    ? "Continue to preferences step"
+                    : "Finish onboarding"
+              }
+              accessibilityState={{ disabled: !canContinue }}
               style={({ pressed }) => [
                 styles.nextButton,
                 !canContinue ? styles.nextButtonDisabled : undefined,

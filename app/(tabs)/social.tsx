@@ -233,8 +233,8 @@ export default function SocialScreen() {
               style={[
                 styles.title,
                 {
-                  fontSize: responsive.titleSize,
-                  lineHeight: Math.round(responsive.titleSize * 1.14),
+                  fontSize: responsive.headerTitleSize + 8,
+                  lineHeight: Math.round((responsive.headerTitleSize + 8) * 1.14),
                 },
               ]}
             >

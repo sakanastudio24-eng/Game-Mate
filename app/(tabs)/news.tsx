@@ -111,7 +111,13 @@ export default function NewsScreen() {
             >
               <View style={styles.titleRow}>
                 <Text
-                  style={[styles.title, { fontSize: responsive.titleSize, lineHeight: Math.round(responsive.titleSize * 1.14) }]}
+                  style={[
+                    styles.title,
+                    {
+                      fontSize: responsive.headerTitleSize + 8,
+                      lineHeight: Math.round((responsive.headerTitleSize + 8) * 1.14),
+                    },
+                  ]}
                 >
                   News
                 </Text>

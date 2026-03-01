@@ -55,7 +55,12 @@ export function Screen({
   const containerStyle = [
     styles.container,
     padded && { paddingHorizontal: responsive.horizontalPadding },
-    { paddingBottom: Math.max(insets.bottom, responsive.safeBottomInset) },
+    {
+      paddingBottom: Math.max(insets.bottom, responsive.safeBottomInset),
+      width: "100%" as const,
+      maxWidth: responsive.contentMaxWidth,
+      alignSelf: "center" as const,
+    },
     style,
   ];
 

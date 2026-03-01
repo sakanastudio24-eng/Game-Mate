@@ -44,11 +44,15 @@ Resolved in this update:
   - Groups join actions now show undo toast and update instantly
   - Local cache hooks added for feed snapshot, likes/saves, group joins/deletes, and search context
 - Share UX upgraded with copy-link fallback placeholder in feed and groups
+- Global toast system added:
+  - app-level `ToastProvider` wired in root layout
+  - feed and groups migrated to `useToast()` for shared undo/action feedback
+- Autocomplete suggestions added on video search using local sources (feed titles/authors/categories + recent searches)
 
 Open follow-ups:
 - Migrate additional list-heavy screens to skeleton loading when API wiring starts (messages, notifications, discover)
 - Add visual regression checks for safe-area + skeleton states across device classes
-- Add persistent storage backend package (`@react-native-async-storage/async-storage`) to replace in-memory fallback used by `useLocalCache` when package is absent
+- Complete AsyncStorage dependency install in online environment (`@react-native-async-storage/async-storage` is declared but package install failed in offline sandbox)
 
 ## 3) Backend Endpoint Inventory (All v1 Endpoints)
 

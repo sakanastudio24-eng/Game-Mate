@@ -56,6 +56,7 @@ Completed this pass:
 - Added recent searches list and clear action.
 - Added reusable filter chips and wired category filters on video search.
 - Added stronger empty state copy via reusable `EmptyState`.
+- Added autocomplete suggestions from local feed titles/authors/categories and recent searches.
 
 5. Continue surfaces
 - Video search now shows continue chips for last search and last opened video.
@@ -64,10 +65,13 @@ Completed this pass:
 6. Share UX
 - Added copy-link fallback placeholder option in share menus (feed and groups), alongside existing share-sheet options.
 
+7. Global feedback surface
+- Added app-level `ToastProvider` and `useToast()` hook.
+- Migrated feed and groups undo/action toasts to global host.
+
 Still open:
-- Global toast service and shared undo queue (currently screen-local toasts).
-- Real persistent storage package install (`@react-native-async-storage/async-storage`) for guaranteed cross-session persistence.
-- Autocomplete suggestion panel and backend-driven search suggestions.
+- Real persistent storage package install completion in online environment (dependency now declared but install could not run in this offline sandbox).
+- Backend-driven autocomplete suggestions.
 - Full activity badge system, duplicate-group templates, and pull-to-refresh animation polish.
 
 ## 2) Postmortem: Problems and Growth

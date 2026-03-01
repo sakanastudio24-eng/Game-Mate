@@ -1,17 +1,9 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
-import {
-  setCompletedOnboarding,
-} from "../src/lib/onboarding-store";
+import { setCompletedOnboarding } from "../src/lib/onboarding-store";
 
 type Step = "welcome" | "email" | "birthdate" | "preferences";
 
@@ -24,29 +16,56 @@ const GENRES = [
   "Sports",
   "Racing",
   "Strategy",
-];
+] as const;
 
 const PLAY_STYLES = [
-  "Casual",
-  "Competitive",
-  "Social",
-  "Achievement Hunter",
-];
+  { id: "casual", label: "Casual", description: "Play for fun", icon: "heart-outline" },
+  {
+    id: "competitive",
+    label: "Competitive",
+    description: "Climb the ranks",
+    icon: "trophy-outline",
+  },
+  {
+    id: "social",
+    label: "Social",
+    description: "Make friends",
+    icon: "account-group-outline",
+  },
+  {
+    id: "achievement",
+    label: "Achievement Hunter",
+    description: "Complete everything",
+    icon: "star-outline",
+  },
+] as const;
+
+const SOCIAL_AUTH = [
+  { id: "google", label: "Continue with Google", icon: "google" },
+  { id: "steam", label: "Continue with Steam", icon: "steam" },
+  {
+    id: "playstation",
+    label: "Continue with PlayStation",
+    icon: "sony-playstation",
+  },
+  { id: "xbox", label: "Continue with Xbox", icon: "microsoft-xbox" },
+] as const;
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("welcome");
   const [email, setEmail] = useState("");
   const [birthdate, setBirthdate] = useState("02/24/1999");
+  const [acceptEmails, setAcceptEmails] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [playStyle, setPlayStyle] = useState("");
 
   const progress = useMemo(() => {
-    if (step === "welcome") return 0;
     if (step === "email") return 1;
     if (step === "birthdate") return 2;
-    return 3;
+    if (step === "preferences") return 3;
+    return 0;
   }, [step]);
 
   const canContinue = useMemo(() => {
@@ -56,36 +75,59 @@ export default function OnboardingScreen() {
     return selectedGenres.length > 0 && playStyle.length > 0;
   }, [acceptTerms, email, playStyle, selectedGenres.length, step]);
 
+  const finishOnboarding = async () => {
+    await setCompletedOnboarding(true);
+    router.replace("/(tabs)/news");
+  };
+
   const handleNext = async () => {
     if (!canContinue) return;
-    if (step === "welcome") setStep("email");
-    else if (step === "email") setStep("birthdate");
-    else if (step === "birthdate") setStep("preferences");
-    else {
-      await setCompletedOnboarding(true);
-      router.replace("/(tabs)/news");
+
+    if (step === "welcome") {
+      setStep("email");
+      return;
     }
+
+    if (step === "email") {
+      setStep("birthdate");
+      return;
+    }
+
+    if (step === "birthdate") {
+      setStep("preferences");
+      return;
+    }
+
+    await finishOnboarding();
   };
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres((prev) => {
-      if (prev.includes(genre)) return prev.filter((g) => g !== genre);
+      if (prev.includes(genre)) return prev.filter((item) => item !== genre);
       if (prev.length >= 5) return prev;
       return [...prev, genre];
     });
   };
 
+  const handleSocialAuth = () => {
+    setStep("email");
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.head}>
-        <Text style={styles.brand}>Game Mate</Text>
+      <View style={styles.headerBlock}>
+        <Text style={styles.brandText}>Welcome to Game Mate</Text>
         <Text style={styles.heading}>Create Account</Text>
+
         {step !== "welcome" && (
           <View style={styles.progressRow}>
-            {[1, 2, 3].map((n) => (
+            {[1, 2, 3].map((index) => (
               <View
-                key={n}
-                style={[styles.progressBar, n <= progress && styles.progressBarActive]}
+                key={index}
+                style={[
+                  styles.progressBar,
+                  index <= progress ? styles.progressBarActive : undefined,
+                ]}
               />
             ))}
           </View>
@@ -93,65 +135,140 @@ export default function OnboardingScreen() {
       </View>
 
       {step === "welcome" && (
-        <View style={styles.section}>
-          <View style={styles.logoWrap}>
-            <MaterialCommunityIcons name="gamepad-variant" size={72} color="#1A1A1A" />
+        <View style={styles.stepSection}>
+          <View style={styles.welcomeHero}>
+            <View style={styles.logoCircle}>
+              <MaterialCommunityIcons name="gamepad-variant" size={72} color="#1A1A1A" />
+            </View>
+            <Text style={styles.appTitle}>Game Mate</Text>
+            <Text style={styles.welcomeCopy}>Your Gaming Community Hub</Text>
           </View>
-          <Text style={styles.title}>Welcome to your gaming community</Text>
-          <Text style={styles.subTitle}>
-            Find squads, join groups, and connect with players that match your style.
-          </Text>
-          <Pressable style={styles.providerButton} onPress={handleNext}>
-            <Text style={styles.providerText}>Continue with Email</Text>
+
+          <Text style={styles.authHint}>Sign in with your gaming account</Text>
+          <View style={styles.authList}>
+            {SOCIAL_AUTH.map((provider) => (
+              <Pressable
+                key={provider.id}
+                onPress={handleSocialAuth}
+                style={({ pressed }) => [styles.authButton, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons
+                  name={provider.icon as any}
+                  size={20}
+                  color="#F5F5F5"
+                  style={styles.authIcon}
+                />
+                <Text style={styles.authLabel}>{provider.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.orRow}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>or</Text>
+            <View style={styles.orLine} />
+          </View>
+
+          <Pressable
+            onPress={handleNext}
+            style={({ pressed }) => [styles.primaryWideButton, pressed && styles.pressed]}
+          >
+            <MaterialCommunityIcons name="email-outline" size={20} color="#1A1A1A" />
+            <Text style={styles.primaryWideButtonText}>Continue with Email</Text>
           </Pressable>
         </View>
       )}
 
       {step === "email" && (
-        <View style={styles.section}>
-          <Text style={styles.title}>What's your email?</Text>
-          <TextInput
-            value={email}
-            onChangeText={setEmail}
-            placeholder="gamer@example.com"
-            placeholderTextColor="#999"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            style={styles.input}
-          />
-        </View>
-      )}
+        <View style={styles.stepSection}>
+          <Text style={styles.stepTitle}>What's Your Email?</Text>
+          <Text style={styles.stepCopy}>We'll use this to keep your account secure</Text>
 
-      {step === "birthdate" && (
-        <View style={styles.section}>
-          <Text style={styles.title}>When were you born?</Text>
-          <TextInput
-            value={birthdate}
-            onChangeText={setBirthdate}
-            placeholder="MM/DD/YYYY"
-            placeholderTextColor="#999"
-            style={styles.input}
-          />
-          <Pressable
-            onPress={() => setAcceptTerms((v) => !v)}
-            style={[styles.toggle, acceptTerms && styles.toggleActive]}
-          >
-            <MaterialCommunityIcons
-              name={acceptTerms ? "check-circle" : "checkbox-blank-circle-outline"}
-              size={18}
-              color={acceptTerms ? "#FF9F66" : "#444"}
+          <Text style={styles.fieldLabel}>Email Address</Text>
+          <View style={styles.inputWrap}>
+            <TextInput
+              value={email}
+              onChangeText={setEmail}
+              placeholder="gamer@example.com"
+              placeholderTextColor="#999"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              style={styles.input}
             />
-            <Text style={styles.toggleText}>
-              I agree to Terms of Service and Privacy Policy
+            {email.includes("@") && (
+              <View style={styles.validBadge}>
+                <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
+              </View>
+            )}
+          </View>
+
+          <Pressable
+            onPress={() => setAcceptEmails((prev) => !prev)}
+            style={({ pressed }) => [
+              styles.checkboxRow,
+              acceptEmails ? styles.checkboxRowActive : undefined,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={[styles.checkbox, acceptEmails ? styles.checkboxOn : undefined]}>
+              {acceptEmails && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
+            </View>
+            <Text style={styles.checkboxText}>
+              Send me updates about Game Mate features and gaming news
             </Text>
           </Pressable>
         </View>
       )}
 
+      {step === "birthdate" && (
+        <View style={styles.stepSection}>
+          <Text style={styles.stepTitle}>When Were You Born?</Text>
+          <Text style={styles.stepCopy}>We need this to verify your age</Text>
+
+          <Text style={styles.fieldLabel}>Date of Birth</Text>
+          <View style={styles.inputWrap}>
+            <TextInput
+              value={birthdate}
+              onChangeText={setBirthdate}
+              placeholder="MM/DD/YYYY"
+              placeholderTextColor="#999"
+              style={styles.input}
+            />
+            <MaterialCommunityIcons
+              name="calendar-month-outline"
+              size={20}
+              color="#777"
+              style={styles.inputTrailingIcon}
+            />
+          </View>
+
+          <Pressable
+            onPress={() => setAcceptTerms((prev) => !prev)}
+            style={({ pressed }) => [
+              styles.checkboxRow,
+              acceptTerms ? styles.checkboxRowActive : undefined,
+              pressed && styles.pressed,
+            ]}
+          >
+            <View style={[styles.checkbox, acceptTerms ? styles.checkboxOn : undefined]}>
+              {acceptTerms && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
+            </View>
+            <View style={styles.termsTextWrap}>
+              <Text style={styles.checkboxText}>
+                I agree to the <Text style={styles.linkText}>Terms of Service</Text> and{" "}
+                <Text style={styles.linkText}>Privacy Policy</Text>
+              </Text>
+              <Text style={styles.securityHint}>Your data is secure and encrypted.</Text>
+            </View>
+          </Pressable>
+        </View>
+      )}
+
       {step === "preferences" && (
-        <View style={styles.section}>
-          <Text style={styles.title}>Pick your game genres</Text>
-          <Text style={styles.subTitleDark}>Select up to 5</Text>
+        <View style={styles.stepSection}>
+          <Text style={styles.stepTitle}>What Do You Like to Play?</Text>
+          <Text style={styles.stepCopy}>Select up to 5 genres (minimum 1)</Text>
+
           <View style={styles.genreGrid}>
             {GENRES.map((genre) => {
               const selected = selectedGenres.includes(genre);
@@ -159,30 +276,60 @@ export default function OnboardingScreen() {
                 <Pressable
                   key={genre}
                   onPress={() => toggleGenre(genre)}
-                  style={[styles.genreChip, selected && styles.genreChipActive]}
+                  style={({ pressed }) => [
+                    styles.genreChip,
+                    selected ? styles.genreChipSelected : undefined,
+                    pressed && styles.pressed,
+                  ]}
                 >
-                  <Text style={[styles.genreText, selected && styles.genreTextActive]}>
+                  <Text style={[styles.genreChipText, selected ? styles.genreChipTextSelected : undefined]}>
                     {genre}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text style={[styles.title, styles.playTitle]}>Play style</Text>
+
+          <Text style={[styles.stepTitle, styles.playStyleTitle]}>How Do You Play?</Text>
+          <Text style={styles.stepCopy}>Choose your primary play style</Text>
+
           <View style={styles.playStyleList}>
             {PLAY_STYLES.map((style) => {
-              const selected = playStyle === style;
+              const selected = playStyle === style.id;
               return (
                 <Pressable
-                  key={style}
-                  onPress={() => setPlayStyle(style)}
-                  style={[styles.playRow, selected && styles.playRowActive]}
+                  key={style.id}
+                  onPress={() => setPlayStyle(style.id)}
+                  style={({ pressed }) => [
+                    styles.playStyleRow,
+                    selected ? styles.playStyleRowSelected : undefined,
+                    pressed && styles.pressed,
+                  ]}
                 >
-                  <Text style={[styles.playText, selected && styles.playTextActive]}>
-                    {style}
-                  </Text>
+                  <View
+                    style={[
+                      styles.playStyleIconWrap,
+                      selected ? styles.playStyleIconWrapSelected : undefined,
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name={style.icon as any}
+                      size={20}
+                      color={selected ? "#1A1A1A" : "#444"}
+                    />
+                  </View>
+                  <View style={styles.playStyleTextWrap}>
+                    <Text style={[styles.playStyleLabel, selected ? styles.playStyleLabelSelected : undefined]}>
+                      {style.label}
+                    </Text>
+                    <Text style={[styles.playStyleDescription, selected ? styles.playStyleDescriptionSelected : undefined]}>
+                      {style.description}
+                    </Text>
+                  </View>
                   {selected && (
-                    <MaterialCommunityIcons name="check" size={20} color="#1A1A1A" />
+                    <View style={styles.playStyleCheck}>
+                      <MaterialCommunityIcons name="check" size={16} color="#FF9F66" />
+                    </View>
                   )}
                 </Pressable>
               );
@@ -191,14 +338,23 @@ export default function OnboardingScreen() {
         </View>
       )}
 
-      <View style={styles.footer}>
-        <Pressable
-          onPress={handleNext}
-          style={[styles.nextButton, !canContinue && styles.nextButtonDisabled]}
-        >
-          <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
-        </Pressable>
-      </View>
+      {step !== "welcome" && (
+        <View style={styles.footer}>
+          <Pressable
+            onPress={handleNext}
+            style={({ pressed }) => [
+              styles.nextButton,
+              !canContinue ? styles.nextButtonDisabled : undefined,
+              pressed && styles.pressed,
+            ]}
+          >
+            <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
+          </Pressable>
+          <Text style={styles.stepFootnote}>
+            {step === "email" ? "Step 1 of 3" : step === "birthdate" ? "Step 2 of 3" : "Step 3 of 3"}
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -214,11 +370,11 @@ const styles = StyleSheet.create({
     paddingTop: 48,
     paddingBottom: 40,
   },
-  head: {
-    marginBottom: 24,
+  headerBlock: {
+    marginBottom: 18,
   },
-  brand: {
-    color: "#999",
+  brandText: {
+    color: "#8A8A8A",
     fontSize: 13,
     marginBottom: 8,
   },
@@ -229,147 +385,295 @@ const styles = StyleSheet.create({
   },
   progressRow: {
     flexDirection: "row",
-    gap: 8,
-    marginTop: 16,
+    marginTop: 14,
   },
   progressBar: {
-    width: 46,
+    width: 48,
     height: 4,
     borderRadius: 4,
     backgroundColor: "#D0D0D0",
+    marginRight: 8,
   },
   progressBarActive: {
     backgroundColor: "#FF9F66",
   },
-  section: {
+  stepSection: {
     flex: 1,
   },
-  logoWrap: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+  welcomeHero: {
+    borderRadius: 24,
+    backgroundColor: "#1A1A1A",
+    paddingHorizontal: 24,
+    paddingVertical: 30,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FF9F66",
-    alignSelf: "center",
-    marginVertical: 24,
+    marginBottom: 14,
   },
-  title: {
-    color: "#1A1A1A",
-    fontSize: 26,
+  appTitle: {
+    color: "#F5F5F5",
+    fontSize: 30,
     fontWeight: "800",
+    marginBottom: 4,
+  },
+  welcomeCopy: {
+    color: "#B0B0B0",
+    textAlign: "center",
+    fontSize: 15,
+  },
+  authHint: {
+    color: "#666",
+    fontSize: 13,
+    marginBottom: 10,
+    textAlign: "center",
+    fontWeight: "600",
+  },
+  authList: {
     marginBottom: 8,
   },
-  subTitle: {
-    color: "#606060",
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  providerButton: {
-    backgroundColor: "#FF9F66",
-    borderRadius: 16,
-    paddingVertical: 14,
-    marginTop: 12,
+  authButton: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2A2A2A",
+    borderWidth: 1,
+    borderColor: "#3A3A3A",
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginBottom: 10,
   },
-  providerText: {
-    color: "#1A1A1A",
+  authIcon: {
+    marginRight: 8,
+  },
+  authLabel: {
+    color: "#F5F5F5",
+    fontSize: 15,
     fontWeight: "700",
+  },
+  orRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#D0D0D0",
+  },
+  orText: {
+    color: "#8A8A8A",
+    marginHorizontal: 10,
+    fontWeight: "600",
+  },
+  primaryWideButton: {
+    backgroundColor: "#FF9F66",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  primaryWideButtonText: {
+    color: "#1A1A1A",
     fontSize: 16,
+    fontWeight: "800",
+    marginLeft: 6,
+  },
+  stepTitle: {
+    color: "#1A1A1A",
+    fontSize: 28,
+    fontWeight: "800",
+    marginBottom: 6,
+  },
+  stepCopy: {
+    color: "#777",
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  fieldLabel: {
+    color: "#1A1A1A",
+    fontSize: 12,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+  inputWrap: {
+    position: "relative",
+    marginBottom: 16,
   },
   input: {
     backgroundColor: "#E8E8E8",
     borderRadius: 16,
     paddingHorizontal: 18,
     paddingVertical: 14,
-    fontSize: 16,
     color: "#1A1A1A",
-    marginTop: 8,
+    fontSize: 16,
   },
-  toggle: {
-    flexDirection: "row",
-    gap: 10,
+  inputTrailingIcon: {
+    position: "absolute",
+    right: 14,
+    top: 14,
+  },
+  validBadge: {
+    position: "absolute",
+    right: 12,
+    top: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#66FF9F",
     alignItems: "center",
-    marginTop: 18,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#E8E8E8",
+    justifyContent: "center",
   },
-  toggleActive: {
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    backgroundColor: "#E8E8E8",
+    borderRadius: 12,
+    padding: 12,
+  },
+  checkboxRowActive: {
     borderWidth: 1,
     borderColor: "#FF9F66",
   },
-  toggleText: {
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: "#D0D0D0",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  checkboxOn: {
+    backgroundColor: "#FF9F66",
+  },
+  checkboxText: {
     color: "#333",
     flex: 1,
-    lineHeight: 19,
+    lineHeight: 20,
   },
-  subTitleDark: {
-    color: "#606060",
-    marginBottom: 10,
+  termsTextWrap: {
+    flex: 1,
+  },
+  linkText: {
+    color: "#FF9F66",
+    fontWeight: "700",
+  },
+  securityHint: {
+    color: "#777",
+    marginTop: 4,
+    fontSize: 12,
   },
   genreGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    marginHorizontal: -4,
   },
   genreChip: {
+    width: "50%",
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  genreChipSelected: {},
+  genreChipText: {
     backgroundColor: "#E8E8E8",
-    borderRadius: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  genreChipActive: {
-    backgroundColor: "#FF9F66",
-  },
-  genreText: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    textAlign: "center",
     color: "#333",
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 13,
   },
-  genreTextActive: {
+  genreChipTextSelected: {
+    backgroundColor: "#FF9F66",
     color: "#1A1A1A",
   },
-  playTitle: {
-    marginTop: 18,
+  playStyleTitle: {
+    marginTop: 6,
   },
   playStyleList: {
-    gap: 8,
+    marginTop: 6,
   },
-  playRow: {
-    backgroundColor: "#E8E8E8",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  playStyleRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    backgroundColor: "#E8E8E8",
+    borderRadius: 14,
+    padding: 12,
+    marginBottom: 8,
   },
-  playRowActive: {
+  playStyleRowSelected: {
     backgroundColor: "#FF9F66",
   },
-  playText: {
-    color: "#333",
-    fontWeight: "700",
+  playStyleIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#D8D8D8",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
   },
-  playTextActive: {
+  playStyleIconWrapSelected: {
+    backgroundColor: "#FFCCB3",
+  },
+  playStyleTextWrap: {
+    flex: 1,
+  },
+  playStyleLabel: {
     color: "#1A1A1A",
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 2,
+  },
+  playStyleLabelSelected: {
+    color: "#1A1A1A",
+  },
+  playStyleDescription: {
+    color: "#666",
+    fontSize: 12,
+  },
+  playStyleDescriptionSelected: {
+    color: "#4A3A30",
+  },
+  playStyleCheck: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#1A1A1A",
+    alignItems: "center",
+    justifyContent: "center",
   },
   footer: {
     alignItems: "center",
-    marginTop: 28,
+    marginTop: 20,
   },
   nextButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 84,
+    height: 84,
+    borderRadius: 42,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FF9F66",
   },
   nextButtonDisabled: {
-    opacity: 0.45,
+    backgroundColor: "#D0D0D0",
+  },
+  stepFootnote: {
+    color: "#777",
+    fontSize: 12,
+    marginTop: 8,
+  },
+  pressed: {
+    opacity: 0.8,
   },
 });

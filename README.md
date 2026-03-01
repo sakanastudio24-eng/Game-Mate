@@ -226,13 +226,13 @@ WelcomeScreen
 
 ```bash
 # Install dependencies
-pnpm install
+npm install
 
 # Start the dev server
-pnpm dev
+npm run start
 
-# Build for production
-pnpm build
+# Quick Android bundle validation
+npx expo export:embed --eager --platform android --dev false
 ```
 
 ---
@@ -258,4 +258,5 @@ See [`docs/XCODE_MIGRATION.md`](docs/XCODE_MIGRATION.md) for a full component-by
 | `docs/FLOWS.md`               | Detailed screen-by-screen navigation flows    |
 | `docs/COMPONENTS.md`          | Full component prop catalog                   |
 | `docs/DESIGN_SYSTEM_MOBILE.md`| iPhone + Android layout and typography system |
+| `docs/MOBILE_WORKFLOW_NOTES.md` | Build checklist, postmortem, optimization log |
 | `docs/XCODE_MIGRATION.md`     | iOS / SwiftUI porting reference               |

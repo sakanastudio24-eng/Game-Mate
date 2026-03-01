@@ -9,6 +9,7 @@ import { FilterChipOption, FilterChips } from "../../src/components/ui/FilterChi
 import { Header } from "../../src/components/ui/Header";
 import { RecentSearchList } from "../../src/components/ui/RecentSearchList";
 import { Screen } from "../../src/components/ui/Screen";
+import { SearchAutocompleteList } from "../../src/components/ui/SearchAutocompleteList";
 import { Skeleton } from "../../src/components/ui/Skeleton";
 import { NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
@@ -137,6 +138,25 @@ export default function AIAdvisorScreen() {
       selectedCategoryFilters.includes(video.category),
     );
   }, [selectedCategoryFilters]);
+
+  const autocompleteItems = useMemo(() => {
+    const q = queryInput.trim().toLowerCase();
+    if (!q) return [];
+
+    const pool = new Set<string>();
+
+    recentSearches.forEach((item) => {
+      if (item.toLowerCase().includes(q)) pool.add(item);
+    });
+
+    NEWS_FEED.forEach((video) => {
+      if (video.title.toLowerCase().includes(q)) pool.add(video.title);
+      if (video.author.toLowerCase().includes(q)) pool.add(video.author);
+      if (video.category.toLowerCase().includes(q)) pool.add(video.category.toUpperCase());
+    });
+
+    return [...pool].slice(0, 6);
+  }, [queryInput, recentSearches]);
 
   const addRecentSearch = useCallback(
     (value: string) => {
@@ -327,6 +347,10 @@ export default function AIAdvisorScreen() {
           inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
           placeholderTextColor={colors.textSecondary}
         />
+
+        {queryInput.trim().length > 0 ? (
+          <SearchAutocompleteList items={autocompleteItems} onSelect={setQueryInput} />
+        ) : null}
 
         {queryInput.trim().length === 0 ? (
           <RecentSearchList

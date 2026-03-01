@@ -23,12 +23,16 @@ import {
 } from "../../src/ai/advisorClient";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
+import { RecentSearchList } from "../../src/components/ui/RecentSearchList";
 import { Skeleton } from "../../src/components/ui/Skeleton";
+import { Toast } from "../../src/components/ui/Toast";
 import {
   GROUPS_PAGE_SIZE,
   homeContentPrimed,
   SUGGESTED_GROUPS,
 } from "../../src/lib/content-data";
+import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
+import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -38,6 +42,14 @@ type AISwipeItem = {
   score: number;
   reasons: string[];
 };
+
+type GroupsToastState = {
+  visible: boolean;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+};
+
 const SWIPE_ACTION_THRESHOLD = 90;
 
 function mapAiCandidate(group: (typeof SUGGESTED_GROUPS)[number]): AIGroupCandidate {
@@ -78,9 +90,29 @@ export default function GroupsScreen() {
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
 
   const initialVisible = homeContentPrimed() ? GROUPS_PAGE_SIZE + 1 : GROUPS_PAGE_SIZE;
-  const [joinedGroupIds, setJoinedGroupIds] = useState<string[]>([]);
-  const [deletedGroupIds, setDeletedGroupIds] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
+  const {
+    value: joinedGroupIds,
+    setValue: setJoinedGroupIds,
+  } = useLocalCache<string[]>("groups:joined-ids", []);
+  const {
+    value: deletedGroupIds,
+    setValue: setDeletedGroupIds,
+  } = useLocalCache<string[]>("groups:deleted-ids", []);
+  const {
+    value: recentSearches,
+    setValue: setRecentSearches,
+    clear: clearRecentSearches,
+  } = useLocalCache<string[]>("groups:recent-searches", []);
+  const {
+    value: lastOpenedGroup,
+    setValue: setLastOpenedGroup,
+  } = useLocalCache<{ id?: string; name?: string }>("groups:last-opened", {});
+  const [toastState, setToastState] = useState<GroupsToastState>({
+    visible: false,
+    message: "",
+  });
+  const [queryInput, setQueryInput] = useState("");
+  const query = useDebouncedValue(queryInput, 260);
   const [visibleCount, setVisibleCount] = useState(initialVisible);
   const [activeGroupMenu, setActiveGroupMenu] = useState<{
     id: string;
@@ -115,6 +147,17 @@ export default function GroupsScreen() {
     setVisibleCount(initialVisible);
   }, [query, initialVisible]);
 
+  useEffect(() => {
+    const cleaned = query.trim();
+    if (!cleaned) return;
+    setRecentSearches((previous) => {
+      const withoutMatch = previous.filter(
+        (item) => item.toLowerCase() !== cleaned.toLowerCase(),
+      );
+      return [cleaned, ...withoutMatch].slice(0, 8);
+    });
+  }, [query, setRecentSearches]);
+
   const visibleGroups = useMemo(
     () => discoverableGroups.slice(0, visibleCount),
     [discoverableGroups, visibleCount],
@@ -122,14 +165,49 @@ export default function GroupsScreen() {
 
   const totalOnline = SUGGESTED_GROUPS.reduce((total, group) => total + group.online, 0);
 
-  const toggleJoin = (id: string) => {
+  const showToast = (next: Omit<GroupsToastState, "visible">) => {
+    setToastState({
+      ...next,
+      visible: true,
+    });
+  };
+
+  const dismissToast = () => {
+    setToastState((previous) => ({
+      ...previous,
+      visible: false,
+    }));
+  };
+
+  const toggleJoin = (id: string, groupName: string) => {
+    const wasJoined = joinedGroupIds.includes(id);
     setJoinedGroupIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
+
+    if (!wasJoined) {
+      showToast({
+        message: `${groupName} joined`,
+        actionLabel: "Undo",
+        onAction: () => {
+          setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
+        },
+      });
+    }
   };
 
-  const joinGroup = (id: string) => {
+  const joinGroup = (id: string, groupName: string) => {
+    const wasJoined = joinedGroupIds.includes(id);
     setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    if (!wasJoined) {
+      showToast({
+        message: `${groupName} joined`,
+        actionLabel: "Undo",
+        onAction: () => {
+          setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
+        },
+      });
+    }
   };
 
   const loadMoreGroups = () => {
@@ -149,6 +227,14 @@ export default function GroupsScreen() {
   const handleDeleteGroup = (groupId: string) => {
     setDeletedGroupIds((prev) => (prev.includes(groupId) ? prev : [...prev, groupId]));
     setJoinedGroupIds((prev) => prev.filter((id) => id !== groupId));
+  };
+
+  const openGroupDetail = (groupId: string, groupName: string) => {
+    setLastOpenedGroup({
+      id: groupId,
+      name: groupName,
+    });
+    router.push(`/(tabs)/group-detail?groupId=${groupId}`);
   };
 
   const openGroupOptions = (groupId: string, groupName: string, game: string) => {
@@ -240,10 +326,9 @@ export default function GroupsScreen() {
       duration: 180,
       useNativeDriver: true,
     }).start(() => {
-      joinGroup(current.group.id);
+      joinGroup(current.group.id, current.group.name);
       setAiSwipeItems((prev) => prev.slice(1));
       swipeX.setValue(0);
-      Alert.alert("Joined Group", `You joined "${current.group.name}".`);
     });
   };
 
@@ -382,13 +467,40 @@ export default function GroupsScreen() {
 
             <Searchbar
               placeholder="Search groups..."
-              value={query}
-              onChangeText={setQuery}
+              value={queryInput}
+              onChangeText={setQueryInput}
               accessibilityLabel="Search groups"
               style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
               inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
               placeholderTextColor={colors.textSecondary}
             />
+
+            {queryInput.trim().length === 0 ? (
+              <RecentSearchList
+                items={recentSearches}
+                onSelect={setQueryInput}
+                onClear={clearRecentSearches}
+              />
+            ) : null}
+
+            {lastOpenedGroup.id ? (
+              <Pressable
+                onPress={() =>
+                  openGroupDetail(
+                    lastOpenedGroup.id ?? SUGGESTED_GROUPS[0].id,
+                    lastOpenedGroup.name ?? "Last Group",
+                  )
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`Continue with ${lastOpenedGroup.name ?? "last group"}`}
+                style={({ pressed }) => [styles.continuePill, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="history" size={14} color={colors.primary} />
+                <Text style={styles.continuePillText} numberOfLines={1}>
+                  Continue: {lastOpenedGroup.name ?? "Last Group"}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         </AnimatedEntrance>
 
@@ -448,7 +560,7 @@ export default function GroupsScreen() {
                 }}
               >
                 <Pressable
-                  onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                  onPress={() => openGroupDetail(group.id, group.name)}
                   accessibilityRole="button"
                   accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
                   accessibilityHint="Open group details"
@@ -509,7 +621,7 @@ export default function GroupsScreen() {
                     <Pressable
                       onPress={(event) => {
                         event.stopPropagation();
-                        toggleJoin(group.id);
+                        toggleJoin(group.id, group.name);
                       }}
                       accessibilityRole="button"
                       accessibilityLabel={isJoined ? `Leave ${group.name}` : `Join ${group.name}`}
@@ -693,6 +805,24 @@ export default function GroupsScreen() {
         </Pressable>
       </Modal>
 
+      <Toast
+        visible={toastState.visible}
+        message={toastState.message}
+        icon="check-circle-outline"
+        action={
+          toastState.actionLabel && toastState.onAction
+            ? {
+                label: toastState.actionLabel,
+                onPress: () => {
+                  toastState.onAction?.();
+                  dismissToast();
+                },
+              }
+            : undefined
+        }
+        onDismiss={dismissToast}
+      />
+
       <ActionSheet
         visible={activeGroupMenu !== null}
         title={activeGroupMenu?.name ?? "Group"}
@@ -708,7 +838,7 @@ export default function GroupsScreen() {
                   onPress: () =>
                     handleShareToFriends(
                       activeGroupMenu.name,
-                      `Check out this Game Mate group: ${activeGroupMenu.name} (${activeGroupMenu.game}).`,
+                      `Check out this Game Mate group: ${activeGroupMenu.name} (${activeGroupMenu.game}).\nhttps://gamemate.app/g/${activeGroupMenu.id}`,
                     ),
                 },
                 {
@@ -757,6 +887,15 @@ export default function GroupsScreen() {
                   icon: "dots-horizontal-circle-outline",
                   onPress: () => {
                     void handleShareGroupToContacts(shareTarget.message);
+                  },
+                },
+                {
+                  id: "copy",
+                  label: "Copy Link",
+                  icon: "content-copy",
+                  onPress: () => {
+                    const link = shareTarget.message.split("\n").slice(-1)[0];
+                    Alert.alert("Link Ready", link);
                   },
                 },
               ]
@@ -848,6 +987,26 @@ const styles = StyleSheet.create({
   searchInput: {
     color: colors.text,
     fontSize: 14,
+  },
+  continuePill: {
+    marginTop: spacing.sm,
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: "rgba(255,159,102,0.12)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  continuePillText: {
+    marginLeft: 6,
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "700",
+    maxWidth: "92%",
   },
   sectionHead: {
     flexDirection: "row",

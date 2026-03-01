@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -16,8 +16,11 @@ import {
 import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
+import { Toast } from "../../src/components/ui/Toast";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
+import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
+import { useOptimisticToggle } from "../../src/lib/hooks/useOptimisticToggle";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -31,6 +34,13 @@ interface CommentItem {
   avatar: string;
   message: string;
 }
+
+type NewsToastState = {
+  visible: boolean;
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+};
 
 const INITIAL_LOOP_COUNT = 3;
 const COMMENT_AVATARS: Record<string, string> = {
@@ -96,10 +106,31 @@ export default function NewsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const initialFeed = useMemo(() => createInitialFeed(), []);
 
-  const [feedItems, setFeedItems] = useState<FeedEntry[]>(() => createInitialFeed());
-  const [likedIds, setLikedIds] = useState<string[]>([]);
-  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const { value: feedItems, setValue: setFeedItems } = useLocalCache<FeedEntry[]>(
+    "news:cached-feed-items",
+    initialFeed,
+  );
+  const { value: savedIds, setValue: setSavedIds } = useLocalCache<string[]>(
+    "news:saved-ids",
+    [],
+  );
+  const { value: likedCache, setValue: setLikedCache } = useLocalCache<string[]>(
+    "news:liked-ids",
+    [],
+  );
+  const {
+    selectedIds: likedIds,
+    setSelectedIds: setLikedIds,
+    isSelected: isLiked,
+    toggle: toggleOptimisticLike,
+  } = useOptimisticToggle([]);
+
+  const [toastState, setToastState] = useState<NewsToastState>({
+    visible: false,
+    message: "",
+  });
   const [activePostMenu, setActivePostMenu] = useState<FeedEntry | null>(null);
   const [commentsTarget, setCommentsTarget] = useState<FeedEntry | null>(null);
   const [commentThreads, setCommentThreads] = useState<Record<string, CommentItem[]>>({});
@@ -125,20 +156,47 @@ export default function NewsScreen() {
     return commentThreads[commentsTarget.feedId] ?? buildCommentPreview(commentsTarget);
   }, [commentThreads, commentsTarget]);
 
-  const isLiked = useCallback(
-    (feedId: string) => likedIds.includes(feedId),
-    [likedIds],
-  );
-
   const isSaved = useCallback(
     (feedId: string) => savedIds.includes(feedId),
     [savedIds],
   );
 
+  useEffect(() => {
+    setLikedIds(likedCache);
+  }, [likedCache, setLikedIds]);
+
+  const showToast = (next: Omit<NewsToastState, "visible">) => {
+    setToastState({
+      ...next,
+      visible: true,
+    });
+  };
+
+  const dismissToast = () => {
+    setToastState((previous) => ({
+      ...previous,
+      visible: false,
+    }));
+  };
+
   const toggleLike = (feedId: string) => {
-    setLikedIds((prev) =>
+    const wasLiked = likedIds.includes(feedId);
+    const undoToggle = toggleOptimisticLike(feedId);
+
+    setLikedCache((prev) =>
       prev.includes(feedId) ? prev.filter((item) => item !== feedId) : [...prev, feedId],
     );
+
+    if (!wasLiked) {
+      showToast({
+        message: "Post liked",
+        actionLabel: "Undo",
+        onAction: () => {
+          undoToggle();
+          setLikedCache((prev) => prev.filter((item) => item !== feedId));
+        },
+      });
+    }
   };
 
   const toggleSave = (feedId: string) => {
@@ -216,7 +274,7 @@ export default function NewsScreen() {
   const openShareDrawer = (item: FeedEntry) => {
     setShareTarget({
       title: item.title,
-      message: `${item.title} · ${item.author}`,
+      message: `${item.title} · ${item.author}\nhttps://gamemate.app/p/${item.id}`,
     });
   };
 
@@ -461,6 +519,24 @@ export default function NewsScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      <Toast
+        visible={toastState.visible}
+        message={toastState.message}
+        icon="thumb-up-outline"
+        action={
+          toastState.actionLabel && toastState.onAction
+            ? {
+                label: toastState.actionLabel,
+                onPress: () => {
+                  toastState.onAction?.();
+                  dismissToast();
+                },
+              }
+            : undefined
+        }
+        onDismiss={dismissToast}
+      />
+
       <ActionSheet
         visible={activePostMenu !== null}
         title={activePostMenu?.title ?? "Post"}
@@ -515,6 +591,15 @@ export default function NewsScreen() {
                   icon: "account-box-outline",
                   onPress: () => {
                     void handleSystemShare(shareTarget.message);
+                  },
+                },
+                {
+                  id: "copy",
+                  label: "Copy Link",
+                  icon: "content-copy",
+                  onPress: () => {
+                    const link = shareTarget.message.split("\n").slice(-1)[0];
+                    Alert.alert("Link Ready", link);
                   },
                 },
               ]

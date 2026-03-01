@@ -3,11 +3,16 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
-import { Header } from "../../src/components/ui/Header";
-import { Skeleton } from "../../src/components/ui/Skeleton";
-import { Screen } from "../../src/components/ui/Screen";
 import { getSuggestedTags } from "../../src/ai/advisorClient";
+import { EmptyState } from "../../src/components/ui/EmptyState";
+import { FilterChipOption, FilterChips } from "../../src/components/ui/FilterChips";
+import { Header } from "../../src/components/ui/Header";
+import { RecentSearchList } from "../../src/components/ui/RecentSearchList";
+import { Screen } from "../../src/components/ui/Screen";
+import { Skeleton } from "../../src/components/ui/Skeleton";
 import { NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
+import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
+import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -26,8 +31,21 @@ type PagedVideoResult = RankedVideoResult & {
   slotIndex: number;
 };
 
+type ContinueSurface = {
+  lastSearch: string;
+  lastVideoId?: string;
+  lastVideoTitle?: string;
+};
+
 const TOP_RESULTS_LIMIT = 10;
 const AI_PICK_COUNT = 2;
+
+const CATEGORY_FILTERS: FilterChipOption[] = [
+  { id: "fyp", label: "For You" },
+  { id: "esports", label: "Esports" },
+  { id: "patches", label: "Patches" },
+  { id: "streams", label: "Streams" },
+];
 
 function compactNumber(value: number): string {
   if (value >= 1_000_000) {
@@ -60,16 +78,37 @@ export default function AIAdvisorScreen() {
   const responsive = useResponsive();
   const params = useLocalSearchParams<{ source?: string }>();
 
-  const [query, setQuery] = useState("");
+  const [queryInput, setQueryInput] = useState("");
+  const debouncedQuery = useDebouncedValue(queryInput, 280);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [pageCount, setPageCount] = useState(1);
 
+  const {
+    value: recentSearches,
+    setValue: setRecentSearches,
+    clear: clearRecentSearches,
+  } = useLocalCache<string[]>("search:video-recents", []);
+
+  const {
+    value: selectedCategoryFilters,
+    setValue: setSelectedCategoryFilters,
+  } = useLocalCache<string[]>("search:video-filters", []);
+
+  const {
+    value: continueSurface,
+    setValue: setContinueSurface,
+  } = useLocalCache<ContinueSurface>("search:continue-surface", {
+    lastSearch: "",
+  });
+
   const maxLikes = useMemo(
     () => NEWS_FEED.reduce((max, item) => Math.max(max, item.likes), 1),
     [],
   );
+
   const maxComments = useMemo(
     () => NEWS_FEED.reduce((max, item) => Math.max(max, item.comments), 1),
     [],
@@ -89,16 +128,41 @@ export default function AIAdvisorScreen() {
     return map;
   }, []);
 
+  const filteredVideos = useMemo(() => {
+    if (selectedCategoryFilters.length === 0) {
+      return NEWS_FEED;
+    }
+
+    return NEWS_FEED.filter((video) =>
+      selectedCategoryFilters.includes(video.category),
+    );
+  }, [selectedCategoryFilters]);
+
+  const addRecentSearch = useCallback(
+    (value: string) => {
+      const cleaned = value.trim();
+      if (!cleaned) return;
+
+      setRecentSearches((previous) => {
+        const withoutMatch = previous.filter(
+          (item) => item.toLowerCase() !== cleaned.toLowerCase(),
+        );
+        return [cleaned, ...withoutMatch].slice(0, 8);
+      });
+    },
+    [setRecentSearches],
+  );
+
   const refreshSearch = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 280));
-      if (!query.trim()) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      if (!debouncedQuery.trim()) {
         setSuggestedTags([]);
       } else {
-        const response = await getSuggestedTags(query);
+        const response = await getSuggestedTags(debouncedQuery);
         setSuggestedTags(response.tags);
       }
     } catch {
@@ -107,44 +171,26 @@ export default function AIAdvisorScreen() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [debouncedQuery]);
 
   useEffect(() => {
     void refreshSearch();
   }, [refreshSearch]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    const loadTags = async () => {
-      if (!query.trim()) {
-        setSuggestedTags([]);
-        return;
-      }
-
-      try {
-        const response = await getSuggestedTags(query);
-        if (!cancelled) {
-          setSuggestedTags(response.tags);
-        }
-      } catch {
-        if (!cancelled) {
-          setSuggestedTags([]);
-        }
-      }
-    };
-
-    void loadTags();
-    return () => {
-      cancelled = true;
-    };
-  }, [query]);
+    if (!debouncedQuery.trim()) return;
+    addRecentSearch(debouncedQuery);
+    setContinueSurface((previous) => ({
+      ...previous,
+      lastSearch: debouncedQuery.trim(),
+    }));
+  }, [addRecentSearch, debouncedQuery, setContinueSurface]);
 
   const rankedTopTen = useMemo(() => {
-    const queryTokens = normalizeTokens(query);
+    const queryTokens = normalizeTokens(debouncedQuery);
     const normalizedSuggestedTags = suggestedTags.map((tag) => tag.toLowerCase());
 
-    const ranked = NEWS_FEED.map((video, index) => {
+    const ranked = filteredVideos.map((video, index) => {
       const title = video.title.toLowerCase();
       const author = video.author.toLowerCase();
       const category = video.category.toLowerCase();
@@ -204,11 +250,11 @@ export default function AIAdvisorScreen() {
       .slice(0, TOP_RESULTS_LIMIT - AI_PICK_COUNT);
 
     return [...topAi, ...restSearch];
-  }, [freshnessById, maxComments, maxLikes, query, suggestedTags]);
+  }, [debouncedQuery, filteredVideos, freshnessById, maxComments, maxLikes, suggestedTags]);
 
   useEffect(() => {
     setPageCount(1);
-  }, [query, rankedTopTen]);
+  }, [debouncedQuery, rankedTopTen, selectedCategoryFilters]);
 
   const pagedResults = useMemo(() => {
     if (rankedTopTen.length === 0) {
@@ -235,6 +281,34 @@ export default function AIAdvisorScreen() {
     }
   };
 
+  const toggleCategoryFilter = (filterId: string) => {
+    setSelectedCategoryFilters((previous) =>
+      previous.includes(filterId)
+        ? previous.filter((item) => item !== filterId)
+        : [...previous, filterId],
+    );
+  };
+
+  const openVideo = (item: PagedVideoResult) => {
+    setContinueSurface((previous) => ({
+      ...previous,
+      lastVideoId: item.video.id,
+      lastVideoTitle: item.video.title,
+      lastSearch: debouncedQuery.trim() || previous.lastSearch,
+    }));
+
+    router.push({
+      pathname: "/(tabs)/video-preview",
+      params: {
+        videoId: item.video.id,
+        title: item.video.title,
+        image: item.video.thumbnail,
+        duration: item.video.duration ?? "0:00",
+        views: compactNumber(item.video.likes),
+      },
+    } as any);
+  };
+
   return (
     <Screen scrollable={false}>
       <Header
@@ -246,13 +320,30 @@ export default function AIAdvisorScreen() {
       <View style={styles.fixedSearchWrap}>
         <Searchbar
           placeholder="Search videos..."
-          value={query}
-          onChangeText={setQuery}
+          value={queryInput}
+          onChangeText={setQueryInput}
           accessibilityLabel="Search videos"
           style={[styles.searchbar, { borderRadius: responsive.searchRadius }]}
           inputStyle={[styles.searchInput, { fontSize: responsive.bodySize }]}
           placeholderTextColor={colors.textSecondary}
         />
+
+        {queryInput.trim().length === 0 ? (
+          <RecentSearchList
+            items={recentSearches}
+            onSelect={setQueryInput}
+            onClear={clearRecentSearches}
+          />
+        ) : null}
+
+        <View style={styles.filterWrap}>
+          <FilterChips
+            options={CATEGORY_FILTERS}
+            selectedIds={selectedCategoryFilters}
+            onToggle={toggleCategoryFilter}
+            accessibilityLabelPrefix="Filter videos by"
+          />
+        </View>
 
         {suggestedTags.length > 0 ? (
           <View style={styles.tagsRow}>
@@ -261,6 +352,33 @@ export default function AIAdvisorScreen() {
                 <Text style={styles.tagChipText}>#{tag}</Text>
               </View>
             ))}
+          </View>
+        ) : null}
+
+        {(continueSurface.lastSearch || continueSurface.lastVideoTitle) ? (
+          <View style={styles.continueRow}>
+            {continueSurface.lastSearch ? (
+              <Pressable
+                onPress={() => setQueryInput(continueSurface.lastSearch)}
+                accessibilityRole="button"
+                accessibilityLabel={`Continue search ${continueSurface.lastSearch}`}
+                style={({ pressed }) => [styles.continuePill, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="history" size={13} color={colors.primary} />
+                <Text style={styles.continuePillText} numberOfLines={1}>
+                  Continue: {continueSurface.lastSearch}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {continueSurface.lastVideoTitle ? (
+              <View style={styles.continuePillMuted}>
+                <MaterialCommunityIcons name="play-circle-outline" size={13} color={colors.textSecondary} />
+                <Text style={styles.continueMutedText} numberOfLines={1}>
+                  Last video: {continueSurface.lastVideoTitle}
+                </Text>
+              </View>
+            ) : null}
           </View>
         ) : null}
 
@@ -330,23 +448,19 @@ export default function AIAdvisorScreen() {
           </View>
         </View>
       ) : error ? (
-        <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>Video search error</Text>
-          <Text style={styles.stateCopy}>{error}</Text>
-          <Pressable
-            onPress={() => void refreshSearch()}
-            accessibilityRole="button"
-            accessibilityLabel="Retry video search"
-            style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </Pressable>
-        </View>
+        <EmptyState
+          title="Video search error"
+          description={error}
+          suggestion="Tap refresh and try again."
+          icon="alert-circle-outline"
+        />
       ) : rankedTopTen.length === 0 ? (
-        <View style={styles.stateBox}>
-          <Text style={styles.stateTitle}>No videos found</Text>
-          <Text style={styles.stateCopy}>Try: ranked duo, no mic, chill, scrim.</Text>
-        </View>
+        <EmptyState
+          title="No videos found"
+          description="No results matched your current search and filters."
+          suggestion="Try: ranked duo, no mic, chill, scrim."
+          icon="magnify-close"
+        />
       ) : (
         <FlatList
           data={pagedResults}
@@ -362,22 +476,12 @@ export default function AIAdvisorScreen() {
           contentContainerStyle={styles.gridContent}
           columnWrapperStyle={styles.gridRow}
           renderItem={({ item }) => {
-            const showAiBadge = item.pageIndex === 0 && item.slotIndex < AI_PICK_COUNT && item.isAiPick;
+            const showAiBadge =
+              item.pageIndex === 0 && item.slotIndex < AI_PICK_COUNT && item.isAiPick;
 
             return (
               <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/(tabs)/video-preview",
-                    params: {
-                      videoId: item.video.id,
-                      title: item.video.title,
-                      image: item.video.thumbnail,
-                      duration: item.video.duration ?? "0:00",
-                      views: compactNumber(item.video.likes),
-                    },
-                  } as any)
-                }
+                onPress={() => openVideo(item)}
                 accessibilityRole="button"
                 accessibilityLabel={`Open video ${item.video.title}`}
                 style={({ pressed }) => [styles.videoCard, pressed && styles.pressed]}
@@ -414,7 +518,11 @@ export default function AIAdvisorScreen() {
 
                 <View style={styles.statRow}>
                   <View style={styles.statInline}>
-                    <MaterialCommunityIcons name="heart-outline" size={13} color={colors.textSecondary} />
+                    <MaterialCommunityIcons
+                      name="heart-outline"
+                      size={13}
+                      color={colors.textSecondary}
+                    />
                     <Text style={styles.statText}>{compactNumber(item.video.likes)}</Text>
                   </View>
                   <View style={styles.statInline}>
@@ -448,6 +556,9 @@ const styles = StyleSheet.create({
   searchInput: {
     color: colors.text,
   },
+  filterWrap: {
+    marginTop: spacing.sm,
+  },
   tagsRow: {
     marginTop: spacing.sm,
     flexDirection: "row",
@@ -466,6 +577,48 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 11,
     fontWeight: "700",
+  },
+  continueRow: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  continuePill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: "rgba(255,159,102,0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+  },
+  continuePillText: {
+    marginLeft: 6,
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "700",
+    maxWidth: "92%",
+  },
+  continuePillMuted: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#242424",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    maxWidth: "100%",
+  },
+  continueMutedText: {
+    marginLeft: 6,
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+    maxWidth: "92%",
   },
   searchMetaRow: {
     marginTop: spacing.sm,
@@ -520,39 +673,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-  stateBox: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#242424",
-    borderRadius: 14,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  stateTitle: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 16,
-  },
-  stateCopy: {
-    color: colors.textSecondary,
-    marginTop: 4,
-    lineHeight: 20,
-  },
-  retryButton: {
-    marginTop: spacing.sm,
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    backgroundColor: "#1F1F1F",
-  },
-  retryButtonText: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 12,
   },
   gridContent: {
     paddingBottom: spacing.lg,

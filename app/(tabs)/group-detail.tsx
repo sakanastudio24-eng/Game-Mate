@@ -3,7 +3,6 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
-import { Card } from "../../src/components/ui/Card";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
@@ -21,14 +20,24 @@ export default function GroupDetailScreen() {
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const group = mockGroups.find((item) => item.id === groupId) ?? mockGroups[0];
   const initialMembers = Array.isArray(group.members) ? group.members : [];
-  const [members, setMembers] = useState<string[]>(initialMembers);
-  const [isJoined, setIsJoined] = useState(
-    initialMembers.some((member) => member.toLowerCase() === "you"),
-  );
+  const [members] = useState<string[]>(initialMembers);
   const [activeTab, setActiveTab] = useState<"home" | "events" | "chat" | "members">(
     "home",
   );
   const [chatMessage, setChatMessage] = useState("");
+  const onlineCount = Math.max(1, Math.min(group.memberCount, Math.round(group.memberCount * 0.55)));
+  const homeEvents = [
+    {
+      id: "h-ev-1",
+      title: group.mode === "ranked" ? "Ranked Session" : "Casual Queue Night",
+      time: "Tonight · 8:00 PM",
+    },
+    {
+      id: "h-ev-2",
+      title: "Team Check-In",
+      time: "Tomorrow · 7:30 PM",
+    },
+  ];
   const [messages, setMessages] = useState<
     Array<{ id: string; user: string; text: string; timestamp: Date }>
   >([
@@ -48,23 +57,12 @@ export default function GroupDetailScreen() {
 
   const handleSendMessage = () => {
     if (chatMessage.trim()) {
-      if (!isJoined) return;
       setMessages([
         ...messages,
         { id: Date.now().toString(), user: "You", text: chatMessage, timestamp: new Date() },
       ]);
       setChatMessage("");
     }
-  };
-
-  const handleJoinGroup = () => {
-    if (isJoined) return;
-    setIsJoined(true);
-    setMembers((prev) =>
-      prev.some((member) => member.toLowerCase() === "you")
-        ? prev
-        : [...prev, "You"],
-    );
   };
 
   return (
@@ -84,7 +82,7 @@ export default function GroupDetailScreen() {
               styles.tabButton,
               { minHeight: responsive.buttonHeightSmall },
               activeTab === tab && styles.tabButtonActive,
-              pressed && styles.joinButtonPressed,
+              pressed && styles.pressed,
             ]}
           >
             <Text
@@ -103,118 +101,69 @@ export default function GroupDetailScreen() {
       {/* Tab content */}
       {activeTab === "home" && (
         <View style={styles.homeWrap}>
-          <Card style={styles.homeCard}>
-            <Text style={[styles.homeTitle, { fontSize: responsive.bodySize + 2 }]}>Group Home</Text>
+          <Text style={[styles.homeName, { fontSize: responsive.sectionTitleSize }]}>
+            {group.name}
+          </Text>
+          <Text style={[styles.homeSubtitle, { fontSize: responsive.bodySmallSize }]}>
+            {group.game} · {group.mode === "ranked" ? "Competitive Squad" : "Casual Squad"}
+          </Text>
 
-            <View style={styles.homeHero}>
-              <View style={styles.homeGameRow}>
-                <MaterialCommunityIcons name="controller" size={15} color={colors.primary} />
-                <Text style={[styles.gameName, { fontSize: responsive.bodySize + 2 }]}>{group.game}</Text>
+          <View style={styles.homeTagRow}>
+            {group.mode === "ranked" && (
+              <View style={styles.homeTag}>
+                <MaterialCommunityIcons name="star-outline" size={13} color={colors.primary} />
+                <Text style={styles.homeTagText}>Ranked</Text>
               </View>
-              <View style={styles.homeCountPill}>
-                <Text style={[styles.homeCountValue, { fontSize: responsive.bodySize }]}>
-                  {group.memberCount}
-                </Text>
-                <Text style={[styles.homeCountLabel, { fontSize: responsive.captionSize }]}>
-                  Members
-                </Text>
+            )}
+            {group.micRequired && (
+              <View style={styles.homeTag}>
+                <MaterialCommunityIcons name="microphone-outline" size={13} color={colors.primary} />
+                <Text style={styles.homeTagText}>Mic Required</Text>
               </View>
+            )}
+            {group.minRank && (
+              <View style={styles.homeTag}>
+                <MaterialCommunityIcons name="signal-cellular-2" size={13} color={colors.primary} />
+                <Text style={styles.homeTagText}>{group.minRank}+</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.homeInlineStats}>
+            <View style={styles.homeInlineStat}>
+              <Text style={styles.homeInlineStatValue}>{onlineCount}</Text>
+              <Text style={styles.homeInlineStatLabel}>Online</Text>
             </View>
-
-            <View style={styles.headerRow}>
-              <View>
-                <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>
-                  {group.description}
-                </Text>
-              </View>
+            <View style={styles.homeInlineStat}>
+              <Text style={styles.homeInlineStatValue}>{members.length}</Text>
+              <Text style={styles.homeInlineStatLabel}>Members</Text>
             </View>
+          </View>
 
-            <View style={styles.homeTagRow}>
-              {group.mode === "ranked" && (
-                <View style={styles.homeTag}>
-                  <MaterialCommunityIcons name="star-outline" size={13} color={colors.primary} />
-                  <Text style={styles.homeTagText}>Ranked</Text>
+          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Description</Text>
+          <Text style={[styles.homeBody, { fontSize: responsive.bodySmallSize }]}>
+            {group.description}
+          </Text>
+
+          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Overview</Text>
+          <Text style={[styles.homeBody, { fontSize: responsive.bodySmallSize }]}>
+            {group.mode === "ranked"
+              ? "Focused competitive play with coordinated sessions and clear comms."
+              : "Relaxed sessions for regular play, learning, and team chemistry."}
+          </Text>
+
+          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Events</Text>
+          <View style={styles.homeEventsList}>
+            {homeEvents.map((event) => (
+              <View key={event.id} style={styles.homeEventRow}>
+                <MaterialCommunityIcons name="calendar-clock" size={16} color={colors.primary} />
+                <View style={styles.homeEventTextWrap}>
+                  <Text style={styles.homeEventTitle}>{event.title}</Text>
+                  <Text style={styles.homeEventTime}>{event.time}</Text>
                 </View>
-              )}
-              {group.micRequired && (
-                <View style={styles.homeTag}>
-                  <MaterialCommunityIcons name="microphone-outline" size={13} color={colors.primary} />
-                  <Text style={styles.homeTagText}>Mic Required</Text>
-                </View>
-              )}
-              {group.minRank && (
-                <View style={styles.homeTag}>
-                  <MaterialCommunityIcons name="signal-cellular-2" size={13} color={colors.primary} />
-                  <Text style={styles.homeTagText}>{group.minRank}+</Text>
-                </View>
-              )}
-            </View>
-
-            <Pressable
-              onPress={handleJoinGroup}
-              accessibilityRole="button"
-              accessibilityLabel={isJoined ? `${group.name} joined` : `Join ${group.name}`}
-              accessibilityState={{ selected: isJoined }}
-              style={({ pressed }) => [
-                styles.joinButton,
-                {
-                  borderRadius: responsive.cardRadius - 8,
-                  minHeight: responsive.buttonHeightMedium,
-                },
-                isJoined && styles.joinedButton,
-                pressed && styles.joinButtonPressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.joinButtonText,
-                  { fontSize: responsive.bodySmallSize },
-                  isJoined && styles.joinedButtonText,
-                ]}
-              >
-                {isJoined ? "Joined" : "Join Group"}
-              </Text>
-            </Pressable>
-
-            <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Overview</Text>
-            <View style={styles.homeStatsRow}>
-              <View style={styles.homeStatPill}>
-                <Text style={styles.homeStatValue}>{members.length}</Text>
-                <Text style={styles.homeStatLabel}>Members</Text>
               </View>
-              <View style={styles.homeStatPill}>
-                <Text style={styles.homeStatValue}>{group.mode}</Text>
-                <Text style={styles.homeStatLabel}>Mode</Text>
-              </View>
-              <View style={styles.homeStatPill}>
-                <Text style={styles.homeStatValue}>{group.micRequired ? "Yes" : "No"}</Text>
-                <Text style={styles.homeStatLabel}>Mic</Text>
-              </View>
-            </View>
-            <View style={styles.homeQuickRow}>
-              <Pressable
-                onPress={() => setActiveTab("chat")}
-                accessibilityRole="button"
-                accessibilityLabel="Open group chat"
-                style={({ pressed }) => [styles.homeQuickButton, pressed && styles.joinButtonPressed]}
-              >
-                <MaterialCommunityIcons name="message-text-outline" size={16} color="#1A1A1A" />
-                <Text style={styles.homeQuickButtonText}>Open Chat</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setActiveTab("members")}
-                accessibilityRole="button"
-                accessibilityLabel="Open members list"
-                style={({ pressed }) => [
-                  styles.homeQuickButtonSecondary,
-                  pressed && styles.joinButtonPressed,
-                ]}
-              >
-                <MaterialCommunityIcons name="account-group-outline" size={16} color={colors.text} />
-                <Text style={styles.homeQuickButtonSecondaryText}>Members</Text>
-              </Pressable>
-            </View>
-          </Card>
+            ))}
+          </View>
         </View>
       )}
 
@@ -309,19 +258,18 @@ export default function GroupDetailScreen() {
                   fontSize: responsive.bodySize,
                 },
               ]}
-              placeholder={isJoined ? "Message group..." : "Join group to message"}
+              placeholder="Message group..."
               placeholderTextColor={colors.textMuted}
               value={chatMessage}
               onChangeText={setChatMessage}
               multiline
-              editable={isJoined}
+              editable
               accessibilityLabel="Group message"
             />
             <Pressable
               onPress={handleSendMessage}
               accessibilityRole="button"
               accessibilityLabel="Send message"
-              accessibilityState={{ disabled: !isJoined }}
               style={({ pressed }) => [
                 styles.sendButton,
                 {
@@ -331,10 +279,8 @@ export default function GroupDetailScreen() {
                   height: responsive.iconButtonSize,
                   borderRadius: responsive.iconButtonSize / 2,
                 },
-                !isJoined && styles.sendButtonDisabled,
                 pressed && { opacity: 0.7 },
               ]}
-              disabled={!isJoined}
             >
               <MaterialCommunityIcons
                 name="send"
@@ -366,44 +312,8 @@ function formatChatTime(date: Date): string {
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    marginTop: spacing.sm,
-  },
-  gameName: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 16,
-    marginBottom: 0,
-    marginLeft: 6,
-  },
-  description: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  joinButton: {
-    marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingVertical: spacing.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  joinButtonPressed: {
+  pressed: {
     opacity: 0.8,
-  },
-  joinButtonText: {
-    color: colors.background,
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  joinedButton: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  joinedButtonText: {
-    color: colors.primary,
   },
   tabSelector: {
     flexDirection: "row",
@@ -464,53 +374,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
   },
-  homeCard: {
-    marginBottom: 0,
-    borderColor: "#454545",
-    backgroundColor: "#212121",
-  },
-  homeTitle: {
+  homeName: {
     color: colors.text,
     fontWeight: "800",
+    marginTop: spacing.xs,
   },
-  homeHero: {
-    marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: "#171717",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  homeGameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  homeCountPill: {
-    borderWidth: 1,
-    borderColor: colors.primary,
-    backgroundColor: "rgba(255,159,102,0.18)",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: 78,
-  },
-  homeCountValue: {
-    color: colors.primary,
-    fontWeight: "800",
-    lineHeight: 16,
-  },
-  homeCountLabel: {
-    color: colors.primary,
-    fontWeight: "700",
-    lineHeight: 14,
+  homeSubtitle: {
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   homeTagRow: {
     flexDirection: "row",
@@ -535,74 +406,68 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textTransform: "capitalize",
   },
+  homeInlineStats: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  homeInlineStat: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  homeInlineStatValue: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 15,
+  },
+  homeInlineStatLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
+  },
   homeSectionTitle: {
     color: colors.textSecondary,
     marginTop: spacing.md,
     lineHeight: 19,
     fontWeight: "700",
   },
-  homeStatsRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  homeStatPill: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#4B4B4B",
-    backgroundColor: "#181818",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  homeStatValue: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 14,
-    textTransform: "capitalize",
-  },
-  homeStatLabel: {
+  homeBody: {
     color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 2,
+    lineHeight: 20,
   },
-  homeQuickRow: {
-    flexDirection: "row",
+  homeEventsList: {
+    marginTop: spacing.sm,
     gap: spacing.sm,
-    marginTop: spacing.md,
   },
-  homeQuickButton: {
-    flex: 1,
-    minHeight: 44,
-    backgroundColor: colors.primary,
-    borderRadius: 999,
+  homeEventRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  homeQuickButtonText: {
-    color: "#1A1A1A",
-    fontWeight: "800",
-    fontSize: 13,
-  },
-  homeQuickButtonSecondary: {
-    flex: 1,
-    minHeight: 44,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
-    borderRadius: 999,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    backgroundColor: "#1B1B1B",
   },
-  homeQuickButtonSecondaryText: {
+  homeEventTextWrap: {
+    marginLeft: spacing.sm,
+    flex: 1,
+  },
+  homeEventTitle: {
     color: colors.text,
     fontWeight: "700",
     fontSize: 13,
+  },
+  homeEventTime: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
   },
   messageItem: {
     backgroundColor: colors.card,
@@ -670,9 +535,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-  },
-  sendButtonDisabled: {
-    opacity: 0.45,
   },
   emptyState: {
     flex: 1,

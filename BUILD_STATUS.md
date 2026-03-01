@@ -55,6 +55,9 @@ Resolved in this update:
   - DOB requires valid `MMDDYYYY`
   - DOB must be strictly before current day
   - success/error hint state added for DOB quality signal
+- Settings + notifications:
+  - Profile Settings now includes bottom Delete Account action with confirmation dialog
+  - Notification Settings now supports presets, delivery flow mode, and time-sheet scheduling controls
 
 Open follow-ups:
 - Migrate additional list-heavy screens to skeleton loading when API wiring starts (messages, notifications, discover)
@@ -72,11 +75,13 @@ Canonical contract: `docs/FLOWS_BACKEND.md`
 - `POST /api/auth/social-login`
 - `GET /api/me`
 - `PATCH /api/me`
+- `DELETE /api/me`
 - `POST /api/users/password/change`
 - `POST /api/users/email/send-verify`
 - `POST /api/users/phone/verify`
 
 ### Preferences and Settings
+- `GET /api/me/notifications`
 - `PATCH /api/me/privacy`
 - `PATCH /api/me/notifications`
 - `GET /api/me/platform-connections`

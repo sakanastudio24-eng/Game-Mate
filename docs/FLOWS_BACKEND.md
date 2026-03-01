@@ -77,11 +77,13 @@ Frontend references:
 - `POST /api/auth/social-login` (public)
 - `GET /api/me`
 - `PATCH /api/me`
+- `DELETE /api/me`
 - `POST /api/users/password/change`
 - `POST /api/users/email/send-verify`
 - `POST /api/users/phone/verify`
 
 ### Preferences + Settings
+- `GET /api/me/notifications`
 - `PATCH /api/me/privacy`
 - `PATCH /api/me/notifications`
 - `GET /api/me/platform-connections`
@@ -472,7 +474,116 @@ Response:
 }
 ```
 
-### 4.5 Social + Messaging
+### 4.5 Notification Preferences
+
+#### GET `/api/me/notifications`
+
+Response:
+```json
+{
+  "preset": "balanced",
+  "deliveryFlow": "instant",
+  "timeSheet": {
+    "preset": "off",
+    "quietStart": "00:00",
+    "quietEnd": "00:00",
+    "activeDays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  },
+  "settings": {
+    "friendRequests": true,
+    "groupInvites": true,
+    "messages": true,
+    "friendActivity": true,
+    "friendOnline": true,
+    "matchmaking": true,
+    "achievements": true
+  },
+  "updatedAt": "2026-03-01T18:20:00Z"
+}
+```
+
+#### PATCH `/api/me/notifications`
+
+Request:
+```json
+{
+  "preset": "minimal",
+  "deliveryFlow": "batch_30m",
+  "timeSheet": {
+    "preset": "night",
+    "quietStart": "22:00",
+    "quietEnd": "08:00",
+    "activeDays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  },
+  "settings": {
+    "friendRequests": true,
+    "groupInvites": true,
+    "messages": true,
+    "friendActivity": false,
+    "friendOnline": false,
+    "matchmaking": true,
+    "achievements": false
+  }
+}
+```
+
+Response:
+```json
+{
+  "preset": "minimal",
+  "deliveryFlow": "batch_30m",
+  "timeSheet": {
+    "preset": "night",
+    "quietStart": "22:00",
+    "quietEnd": "08:00",
+    "activeDays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  },
+  "settings": {
+    "friendRequests": true,
+    "groupInvites": true,
+    "messages": true,
+    "friendActivity": false,
+    "friendOnline": false,
+    "matchmaking": true,
+    "achievements": false
+  },
+  "updatedAt": "2026-03-01T18:21:00Z"
+}
+```
+
+Validation constraints:
+- `preset` enum: `minimal | balanced | all`
+- `deliveryFlow` enum: `instant | batch_30m | hourly_digest`
+- `timeSheet.preset` enum: `off | night | day | focus`
+- `quietStart` and `quietEnd` must be `HH:mm` 24-hour format
+- `activeDays` must contain values in `Mon..Sun`
+- all keys in `settings` are required booleans
+
+### 4.6 Account Deletion
+
+#### DELETE `/api/me`
+
+Request (optional hard-confirm):
+```json
+{
+  "confirm": true
+}
+```
+
+Response:
+```json
+{
+  "accepted": true,
+  "deletionRequestedAt": "2026-03-01T18:25:00Z"
+}
+```
+
+Behavior:
+- Endpoint must invalidate active sessions/tokens after acceptance.
+- Return `202` if deletion is asynchronous; return `200` if immediate.
+- Repeated calls should remain idempotent (`accepted: true` if already scheduled/deleted).
+
+### 4.7 Social + Messaging
 
 #### GET `/api/messages/conversations`
 
@@ -570,7 +681,7 @@ Not required for P0 build parity, but define channel names now:
 ## 8) Backend Handoff Notes
 
 ### Implementation order
-1. Auth + `/api/me` + settings endpoints
+1. Auth + `/api/me` + settings endpoints (including notifications and account deletion)
 2. Groups discover/detail/join/leave/report
 3. Posts feed + engagement + report
 4. Recommendation endpoints

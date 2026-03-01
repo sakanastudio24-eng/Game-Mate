@@ -71,6 +71,10 @@ const SOCIAL_AUTH = [
   { id: "xbox", label: "Continue with Xbox", icon: "microsoft-xbox" },
 ] as const;
 
+function sanitizeBirthdateInput(value: string): string {
+  return value.replace(/\D/g, "").slice(0, 8);
+}
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const responsive = useResponsive();
@@ -79,7 +83,7 @@ export default function OnboardingScreen() {
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const [step, setStep] = useState<Step>("welcome");
   const [email, setEmail] = useState("");
-  const [birthdate, setBirthdate] = useState("02/24/1999");
+  const [birthdate, setBirthdate] = useState("");
   const [acceptEmails, setAcceptEmails] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
@@ -128,9 +132,9 @@ export default function OnboardingScreen() {
   const canContinue = useMemo(() => {
     if (step === "welcome") return true;
     if (step === "email") return email.includes("@");
-    if (step === "birthdate") return acceptTerms;
+    if (step === "birthdate") return acceptTerms && birthdate.length === 8;
     return selectedGenres.length > 0 && playStyle.length > 0 && platform.length > 0;
-  }, [acceptTerms, email, platform.length, playStyle, selectedGenres.length, step]);
+  }, [acceptTerms, birthdate.length, email, platform.length, playStyle, selectedGenres.length, step]);
 
   const finishOnboarding = async () => {
     primeHomeContentCache();
@@ -335,10 +339,12 @@ export default function OnboardingScreen() {
               <View style={styles.inputWrap}>
                 <TextInput
                   value={birthdate}
-                  onChangeText={setBirthdate}
-                  placeholder="MM/DD/YYYY"
+                  onChangeText={(value) => setBirthdate(sanitizeBirthdateInput(value))}
+                  placeholder="MMDDYYYY"
                   placeholderTextColor="#999"
                   accessibilityLabel="Date of birth"
+                  keyboardType="number-pad"
+                  maxLength={8}
                   style={styles.input}
                 />
                 <MaterialCommunityIcons
@@ -348,6 +354,7 @@ export default function OnboardingScreen() {
                   style={styles.inputTrailingIcon}
                 />
               </View>
+              <Text style={styles.birthdateHint}>Use 8 digits only (MMDDYYYY)</Text>
 
               <Pressable
                 onPress={() => setAcceptTerms((prev) => !prev)}
@@ -692,6 +699,12 @@ const styles = StyleSheet.create({
   inputWrap: {
     position: "relative",
     marginBottom: 16,
+  },
+  birthdateHint: {
+    color: "#777",
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 12,
   },
   input: {
     backgroundColor: "#E8E8E8",

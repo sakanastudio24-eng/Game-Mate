@@ -1,13 +1,14 @@
-# AI Advisor API Handoff (GameMate)
+# Recommendation API Handoff (GameMate)
 
 ## Scope
 This contract supports:
-- Feed AI search recommendations
-- Groups AI swipe recommendations
+- Feed recommendation search
+- Groups swipe recommendations
 - Tag suggestions for query input
 - Intro message drafting for group joins
 
 Frontend source of truth: `src/ai/advisorClient.ts`.
+Canonical backend contract: `docs/FLOWS_BACKEND.md`.
 
 ## Base URL + Versioning
 - Base URL: `EXPO_PUBLIC_API_BASE_URL`
@@ -61,7 +62,7 @@ Validation + limits expected by client:
 - `score` clamped to `0..100`
 - `reasons` max 3 strings per result
 
-### 2) POST `/api/ai/suggested-tags` (planned backend parity)
+### 2) POST `/api/ai/suggested-tags`
 
 Request:
 ```json
@@ -82,7 +83,7 @@ Validation + limits expected by client:
 - lowercase + tokenized suggestions
 - default fallback tags when no strong match
 
-### 3) POST `/api/ai/draft-intro` (planned backend parity)
+### 3) POST `/api/ai/draft-intro`
 
 Request:
 ```json
@@ -148,12 +149,11 @@ Error body:
 - Enforce HTTPS/TLS in all environments.
 
 ## Frontend Integration Notes
-- Feed AI button routes to `/(tabs)/ai-advisor`.
-- Groups AI Swipe uses recommendations and lets users `Skip` or `Join`.
+- Feed search icon routes to `/(tabs)/ai-advisor`.
+- Groups swipe card icon opens recommendation swipe panel and supports pass/join.
 - Canonical frontend contract types:
   - `AIUserProfile`
   - `AIGroupCandidate`
   - `AIRecommendationsRequest`
   - `AIRecommendationsResponse`
   - `AIApiError`
-

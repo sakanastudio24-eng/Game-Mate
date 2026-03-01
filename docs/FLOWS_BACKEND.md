@@ -1,267 +1,494 @@
-# Backend API Integration Reference
+# Backend API Contracts + Handoff (v1)
+
+Last updated: 2026-02-28
+Owner: Mobile + Backend handoff
+
+This is the canonical backend contract for the current Expo app state.
+
+## 1) Scope
+
+Covers all backend integration required for:
+- Feed (posts, engagement, reporting, comments)
+- Groups (discover, detail, create, join/leave, report/share)
+- Recommendation search + group swipe scoring
+- Social (friends, requests, player search, user profile)
+- Messages, notifications, QR, account/settings
+- Platform connections and platform presence sync
+
+Frontend references:
+- `app/(tabs)/*`
+- `src/ai/advisorClient.ts`
+
+## 2) API Conventions
+
+### Base URL and versioning
+- Base URL from mobile env: `EXPO_PUBLIC_API_BASE_URL`
+- Current namespace: `/api`
+- Breaking changes: introduce `/api/v2/*`.
+
+### Auth
+- Header: `Authorization: Bearer <token>`
+- Endpoints marked `public` do not require auth.
+
+### Content types
+- Request: `Content-Type: application/json`
+- Response: `application/json`
+
+### IDs and timestamps
+- IDs are opaque strings (UUID/ULID acceptable).
+- Timestamps use ISO-8601 UTC (example: `2026-02-28T17:20:00Z`).
+
+### Pagination
+- Cursor pagination for lists where possible.
+- Request fields: `limit`, `cursor`
+- Response fields: `nextCursor`, `hasMore`
+
+### Standard error contract
+
+```json
+{
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "groups[0].id is required",
+    "details": "Field 'id' cannot be empty",
+    "requestId": "req_01J..."
+  }
+}
+```
+
+### Standard status codes
+- `200` success
+- `201` created
+- `400` invalid input
+- `401` unauthorized
+- `403` forbidden
+- `404` not found
+- `409` conflict
+- `422` semantic validation failed
+- `429` rate-limited
+- `500` server error
+
+## 3) Endpoint Matrix (Feature -> Route)
+
+### Auth + Account
+- `POST /api/auth/signup` (public)
+- `POST /api/auth/login` (public)
+- `POST /api/auth/social-login` (public)
+- `GET /api/me`
+- `PATCH /api/me`
+- `POST /api/users/password/change`
+- `POST /api/users/email/send-verify`
+- `POST /api/users/phone/verify`
+
+### Preferences + Settings
+- `PATCH /api/me/privacy`
+- `PATCH /api/me/notifications`
+- `GET /api/me/platform-connections`
+- `PATCH /api/me/platform-connections`
+
+### Feed
+- `GET /api/posts`
+- `POST /api/posts/:id/like`
+- `POST /api/posts/:id/save`
+- `POST /api/posts/:id/report`
+- `GET /api/posts/:id/comments`
+- `POST /api/posts/:id/comments`
+
+### Groups
+- `GET /api/groups`
+- `GET /api/groups/discover`
+- `POST /api/groups`
+- `GET /api/groups/:id`
+- `POST /api/groups/:id/join`
+- `POST /api/groups/:id/leave`
+- `POST /api/groups/:id/report`
+
+### Recommendations (Search + Group Swipe)
+- `POST /api/ai/recommendations`
+- `POST /api/ai/suggested-tags`
+- `POST /api/ai/draft-intro`
+
+### Social
+- `GET /api/friends`
+- `GET /api/friends/requests`
+- `POST /api/friends/request/:userId`
+- `POST /api/friends/accept/:userId`
+- `POST /api/friends/reject/:userId`
+- `GET /api/players/search`
+- `GET /api/users/:userId`
+
+### Messaging
+- `GET /api/messages/conversations`
+- `GET /api/messages/:userId`
+- `POST /api/messages/:userId`
+
+### Notifications
+- `GET /api/notifications`
+- `POST /api/notifications/:id/read`
+- `DELETE /api/notifications/:id`
+
+### QR
+- `GET /api/qr/my-code`
+- `PATCH /api/qr/my-code`
+- `GET /api/qr/scan?code=...`
+
+## 4) Detailed Contracts (P0)
+
+P0 means needed first for current mobile behavior parity.
+
+### 4.1 Recommendations
+
+#### POST `/api/ai/recommendations`
+
+Request:
+```json
+{
+  "userProfile": {
+    "games": ["valorant"],
+    "rank": "gold",
+    "mic": true,
+    "tags": ["casual", "teamplay"]
+  },
+  "groups": [
+    {
+      "id": "g1",
+      "game": "valorant",
+      "rankMin": "silver",
+      "rankMax": "platinum",
+      "tags": ["casual", "mic"],
+      "slots": 2,
+      "micRequired": true
+    }
+  ]
+}
+```
+
+Response:
+```json
+{
+  "results": [
+    {
+      "groupId": "g1",
+      "score": 87,
+      "reasons": ["Rank match", "Mic-on", "Casual vibe"]
+    }
+  ]
+}
+```
+
+Validation constraints:
+- `groups.length <= 50`
+- `score` in `0..100`
+- `reasons.length <= 3`
+- tags normalized (trim/lowercase)
+
+Rate limit:
+- `30 req/min/user`
+
+#### POST `/api/ai/suggested-tags`
+
+Request:
+```json
+{ "text": "need chill ranked teammates with mic" }
+```
+
+Response:
+```json
+{ "tags": ["chill", "ranked", "mic"] }
+```
+
+Constraints:
+- `text.length <= 500`
+- return up to 6 tags
+
+#### POST `/api/ai/draft-intro`
+
+Request:
+```json
+{
+  "userProfile": {
+    "games": ["valorant"],
+    "rank": "gold",
+    "mic": true,
+    "tags": ["casual", "teamplay"]
+  },
+  "group": {
+    "id": "g1",
+    "game": "valorant",
+    "tags": ["casual", "mic"],
+    "micRequired": true
+  }
+}
+```
+
+Response:
+```json
+{
+  "message": "Hey team, I'm looking to join your valorant group. Current rank: gold. Mic is on and ready."
+}
+```
+
+### 4.2 Groups
+
+#### GET `/api/groups/discover`
+
+Query:
+- `q` optional search string
+- `game` optional
+- `limit` default 20
+- `cursor` optional
+
+Response:
+```json
+{
+  "groups": [
+    {
+      "id": "s1",
+      "name": "CS2 Pro League",
+      "game": "Counter-Strike 2",
+      "members": 156,
+      "online": 89,
+      "thumbnail": "https://..."
+    }
+  ],
+  "nextCursor": "cur_02",
+  "hasMore": true
+}
+```
+
+#### POST `/api/groups/:id/join`
+
+Response:
+```json
+{ "joined": true, "memberCount": 157 }
+```
+
+#### POST `/api/groups/:id/leave`
+
+Response:
+```json
+{ "joined": false, "memberCount": 156 }
+```
+
+#### POST `/api/groups/:id/report`
+
+Request:
+```json
+{ "reason": "spam", "notes": "optional" }
+```
+
+Response:
+```json
+{ "accepted": true }
+```
+
+### 4.3 Feed
+
+#### GET `/api/posts`
+
+Query:
+- `category=fyp|esports|patches|streams` optional
+- `limit` default 20
+- `cursor` optional
+
+Response:
+```json
+{
+  "posts": [
+    {
+      "id": "p1",
+      "type": "video",
+      "title": "Disco 2024 Tournament Finals",
+      "author": "ProGamingLeague",
+      "date": "2026-08-25",
+      "duration": "1:20",
+      "thumbnail": "https://...",
+      "likes": 1240,
+      "comments": 89,
+      "category": "fyp"
+    }
+  ],
+  "nextCursor": "cur_02",
+  "hasMore": true
+}
+```
+
+#### POST `/api/posts/:id/like`
+
+Response:
+```json
+{ "liked": true, "likeCount": 1241 }
+```
+
+#### POST `/api/posts/:id/save`
+
+Response:
+```json
+{ "saved": true, "saveCount": 450 }
+```
+
+#### POST `/api/posts/:id/report`
+
+Request:
+```json
+{ "reason": "abuse", "notes": "optional" }
+```
+
+Response:
+```json
+{ "accepted": true }
+```
+
+### 4.4 Platform Connections
+
+#### GET `/api/me/platform-connections`
+
+Response:
+```json
+{
+  "playstation": false,
+  "computer": false,
+  "phone": true,
+  "switch": false,
+  "syncPresence": true,
+  "updatedAt": "2026-02-28T17:20:00Z"
+}
+```
+
+#### PATCH `/api/me/platform-connections`
+
+Request:
+```json
+{
+  "playstation": true,
+  "computer": true,
+  "phone": true,
+  "switch": false,
+  "syncPresence": true
+}
+```
+
+Response:
+```json
+{
+  "playstation": true,
+  "computer": true,
+  "phone": true,
+  "switch": false,
+  "syncPresence": true,
+  "updatedAt": "2026-02-28T17:21:00Z"
+}
+```
+
+### 4.5 Social + Messaging
+
+#### GET `/api/messages/conversations`
+
+Response:
+```json
+{
+  "conversations": [
+    {
+      "userId": "u2",
+      "username": "NovaStrike",
+      "avatar": "https://...",
+      "lastMessage": "Queue tonight?",
+      "timestamp": "2026-02-28T16:50:00Z",
+      "unreadCount": 2
+    }
+  ]
+}
+```
+
+#### GET `/api/messages/:userId`
+
+Query:
+- `limit` default 50
+- `cursor` optional
+
+Response:
+```json
+{
+  "messages": [
+    {
+      "id": "m1",
+      "senderId": "u2",
+      "text": "Queue tonight?",
+      "timestamp": "2026-02-28T16:50:00Z"
+    }
+  ],
+  "nextCursor": null,
+  "hasMore": false
+}
+```
+
+#### POST `/api/messages/:userId`
+
+Request:
+```json
+{ "message": "I can play in 10 minutes." }
+```
+
+Response:
+```json
+{
+  "id": "m2",
+  "senderId": "me",
+  "text": "I can play in 10 minutes.",
+  "timestamp": "2026-02-28T16:52:00Z"
+}
+```
+
+## 5) Client Behavior Contract (Must Preserve)
+
+Backend responses must support these frontend behaviors:
+- Recommendations cannot block UI. On backend failure, client falls back locally.
+- Group swipe always advances card after decision.
+- Feed/list endpoints must tolerate repeated cursor requests.
+- Join/leave endpoints should be idempotent for repeated taps.
+- Search/tag endpoints must be resilient to noisy user text.
+
+## 6) Rate Limits
+
+Recommended defaults:
+- Recommendations: `30 req/min/user`
+- Suggested tags: `60 req/min/user`
+- Draft intro: `30 req/min/user`
+- Feed + groups list: `120 req/min/user`
+- Messaging send: `40 req/min/user`
+
+On `429`:
+- include `Retry-After`
+- keep error contract above
+
+## 7) Realtime (Phase C)
+
+Not required for P0 build parity, but define channel names now:
+- `messages:new`
+- `groups:member_joined`
+- `groups:member_left`
+- `notifications:new`
+- `friends:presence`
+
+## 8) Backend Handoff Notes
+
+### Implementation order
+1. Auth + `/api/me` + settings endpoints
+2. Groups discover/detail/join/leave/report
+3. Posts feed + engagement + report
+4. Recommendation endpoints
+5. Social + messaging + notifications
+6. QR + secondary account endpoints
+
+### Data and privacy constraints
+- Do not store raw recommendation prompt text beyond required processing logs.
+- Redact tokens/PII from structured logs.
+- Store minimal analytics for recommendation quality (score distribution, latency, error rates).
+
+### Definition of done (backend integration)
+- All P0 endpoints respond with documented shape.
+- Mobile can run with `EXPO_PUBLIC_API_BASE_URL` configured and no schema errors.
+- Recommendation route works with backend and local fallback.
+- Platform connections persist and reload correctly.
+- Error and rate-limit envelopes match contract.
 
-Complete documentation of all API endpoints needed for GameMate Phase B+ backend integration.
-
----
-
-## Authentication & User Management
-
-**POST /api/auth/signup**
-
-- Request: `{ email, password, birthdate, preferredGenres[], playStyle }`
-- Response: `{ userId, token, user: {...} }`
-- Used by: OnboardingPreferences → create account
-
-**POST /api/auth/login**
-
-- Request: `{ email, password }`
-- Response: `{ userId, token, user: {...} }`
-- Used by: WelcomeScreen → email login
-
-**POST /api/auth/social-login**
-
-- Request: `{ provider: 'google'|'steam'|'psn'|'xbox', token }`
-- Response: `{ userId, token, user: {...} }`
-- Used by: WelcomeScreen → social auth buttons
-
-**GET /api/me**
-
-- Response: `{ id, email, username, avatar, stats: {...}, games[], privacySettings, ... }`
-- Used by: ProfileScreen load, profile edits
-
-**PATCH /api/me**
-
-- Request: `{ username?, bio?, avatar?, games[]?, ... }`
-- Response: Updated user object
-- Used by: EditProfileScreen → submit
-
-**PATCH /api/me/privacy**
-
-- Request: `{ profilePublic?, showOnlineStatus?, allowMessages?, allowGroupInvites?, searchable? }`
-- Response: Updated privacy settings
-- Used by: PrivacySettingsScreen
-
-**PATCH /api/me/notifications**
-
-- Request: `{ friendRequests?, groupInvites?, messages?, achievements?, ... }`
-- Response: Updated notification settings
-- Used by: NotificationSettingsScreen
-
----
-
-## Posts / Feed
-
-**GET /api/posts**
-
-- Query: `?category=fyp|esports|patches|streams&limit=20&offset=0`
-- Response: `{ posts: [{ id, author, game, content, likes, saves, comments, ... }], hasMore }`
-- Used by: NewsScreen load & scroll
-
-**POST /api/posts/:id/like**
-
-- Response: `{ liked: boolean, likeCount }`
-- Used by: NewsScreen → heart icon
-
-**POST /api/posts/:id/save**
-
-- Response: `{ saved: boolean, saveCount }`
-- Used by: NewsScreen → bookmark icon
-
----
-
-## Groups & Matchmaking
-
-**GET /api/groups**
-
-- Query: `?mode=ranked|casual&limit=20&offset=0`
-- Response: `{ groups: [{ id, game, name, players, mode, rank, ... }], hasMore }`
-- Used by: GroupsScreen load
-
-**POST /api/groups**
-
-- Request: `{ game, name, description, mode, minRank, maxRank, requireMic, maxPlayers }`
-- Response: Full group object
-- Used by: CreateGroupScreen → form submit
-
-**GET /api/groups/discover**
-
-- Query: `?game=?&mode=?&rank=?&region=?&limit=20&offset=0`
-- Response: `{ groups: [...] }`
-- Used by: DiscoverGroupsScreen
-
-**GET /api/groups/:id**
-
-- Response: Full group object with `{ members: [...], chat: [...], events: [...] }`
-- Used by: GroupDetailScreen
-
-**POST /api/groups/:id/join**
-
-- Response: `{ joined: boolean, memberCount }`
-- Used by: GroupDetailScreen → join button
-
-**POST /api/groups/:id/leave**
-
-- Response: `{ joined: boolean, memberCount }`
-- Used by: GroupDetailScreen → leave button
-
-**POST /api/groups/:id/chat**
-
-- Request: `{ message, attachments?: [] }`
-- Response: Message object
-- Used by: GroupDetailScreen chat input
-
-**GET /api/matchmaking/suggestions**
-
-- Query: `?game=?&mode=?&rank=?&region=?&limit=10`
-- Response: `{ matches: [{ groupId, game, players, avgRank, trustScore, ... }] }`
-- Used by: MatchmakingScreen
-
----
-
-## Friends & Social
-
-**GET /api/friends**
-
-- Query: `?status=online|offline|all`
-- Response: `{ friends: [{ id, username, status, game, avatar, ... }], hasMore }`
-- Used by: SocialScreen friends tab
-
-**GET /api/friends/requests**
-
-- Response: `{ incomingRequests: [...], outgoingRequests: [...], suggestedFriends: [...] }`
-- Used by: SocialScreen requests tab
-
-**POST /api/friends/request/:userId**
-
-- Response: `{ requested: boolean }`
-- Used by: SearchPlayersScreen → add button
-
-**POST /api/friends/accept/:userId**
-
-- Response: `{ requested: boolean }`
-- Used by: SocialScreen requests tab → accept button
-
-**POST /api/friends/reject/:userId**
-
-- Response: Success message
-- Used by: SocialScreen requests tab → reject button
-
-**GET /api/players/search**
-
-- Query: `?query=name&games=?&rank=?&limit=20&offset=0`
-- Response: `{ players: [{ id, name, rank, games, onlineStatus, mutualFriends, ... }] }`
-- Used by: SearchPlayersScreen search
-
-**GET /api/users/:userId**
-
-- Response: User profile object
-- Used by: UserProfileScreen load
-
----
-
-## Direct Messages
-
-**GET /api/messages/conversations**
-
-- Response: `{ conversations: [{ userId, lastMessage, unreadCount, timestamp, ... }] }`
-- Used by: MessagesScreen load
-
-**GET /api/messages/:userId**
-
-- Query: `?limit=50&offset=0`
-- Response: `{ messages: [{ id, sender, text, timestamp, ... }], hasMore }`
-- Used by: ChatScreen load
-
-**POST /api/messages/:userId**
-
-- Request: `{ message, attachments?: [] }`
-- Response: Message object
-- Used by: ChatScreen → send button
-
----
-
-## Notifications
-
-**GET /api/notifications**
-
-- Response: `{ notifications: [{ id, type, title, description, timestamp, read, ... }] }`
-- Used by: NotificationsScreen load
-
-**POST /api/notifications/:id/read**
-
-- Response: Success message
-- Used by: NotificationsScreen
-
-**DELETE /api/notifications/:id**
-
-- Response: Success message
-- Used by: NotificationsScreen dismiss
-
----
-
-## QR Code
-
-**GET /api/qr/my-code**
-
-- Response: `{ qrCodeUrl, customColor, shareUrl, ... }`
-- Used by: QRCodeScreen mycode tab
-
-**PATCH /api/qr/my-code**
-
-- Request: `{ customColor }`
-- Response: Updated QR data
-- Used by: QRCodeScreen → color picker
-
-**GET /api/qr/scan**
-
-- Query: `?code=<scannedCode>`
-- Response: `{ userId, user: {...} }`
-- Used by: QRCodeScreen scan tab
-
----
-
-## Settings & Account
-
-**POST /api/users/password/change**
-
-- Request: `{ currentPassword, newPassword }`
-- Response: Success message
-- Used by: AccountSettingsScreen
-
-**POST /api/users/email/send-verify**
-
-- Request: `{ newEmail }`
-- Response: `{ codeSent: boolean }`
-- Used by: AccountSettingsScreen
-
-**POST /api/users/phone/verify**
-
-- Request: `{ phoneNumber, countryCode }`
-- Response: `{ codeSent: boolean }`
-- Used by: AccountSettingsScreen
-
----
-
-## Error Handling
-
-All endpoints return:
-
-- `200 OK` — Success
-- `201 Created` — Resource created
-- `400 Bad Request` — Invalid fields
-- `401 Unauthorized` — Auth failed
-- `403 Forbidden` — No permission
-- `404 Not Found` — Resource doesn't exist
-- `409 Conflict` — Already exists/taken
-- `500 Server Error` — Backend error
-
-Error response format: `{ error: string, code: string, details?: {...} }`
-
----
-
-## Real-Time Features (Phase C+)
-
-- WebSocket for group chat messages
-- WebSocket for friend online status
-- WebSocket for notifications
-- Server-sent events for feed updates

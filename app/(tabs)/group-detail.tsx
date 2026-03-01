@@ -11,9 +11,9 @@ import { mockFriends, mockGroups } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-// GroupDetailScreen: Shows group details, members, chat, events
+// GroupDetailScreen: Shows group details, home, events, chat, members
 // Backend integration: GET /api/groups/{id}, POST /api/groups/{id}/messages in Phase B
-// Tabs: members, chat, events
+// Tabs: home, events, chat, members
 
 export default function GroupDetailScreen() {
   const router = useRouter();
@@ -25,8 +25,8 @@ export default function GroupDetailScreen() {
   const [isJoined, setIsJoined] = useState(
     initialMembers.some((member) => member.toLowerCase() === "you"),
   );
-  const [activeTab, setActiveTab] = useState<"members" | "chat" | "events">(
-    "chat",
+  const [activeTab, setActiveTab] = useState<"home" | "events" | "chat" | "members">(
+    "home",
   );
   const [chatMessage, setChatMessage] = useState("");
   const [messages, setMessages] = useState<
@@ -138,7 +138,7 @@ export default function GroupDetailScreen() {
 
       {/* Tab selector */}
       <View style={styles.tabSelector}>
-        {["members", "chat", "events"].map((tab) => (
+        {["home", "events", "chat", "members"].map((tab) => (
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
@@ -166,6 +166,56 @@ export default function GroupDetailScreen() {
       </View>
 
       {/* Tab content */}
+      {activeTab === "home" && (
+        <View style={styles.homeWrap}>
+          <Card style={styles.homeCard}>
+            <Text style={[styles.homeTitle, { fontSize: responsive.bodySize + 2 }]}>
+              Group Home
+            </Text>
+            <Text style={[styles.homeCopy, { fontSize: responsive.bodySmallSize }]}>
+              {group.description}
+            </Text>
+            <View style={styles.homeStatsRow}>
+              <View style={styles.homeStatPill}>
+                <Text style={styles.homeStatValue}>{members.length}</Text>
+                <Text style={styles.homeStatLabel}>Members</Text>
+              </View>
+              <View style={styles.homeStatPill}>
+                <Text style={styles.homeStatValue}>{group.mode}</Text>
+                <Text style={styles.homeStatLabel}>Mode</Text>
+              </View>
+              <View style={styles.homeStatPill}>
+                <Text style={styles.homeStatValue}>{group.micRequired ? "Yes" : "No"}</Text>
+                <Text style={styles.homeStatLabel}>Mic</Text>
+              </View>
+            </View>
+            <View style={styles.homeQuickRow}>
+              <Pressable
+                onPress={() => setActiveTab("chat")}
+                accessibilityRole="button"
+                accessibilityLabel="Open group chat"
+                style={({ pressed }) => [styles.homeQuickButton, pressed && styles.joinButtonPressed]}
+              >
+                <MaterialCommunityIcons name="message-text-outline" size={16} color="#1A1A1A" />
+                <Text style={styles.homeQuickButtonText}>Open Chat</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setActiveTab("members")}
+                accessibilityRole="button"
+                accessibilityLabel="Open members list"
+                style={({ pressed }) => [
+                  styles.homeQuickButtonSecondary,
+                  pressed && styles.joinButtonPressed,
+                ]}
+              >
+                <MaterialCommunityIcons name="account-group-outline" size={16} color={colors.text} />
+                <Text style={styles.homeQuickButtonSecondaryText}>Members</Text>
+              </Pressable>
+            </View>
+          </Card>
+        </View>
+      )}
+
       {activeTab === "members" && (
         <FlatList
           data={members}
@@ -424,6 +474,86 @@ const styles = StyleSheet.create({
   chat: {
     flex: 1,
     paddingHorizontal: spacing.md,
+  },
+  homeWrap: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  homeCard: {
+    marginBottom: 0,
+  },
+  homeTitle: {
+    color: colors.text,
+    fontWeight: "800",
+  },
+  homeCopy: {
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    lineHeight: 19,
+  },
+  homeStatsRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  homeStatPill: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#242424",
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  homeStatValue: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 14,
+    textTransform: "capitalize",
+  },
+  homeStatLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  homeQuickRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  homeQuickButton: {
+    flex: 1,
+    minHeight: 44,
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  homeQuickButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  homeQuickButtonSecondary: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 999,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  homeQuickButtonSecondaryText: {
+    color: colors.text,
+    fontWeight: "700",
+    fontSize: 13,
   },
   messageItem: {
     backgroundColor: colors.card,

@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Skeleton, SkeletonCard } from "../../src/components/ui/Skeleton";
@@ -17,6 +17,18 @@ import { SUGGESTED_GROUPS } from "../../src/lib/content-data";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
+
+type RankedSearchResult = {
+  group: (typeof SUGGESTED_GROUPS)[number];
+  result: AIRecommendationsResponse["results"][number];
+  searchScore: number;
+};
+
+type GridSearchItem = RankedSearchResult & {
+  listKey: string;
+};
+
+const TOP_RESULTS_LIMIT = 10;
 
 function mapGroupCandidate(group: (typeof SUGGESTED_GROUPS)[number]): AIGroupCandidate {
   const gameKey = group.game.toLowerCase();
@@ -48,6 +60,29 @@ function buildProfile(): AIUserProfile {
   };
 }
 
+function computeSearchScore(
+  normalizedQuery: string,
+  group: (typeof SUGGESTED_GROUPS)[number],
+  result: AIRecommendationsResponse["results"][number],
+): number {
+  if (!normalizedQuery) return result.score;
+
+  const groupName = group.name.toLowerCase();
+  const game = group.game.toLowerCase();
+  const reasons = result.reasons.join(" ").toLowerCase();
+  const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+
+  let score = result.score;
+  tokens.forEach((token) => {
+    if (groupName.startsWith(token)) score += 10;
+    if (groupName.includes(token)) score += 6;
+    if (game.includes(token)) score += 5;
+    if (reasons.includes(token)) score += 3;
+  });
+
+  return score;
+}
+
 export default function AIAdvisorScreen() {
   const router = useRouter();
   const responsive = useResponsive();
@@ -58,6 +93,7 @@ export default function AIAdvisorScreen() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<AIRecommendationsResponse["results"]>([]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
+  const [pageCount, setPageCount] = useState(1);
 
   const candidates = useMemo(() => SUGGESTED_GROUPS.map(mapGroupCandidate), []);
 
@@ -101,33 +137,66 @@ export default function AIAdvisorScreen() {
     };
   }, [query]);
 
-  const joined = useMemo(() => {
+  const rankedTopResults = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    const matched = results
+    const mapped = results
       .map((result) => {
         const group = SUGGESTED_GROUPS.find((item) => item.id === result.groupId);
         if (!group) return null;
-        return { group, result };
+        const searchScore = computeSearchScore(normalized, group, result);
+        return { group, result, searchScore };
       })
-      .filter((item): item is { group: (typeof SUGGESTED_GROUPS)[number]; result: AIRecommendationsResponse["results"][number] } => Boolean(item));
+      .filter((item): item is RankedSearchResult => Boolean(item));
 
-    if (!normalized) return matched;
+    const filtered = normalized
+      ? mapped.filter(({ group, result }) => {
+          const haystack = `${group.name} ${group.game} ${result.reasons.join(" ")}`.toLowerCase();
+          return haystack.includes(normalized);
+        })
+      : mapped;
 
-    return matched.filter(({ group, result }) => {
-      const haystack = `${group.name} ${group.game} ${result.reasons.join(" ")}`.toLowerCase();
-      return haystack.includes(normalized);
-    });
+    return filtered
+      .sort((a, b) => {
+        if (b.searchScore !== a.searchScore) return b.searchScore - a.searchScore;
+        return b.result.score - a.result.score;
+      })
+      .slice(0, TOP_RESULTS_LIMIT);
   }, [query, results]);
 
+  useEffect(() => {
+    setPageCount(1);
+  }, [query, rankedTopResults.length]);
+
+  const gridItems = useMemo(() => {
+    if (rankedTopResults.length === 0) return [];
+
+    const items: GridSearchItem[] = [];
+    for (let page = 0; page < pageCount; page += 1) {
+      rankedTopResults.forEach((item, index) => {
+        items.push({
+          ...item,
+          listKey: `${item.group.id}-p${page}-i${index}`,
+        });
+      });
+    }
+    return items;
+  }, [pageCount, rankedTopResults]);
+
+  const handleEndReached = () => {
+    if (!loading && !error && rankedTopResults.length > 0) {
+      setPageCount((prev) => prev + 1);
+    }
+  };
+
   return (
-    <Screen scrollable>
+    <Screen scrollable={false}>
       <Header
         title="Search"
         subtitle={typeof params.source === "string" ? `Source: ${params.source}` : "Recommendations"}
         showBackButton
       />
 
-      <View style={styles.section}>
+      <View style={styles.fixedSearchWrap}>
         <Searchbar
           placeholder="Search recommendations..."
           value={query}
@@ -148,15 +217,18 @@ export default function AIAdvisorScreen() {
           </View>
         ) : null}
 
-        <Pressable
-          onPress={() => void loadRecommendations()}
-          accessibilityRole="button"
-          accessibilityLabel="Refresh recommendations"
-          style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}
-        >
-          <MaterialCommunityIcons name="refresh" size={16} color="#1A1A1A" />
-          <Text style={styles.refreshButtonText}>Refresh</Text>
-        </Pressable>
+        <View style={styles.searchMetaRow}>
+          <Text style={styles.resultLabel}>Top {TOP_RESULTS_LIMIT} Results</Text>
+          <Pressable
+            onPress={() => void loadRecommendations()}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh recommendations"
+            style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}
+          >
+            <MaterialCommunityIcons name="refresh" size={16} color="#1A1A1A" />
+            <Text style={styles.refreshButtonText}>Refresh</Text>
+          </Pressable>
+        </View>
       </View>
 
       {loading ? (
@@ -165,8 +237,22 @@ export default function AIAdvisorScreen() {
             <Skeleton width="44%" height={16} />
             <Skeleton width="70%" height={12} style={styles.loadingHeaderCopy} />
           </View>
-          <SkeletonCard />
-          <SkeletonCard />
+          <View style={styles.skeletonGridRow}>
+            <View style={styles.skeletonGridItem}>
+              <SkeletonCard />
+            </View>
+            <View style={styles.skeletonGridItem}>
+              <SkeletonCard />
+            </View>
+          </View>
+          <View style={styles.skeletonGridRow}>
+            <View style={styles.skeletonGridItem}>
+              <SkeletonCard />
+            </View>
+            <View style={styles.skeletonGridItem}>
+              <SkeletonCard />
+            </View>
+          </View>
         </View>
       ) : error ? (
         <View style={styles.stateBox}>
@@ -181,53 +267,74 @@ export default function AIAdvisorScreen() {
             <Text style={styles.retryButtonText}>Retry</Text>
           </Pressable>
         </View>
-      ) : joined.length === 0 ? (
+      ) : rankedTopResults.length === 0 ? (
         <View style={styles.stateBox}>
           <Text style={styles.stateTitle}>No matches found</Text>
           <Text style={styles.stateCopy}>Try a broader search or refresh recommendations.</Text>
         </View>
       ) : (
-        joined.map(({ group, result }) => (
-          <Pressable
-            key={group.id}
-            onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
-            accessibilityRole="button"
-            accessibilityLabel={`${group.name}, match score ${result.score}`}
-            style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-          >
-            <View style={styles.cardTop}>
-              <Text style={styles.cardTitle}>{group.name}</Text>
-              <View style={styles.scorePill}>
-                <Text style={styles.scoreText}>{result.score}% Match</Text>
-              </View>
-            </View>
-            <Text style={styles.cardGame}>{group.game}</Text>
-            <View style={styles.reasonWrap}>
-              {result.reasons.map((reason) => (
-                <View key={`${group.id}-${reason}`} style={styles.reasonChip}>
-                  <MaterialCommunityIcons
-                    name={"star-four-points" as any}
-                    size={12}
-                    color={colors.primary}
-                  />
-                  <Text style={styles.reasonText}>{reason}</Text>
+        <FlatList
+          data={gridItems}
+          keyExtractor={(item) => item.listKey}
+          numColumns={2}
+          onEndReachedThreshold={0.4}
+          onEndReached={handleEndReached}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.gridContent}
+          columnWrapperStyle={styles.gridRow}
+          renderItem={({ item }) => (
+            <Pressable
+              onPress={() => router.push(`/(tabs)/group-detail?groupId=${item.group.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.group.name}, match score ${item.result.score}`}
+              style={({ pressed }) => [styles.gridCard, pressed && styles.pressed]}
+            >
+              <View style={styles.cardTop}>
+                <Text style={styles.cardTitle} numberOfLines={2}>
+                  {item.group.name}
+                </Text>
+                <View style={styles.scorePill}>
+                  <Text style={styles.scoreText}>{item.result.score}%</Text>
                 </View>
-              ))}
-            </View>
-          </Pressable>
-        ))
+              </View>
+              <Text style={styles.cardGame}>{item.group.game}</Text>
+              <View style={styles.reasonWrap}>
+                {item.result.reasons.slice(0, 2).map((reason) => (
+                  <View key={`${item.listKey}-${reason}`} style={styles.reasonChip}>
+                    <MaterialCommunityIcons
+                      name={"star-four-points" as any}
+                      size={11}
+                      color={colors.primary}
+                    />
+                    <Text style={styles.reasonText} numberOfLines={1}>
+                      {reason}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </Pressable>
+          )}
+        />
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
+  fixedSearchWrap: {
     marginTop: spacing.md,
     marginBottom: spacing.md,
   },
   skeletonStack: {
     gap: spacing.sm,
+    flex: 1,
+  },
+  skeletonGridRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  skeletonGridItem: {
+    flex: 1,
   },
   loadingHeader: {
     borderWidth: 1,
@@ -253,6 +360,17 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.xs,
   },
+  searchMetaRow: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  resultLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   tagChip: {
     borderRadius: 999,
     borderWidth: 1,
@@ -267,8 +385,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   refreshButton: {
-    marginTop: spacing.sm,
-    alignSelf: "flex-start",
     borderRadius: 999,
     backgroundColor: colors.primary,
     paddingHorizontal: 12,
@@ -288,6 +404,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#242424",
     borderRadius: 14,
     padding: spacing.md,
+    marginBottom: spacing.md,
   },
   stateTitle: {
     color: colors.text,
@@ -314,13 +431,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 12,
   },
-  card: {
+  gridContent: {
+    paddingBottom: spacing.lg,
+  },
+  gridRow: {
+    justifyContent: "space-between",
+    marginBottom: spacing.sm,
+  },
+  gridCard: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
     borderRadius: 16,
     padding: spacing.md,
-    marginBottom: spacing.sm,
+    width: "48.5%",
+    minHeight: 152,
   },
   cardTop: {
     flexDirection: "row",
@@ -329,10 +454,10 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
     flex: 1,
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
   scorePill: {
     borderRadius: 999,
@@ -359,18 +484,17 @@ const styles = StyleSheet.create({
   reasonChip: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#1F1F1F",
-    paddingHorizontal: 9,
+    paddingHorizontal: 8,
     paddingVertical: 4,
   },
   reasonText: {
-    marginLeft: 5,
+    marginLeft: 4,
     color: colors.text,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "600",
   },
   pressed: {

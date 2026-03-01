@@ -27,10 +27,20 @@ interface FeedEntry extends NewsFeedItem {
 interface CommentItem {
   id: string;
   user: string;
+  avatar: string;
   message: string;
 }
 
 const INITIAL_LOOP_COUNT = 3;
+const LOCAL_USER_AVATAR =
+  "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&h=100&fit=crop";
+const COMMENT_AVATARS: Record<string, string> = {
+  Nova: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+  RiftKing:
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
+  Echo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
+  You: LOCAL_USER_AVATAR,
+};
 
 function createLoop(loopIndex: number): FeedEntry[] {
   return NEWS_FEED.map((item, index) => ({
@@ -59,16 +69,19 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
     {
       id: `${item.feedId}-c1`,
       user: "Nova",
+      avatar: COMMENT_AVATARS.Nova,
       message: `This ${item.type === "video" ? "clip" : "post"} is clean. Need more like this.`,
     },
     {
       id: `${item.feedId}-c2`,
       user: "RiftKing",
+      avatar: COMMENT_AVATARS.RiftKing,
       message: "Queueing this with my group tonight.",
     },
     {
       id: `${item.feedId}-c3`,
       user: "Echo",
+      avatar: COMMENT_AVATARS.Echo,
       message: "Drop your setup details in the next one.",
     },
   ];
@@ -168,6 +181,7 @@ export default function NewsScreen() {
     const newThreadComment: CommentItem = {
       id: `${feedId}-u-${Date.now()}`,
       user: "You",
+      avatar: LOCAL_USER_AVATAR,
       message: nextComment,
     };
 
@@ -374,8 +388,15 @@ export default function NewsScreen() {
                 showsVerticalScrollIndicator
                 renderItem={({ item }) => (
                   <View style={styles.drawerComment}>
-                    <Text style={styles.drawerUser}>{item.user}</Text>
-                    <Text style={styles.drawerMessage}>{item.message}</Text>
+                    <Image
+                      source={{ uri: item.avatar }}
+                      style={styles.drawerCommentAvatar}
+                      accessibilityLabel={`${item.user} profile picture`}
+                    />
+                    <View style={styles.drawerCommentBody}>
+                      <Text style={styles.drawerUser}>{item.user}</Text>
+                      <Text style={styles.drawerMessage}>{item.message}</Text>
+                    </View>
                   </View>
                 )}
               />
@@ -636,20 +657,29 @@ const styles = StyleSheet.create({
   },
   drawerListWrap: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    overflow: "hidden",
-    backgroundColor: "#262626",
+    marginBottom: spacing.xs,
   },
   drawerListContent: {
     paddingBottom: spacing.sm,
   },
   drawerComment: {
-    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingHorizontal: spacing.xs,
     paddingVertical: spacing.sm + 2,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+  drawerCommentAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.25)",
+  },
+  drawerCommentBody: {
+    flex: 1,
   },
   drawerUser: {
     color: colors.text,

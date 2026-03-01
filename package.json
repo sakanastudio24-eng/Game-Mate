@@ -2,7 +2,7 @@
   "name": "gamemate",
   "version": "1.0.0",
   "description": "GameMate - Connect gamers, join groups, dominate together",
-  "main": "expo-router/build/index.js",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",

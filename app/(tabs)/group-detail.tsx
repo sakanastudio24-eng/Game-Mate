@@ -103,7 +103,10 @@ export default function GroupDetailScreen() {
           onPress={handleJoinGroup}
           style={({ pressed }) => [
             styles.joinButton,
-            { borderRadius: responsive.cardRadius - 8 },
+            {
+              borderRadius: responsive.cardRadius - 8,
+              minHeight: responsive.buttonHeightMedium,
+            },
             isJoined && styles.joinedButton,
             pressed && styles.joinButtonPressed,
           ]}
@@ -126,9 +129,11 @@ export default function GroupDetailScreen() {
           <Pressable
             key={tab}
             onPress={() => setActiveTab(tab as any)}
-            style={[
+            style={({ pressed }) => [
               styles.tabButton,
+              { minHeight: responsive.buttonHeightSmall },
               activeTab === tab && styles.tabButtonActive,
+              pressed && styles.joinButtonPressed,
             ]}
           >
             <Text
@@ -151,7 +156,7 @@ export default function GroupDetailScreen() {
           keyExtractor={(_, idx) => `${idx}`}
           renderItem={({ item, index }) => (
             <Pressable
-              style={styles.memberItem}
+              style={[styles.memberItem, { minHeight: responsive.touchTargetMin }]}
               onPress={() => {
                 const matchedUser = mockFriends.find(
                   (friend) => friend.username === item || friend.name === item,
@@ -170,7 +175,9 @@ export default function GroupDetailScreen() {
               )}
             </Pressable>
           )}
-          scrollEnabled={false}
+          scrollEnabled={true}
+          style={styles.tabList}
+          contentContainerStyle={styles.tabListContent}
         />
       )}
 
@@ -191,8 +198,9 @@ export default function GroupDetailScreen() {
                 <Text style={[styles.messageText, { fontSize: responsive.bodySize }]}>{item.text}</Text>
               </View>
             )}
-            scrollEnabled={false}
+            scrollEnabled={true}
             style={styles.chat}
+            contentContainerStyle={styles.tabListContent}
           />
 
           <View style={styles.composer}>
@@ -216,6 +224,8 @@ export default function GroupDetailScreen() {
               style={({ pressed }) => [
                 styles.sendButton,
                 {
+                  minWidth: responsive.touchTargetMin,
+                  minHeight: responsive.touchTargetMin,
                   width: responsive.iconButtonSize,
                   height: responsive.iconButtonSize,
                   borderRadius: responsive.iconButtonSize / 2,
@@ -287,6 +297,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: spacing.sm,
     alignItems: "center",
+    justifyContent: "center",
   },
   joinButtonPressed: {
     opacity: 0.8,
@@ -309,6 +320,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     marginBottom: spacing.md,
+  },
+  tabList: {
+    flex: 1,
+  },
+  tabListContent: {
+    paddingBottom: spacing.md,
   },
   tabButton: {
     flex: 1,

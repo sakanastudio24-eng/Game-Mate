@@ -1,23 +1,17 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React from "react";
+import React, { useState } from "react";
 import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { MY_GROUPS } from "../../src/lib/content-data";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 const SELF_AVATAR =
   "https://images.unsplash.com/photo-1579975979101-7a3c3909d659?w=400&h=400&fit=crop";
-
-const statRows = [
-  { label: "Groups", value: "12", icon: "account-group-outline", color: colors.primary },
-  { label: "Events", value: "34", icon: "calendar-month-outline", color: "#66BAFF" },
-  { label: "Wins", value: "156", icon: "trophy-outline", color: "#FFD700" },
-  { label: "Hours", value: "2.4K", icon: "controller-classic-outline", color: "#4ADE80" },
-] as const;
 
 const achievements = [
   {
@@ -85,6 +79,18 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
+  const [myGroups, setMyGroups] = useState(MY_GROUPS);
+
+  const statRows = [
+    { label: "Groups", value: String(myGroups.length), icon: "account-group-outline", color: colors.primary },
+    { label: "Events", value: "34", icon: "calendar-month-outline", color: "#66BAFF" },
+    { label: "Wins", value: "156", icon: "trophy-outline", color: "#FFD700" },
+    { label: "Hours", value: "2.4K", icon: "controller-classic-outline", color: "#4ADE80" },
+  ] as const;
+
+  const leaveGroup = (groupId: string) => {
+    setMyGroups((prev) => prev.filter((group) => group.id !== groupId));
+  };
 
   return (
     <View style={styles.screen}>
@@ -107,12 +113,15 @@ export default function ProfileScreen() {
               style={({ pressed }) => [
                 styles.headerIcon,
                 {
+                  minWidth: responsive.touchTargetMin,
+                  minHeight: responsive.touchTargetMin,
                   width: responsive.iconButtonSize,
                   height: responsive.iconButtonSize,
                   borderRadius: responsive.iconButtonSize / 2,
                 },
                 pressed && styles.pressed,
               ]}
+              hitSlop={4}
             >
               <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
             </Pressable>
@@ -121,12 +130,15 @@ export default function ProfileScreen() {
               style={({ pressed }) => [
                 styles.headerIcon,
                 {
+                  minWidth: responsive.touchTargetMin,
+                  minHeight: responsive.touchTargetMin,
                   width: responsive.iconButtonSize,
                   height: responsive.iconButtonSize,
                   borderRadius: responsive.iconButtonSize / 2,
                 },
                 pressed && styles.pressed,
               ]}
+              hitSlop={4}
             >
               <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
             </Pressable>
@@ -187,7 +199,11 @@ export default function ProfileScreen() {
 
             <Pressable
               onPress={() => router.push("/(tabs)/edit-profile")}
-              style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.editButton,
+                { minHeight: responsive.buttonHeightMedium },
+                pressed && styles.pressed,
+              ]}
             >
               <MaterialCommunityIcons name="pencil-outline" size={16} color="#1A1A1A" />
               <Text style={[styles.editButtonText, { fontSize: responsive.bodySize + 1 }]}>
@@ -236,6 +252,69 @@ export default function ProfileScreen() {
               },
             ]}
           >
+            <View style={styles.gamesHeader}>
+              <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
+                My Groups
+              </Text>
+              <Text style={styles.gamesCount}>{myGroups.length} groups</Text>
+            </View>
+
+            {myGroups.length === 0 ? (
+              <View style={styles.emptyGroups}>
+                <Text style={styles.emptyGroupsText}>No active groups yet.</Text>
+              </View>
+            ) : (
+              myGroups.map((group) => (
+                <View key={group.id} style={styles.myGroupCard}>
+                  <Image source={{ uri: group.thumbnail }} style={styles.myGroupThumb} />
+
+                  <View style={styles.myGroupInfo}>
+                    <Text style={styles.myGroupName}>{group.name}</Text>
+                    <Text style={styles.myGroupMeta}>
+                      {group.game} · {group.members} members · {group.online} online
+                    </Text>
+                  </View>
+
+                  <View style={styles.myGroupActions}>
+                    <Pressable
+                      onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                      style={({ pressed }) => [
+                        styles.groupOpenButton,
+                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.groupOpenButtonText}>Open</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => leaveGroup(group.id)}
+                      style={({ pressed }) => [
+                        styles.groupLeaveButton,
+                        { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 10 },
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Text style={styles.groupLeaveButtonText}>Leave</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        </AnimatedEntrance>
+
+        <AnimatedEntrance delay={240}>
+          <View
+            style={[
+              styles.section,
+              {
+                paddingHorizontal: responsive.horizontalPadding,
+                maxWidth: responsive.contentMaxWidth,
+                alignSelf: "center",
+                width: "100%",
+              },
+            ]}
+          >
             <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
               Achievements
             </Text>
@@ -270,7 +349,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={260}>
+        <AnimatedEntrance delay={300}>
           <View
             style={[
               styles.section,
@@ -303,7 +382,7 @@ export default function ProfileScreen() {
           </View>
         </AnimatedEntrance>
 
-        <AnimatedEntrance delay={320}>
+        <AnimatedEntrance delay={360}>
           <View
             style={[
               styles.accountMeta,
@@ -460,6 +539,79 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     marginHorizontal: -4,
+  },
+  myGroupCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: spacing.sm,
+  },
+  myGroupThumb: {
+    width: 62,
+    height: 62,
+    borderRadius: 12,
+    marginRight: spacing.md,
+  },
+  myGroupInfo: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  myGroupName: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 14,
+  },
+  myGroupMeta: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 3,
+  },
+  myGroupActions: {
+    gap: 6,
+  },
+  groupOpenButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groupOpenButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+    fontSize: 11,
+  },
+  groupLeaveButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groupLeaveButtonText: {
+    color: colors.textSecondary,
+    fontWeight: "700",
+    fontSize: 11,
+  },
+  emptyGroups: {
+    backgroundColor: "#242424",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+  },
+  emptyGroupsText: {
+    color: colors.textSecondary,
+    fontSize: 12,
   },
   achievementCard: {
     width: "50%",

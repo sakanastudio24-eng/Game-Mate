@@ -8,18 +8,10 @@ import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import {
   GROUPS_PAGE_SIZE,
   homeContentPrimed,
-  MY_GROUPS,
   SUGGESTED_GROUPS,
 } from "../../src/lib/content-data";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
-
-const memberAvatars = [
-  "https://images.unsplash.com/photo-1613063022614-dc11527f5ece?w=80&h=80&fit=crop",
-  "https://images.unsplash.com/photo-1757773873686-2257941bbcb8?w=80&h=80&fit=crop",
-  "https://images.unsplash.com/photo-1628501899963-43bb8e2423e1?w=80&h=80&fit=crop",
-  "https://images.unsplash.com/photo-1622349851524-890cc3641b87?w=80&h=80&fit=crop",
-];
 
 export default function GroupsScreen() {
   const router = useRouter();
@@ -29,17 +21,14 @@ export default function GroupsScreen() {
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
 
   const initialVisible = homeContentPrimed() ? GROUPS_PAGE_SIZE + 1 : GROUPS_PAGE_SIZE;
-
-  const [joinedSuggested, setJoinedSuggested] = useState<string[]>([]);
+  const [joinedGroupIds, setJoinedGroupIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(initialVisible);
 
-  const totalOnline = MY_GROUPS.reduce((total, group) => total + group.online, 0);
-
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return MY_GROUPS;
-    return MY_GROUPS.filter((group) =>
+    if (!q) return SUGGESTED_GROUPS;
+    return SUGGESTED_GROUPS.filter((group) =>
       [group.name, group.game].join(" ").toLowerCase().includes(q),
     );
   }, [query]);
@@ -53,16 +42,10 @@ export default function GroupsScreen() {
     [filteredGroups, visibleCount],
   );
 
-  const filteredSuggested = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return SUGGESTED_GROUPS;
-    return SUGGESTED_GROUPS.filter((group) =>
-      [group.name, group.game].join(" ").toLowerCase().includes(q),
-    );
-  }, [query]);
+  const totalOnline = SUGGESTED_GROUPS.reduce((total, group) => total + group.online, 0);
 
-  const toggleJoinSuggested = (id: string) => {
-    setJoinedSuggested((prev) =>
+  const toggleJoin = (id: string) => {
+    setJoinedGroupIds((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
@@ -95,8 +78,8 @@ export default function GroupsScreen() {
                 style={[
                   styles.title,
                   {
-                    fontSize: responsive.titleSize,
-                    lineHeight: Math.round(responsive.titleSize * 1.14),
+                    fontSize: responsive.headerTitleSize + 8,
+                    lineHeight: Math.round((responsive.headerTitleSize + 8) * 1.14),
                   },
                 ]}
               >
@@ -108,12 +91,15 @@ export default function GroupsScreen() {
                   style={({ pressed }) => [
                     styles.iconButton,
                     {
+                      minWidth: responsive.touchTargetMin,
+                      minHeight: responsive.touchTargetMin,
                       width: responsive.iconButtonSize,
                       height: responsive.iconButtonSize,
                       borderRadius: responsive.iconButtonSize / 2,
                     },
                     pressed && styles.pressed,
                   ]}
+                  hitSlop={4}
                 >
                   <MaterialCommunityIcons name="magnify" size={20} color={colors.text} />
                 </Pressable>
@@ -122,12 +108,15 @@ export default function GroupsScreen() {
                   style={({ pressed }) => [
                     styles.iconButton,
                     {
+                      minWidth: responsive.touchTargetMin,
+                      minHeight: responsive.touchTargetMin,
                       width: responsive.iconButtonSize,
                       height: responsive.iconButtonSize,
                       borderRadius: responsive.iconButtonSize / 2,
                     },
                     pressed && styles.pressed,
                   ]}
+                  hitSlop={4}
                 >
                   <MaterialCommunityIcons name="qrcode" size={20} color={colors.text} />
                 </Pressable>
@@ -136,7 +125,7 @@ export default function GroupsScreen() {
 
             <View style={styles.statsRow}>
               <View style={styles.statPrimary}>
-                <Text style={styles.statPrimaryText}>{MY_GROUPS.length} Active Groups</Text>
+                <Text style={styles.statPrimaryText}>{SUGGESTED_GROUPS.length} Discoverable</Text>
               </View>
               <View style={styles.statSecondary}>
                 <View style={styles.onlineDot} />
@@ -167,12 +156,14 @@ export default function GroupsScreen() {
               },
             ]}
           >
-            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
-              My Groups
-            </Text>
+            <Text style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>Discover Groups</Text>
             <Pressable
               onPress={() => router.push("/(tabs)/create-group")}
-              style={({ pressed }) => [styles.createButton, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.createButton,
+                { minHeight: responsive.buttonHeightSmall },
+                pressed && styles.pressed,
+              ]}
             >
               <MaterialCommunityIcons name="plus" size={16} color="#1A1A1A" />
               <Text style={styles.createButtonText}>Create</Text>
@@ -180,62 +171,70 @@ export default function GroupsScreen() {
           </View>
         </AnimatedEntrance>
 
-        {visibleGroups.map((group, index) => (
-          <AnimatedEntrance key={group.id} delay={120 + index * 70}>
-            <Pressable
-              onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
-              style={({ pressed }) => [
-                styles.groupCard,
-                {
-                  marginHorizontal: responsive.horizontalPadding,
-                  borderRadius: responsive.cardRadius,
-                  maxWidth: responsive.contentMaxWidth,
-                  alignSelf: "center",
-                  width: "100%",
-                },
-                pressed && styles.pressed,
-              ]}
-            >
-              <View style={styles.groupImageWrap}>
-                <Image source={{ uri: group.thumbnail }} style={styles.groupImage} />
+        {visibleGroups.map((group, index) => {
+          const isJoined = joinedGroupIds.includes(group.id);
+          return (
+            <AnimatedEntrance key={group.id} delay={120 + index * 70}>
+              <View
+                style={[
+                  styles.groupCard,
+                  {
+                    marginHorizontal: responsive.horizontalPadding,
+                    borderRadius: responsive.cardRadius,
+                    padding: responsive.cardPadding,
+                    maxWidth: responsive.contentMaxWidth,
+                    alignSelf: "center",
+                    width: "100%",
+                  },
+                ]}
+              >
+                <View style={styles.groupRow}>
+                  <Image source={{ uri: group.thumbnail }} style={styles.groupThumb} />
 
-                {group.verified && (
-                  <View style={styles.verifiedBadge}>
-                    <MaterialCommunityIcons name="check-decagram" size={14} color="#1A1A1A" />
+                  <View style={styles.groupInfo}>
+                    <Text style={styles.groupName}>{group.name}</Text>
+                    <Text style={styles.groupGame}>{group.game}</Text>
+                    <Text style={styles.groupMeta}>
+                      {group.members} members · {group.online} online
+                    </Text>
                   </View>
-                )}
+                </View>
 
-                <View style={styles.onlinePill}>
-                  <View style={styles.onlinePulseDot} />
-                  <Text style={styles.onlinePillText}>{group.online} online</Text>
+                <View style={styles.groupActionRow}>
+                  <Pressable
+                    onPress={() => toggleJoin(group.id)}
+                    style={({ pressed }) => [
+                      styles.groupJoinButton,
+                      { minHeight: responsive.buttonHeightSmall },
+                      isJoined && styles.groupJoinedButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.groupJoinButtonText,
+                        isJoined && styles.groupJoinedButtonText,
+                      ]}
+                    >
+                      {isJoined ? "Joined" : "Join"}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => router.push(`/(tabs)/group-detail?groupId=${group.id}`)}
+                    style={({ pressed }) => [
+                      styles.groupViewButton,
+                      { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin + 16 },
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.groupViewButtonText}>Open</Text>
+                  </Pressable>
                 </View>
               </View>
-
-              <View style={[styles.groupBody, { padding: responsive.cardPadding }]}>
-                <View style={styles.groupTopRow}>
-                  <View style={styles.groupTitleWrap}>
-                    <Text style={styles.groupTitle}>{group.name}</Text>
-                    <Text style={styles.groupSubtitle}>{group.game}</Text>
-                  </View>
-                  {group.date ? <Text style={styles.groupDate}>{group.date}</Text> : null}
-                </View>
-
-                <View style={styles.memberRow}>
-                  <View style={styles.avatarStack}>
-                    {memberAvatars.slice(0, 4).map((avatar, i) => (
-                      <Image
-                        key={`${group.id}-${i}`}
-                        source={{ uri: avatar }}
-                        style={[styles.memberAvatar, { marginLeft: i === 0 ? 0 : -10 }]}
-                      />
-                    ))}
-                  </View>
-                  <Text style={styles.memberText}>{group.members} members</Text>
-                </View>
-              </View>
-            </Pressable>
-          </AnimatedEntrance>
-        ))}
+            </AnimatedEntrance>
+          );
+        })}
 
         {filteredGroups.length > visibleCount ? (
           <Pressable
@@ -243,6 +242,7 @@ export default function GroupsScreen() {
             style={[
               styles.loadMoreButton,
               {
+                minHeight: responsive.buttonHeightMedium,
                 marginHorizontal: responsive.horizontalPadding,
                 maxWidth: responsive.contentMaxWidth,
                 alignSelf: "center",
@@ -254,67 +254,22 @@ export default function GroupsScreen() {
           </Pressable>
         ) : null}
 
-        <AnimatedEntrance delay={260}>
-          <Text
+        {filteredGroups.length === 0 ? (
+          <View
             style={[
-              styles.sectionTitle,
-              styles.suggestedTitle,
-              { fontSize: responsive.sectionTitleSize },
+              styles.emptyState,
               {
-                paddingHorizontal: responsive.horizontalPadding,
+                marginHorizontal: responsive.horizontalPadding,
                 maxWidth: responsive.contentMaxWidth,
                 alignSelf: "center",
                 width: "100%",
               },
             ]}
           >
-            Suggested For You
-          </Text>
-        </AnimatedEntrance>
-
-        {filteredSuggested.map((group, index) => {
-          const isJoined = joinedSuggested.includes(group.id);
-          return (
-            <AnimatedEntrance key={group.id} delay={320 + index * 70}>
-              <View
-                style={[
-                  styles.suggestedCard,
-                  {
-                    marginHorizontal: responsive.horizontalPadding,
-                    borderRadius: responsive.cardRadius - 2,
-                    padding: responsive.cardPadding,
-                    maxWidth: responsive.contentMaxWidth,
-                    alignSelf: "center",
-                    width: "100%",
-                  },
-                ]}
-              >
-                <Image source={{ uri: group.thumbnail }} style={styles.suggestedThumb} />
-
-                <View style={styles.suggestedInfo}>
-                  <Text style={styles.suggestedName}>{group.name}</Text>
-                  <Text style={styles.suggestedGame}>{group.game}</Text>
-                  <Text style={styles.suggestedMeta}>
-                    {group.members} members · {group.online} online
-                  </Text>
-                </View>
-
-                <Pressable
-                  onPress={() => toggleJoinSuggested(group.id)}
-                  style={({ pressed }) => [
-                    styles.joinButton,
-                    isJoined ? styles.joinedButton : undefined,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={[styles.joinButtonText, isJoined ? styles.joinedButtonText : undefined]}>
-                    {isJoined ? "Joined" : "Join"}
-                  </Text>
-                </Pressable>
-              </View>
-            </AnimatedEntrance>
-          );
-        })}
+            <Text style={styles.emptyTitle}>No groups found</Text>
+            <Text style={styles.emptyCopy}>Try another search phrase.</Text>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -421,6 +376,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
   },
   createButtonText: {
     color: "#1A1A1A",
@@ -432,105 +388,78 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
-    overflow: "hidden",
-    marginBottom: spacing.md,
-  },
-  groupImageWrap: {
-    height: 170,
-    position: "relative",
-  },
-  groupImage: {
-    width: "100%",
-    height: "100%",
-  },
-  verifiedBadge: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  onlinePill: {
-    position: "absolute",
-    left: 10,
-    top: 10,
-    backgroundColor: "rgba(26,26,26,0.8)",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  onlinePulseDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#4ADE80",
-    marginRight: 6,
-  },
-  onlinePillText: {
-    color: colors.text,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  groupBody: {
-    padding: spacing.md,
-  },
-  groupTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
     marginBottom: spacing.sm,
   },
-  groupTitleWrap: {
-    flex: 1,
-    marginRight: spacing.sm,
+  groupRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  groupTitle: {
+  groupThumb: {
+    width: 78,
+    height: 78,
+    borderRadius: 14,
+    marginRight: spacing.md,
+  },
+  groupInfo: {
+    flex: 1,
+  },
+  groupName: {
     color: colors.text,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "800",
   },
-  groupSubtitle: {
+  groupGame: {
     color: colors.textSecondary,
     fontSize: 13,
     marginTop: 2,
   },
-  groupDate: {
-    color: colors.primary,
-    borderColor: "rgba(255,159,102,0.25)",
-    borderWidth: 1,
-    backgroundColor: "rgba(255,159,102,0.12)",
-    borderRadius: 999,
-    overflow: "hidden",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+  groupMeta: {
+    color: "#4ADE80",
     fontSize: 11,
+    marginTop: 4,
+  },
+  groupActionRow: {
+    marginTop: spacing.md,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  groupJoinButton: {
+    flex: 1,
+    borderRadius: 999,
+    backgroundColor: colors.primary,
+    paddingVertical: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groupJoinButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  groupJoinedButton: {
+    backgroundColor: "#2E4E3A",
+    borderWidth: 1,
+    borderColor: "#4ADE80",
+  },
+  groupJoinedButtonText: {
+    color: "#4ADE80",
+  },
+  groupViewButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: "#2A2A2A",
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  groupViewButtonText: {
+    color: colors.text,
     fontWeight: "700",
-  },
-  memberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatarStack: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: spacing.sm,
-  },
-  memberAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#242424",
-  },
-  memberText: {
-    color: colors.textSecondary,
-    fontSize: 13,
+    fontSize: 12,
   },
   loadMoreButton: {
     marginTop: spacing.xs,
@@ -545,62 +474,18 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: "700",
   },
-  suggestedTitle: {
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  suggestedCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#242424",
-    marginBottom: spacing.sm,
-    padding: 12,
-    flexDirection: "row",
+  emptyState: {
     alignItems: "center",
+    paddingVertical: 48,
   },
-  suggestedThumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 14,
-    marginRight: spacing.md,
-  },
-  suggestedInfo: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  suggestedName: {
+  emptyTitle: {
     color: colors.text,
-    fontSize: 15,
     fontWeight: "700",
+    fontSize: 16,
   },
-  suggestedGame: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  suggestedMeta: {
-    color: "#4ADE80",
-    fontSize: 11,
+  emptyCopy: {
     marginTop: 4,
-  },
-  joinButton: {
-    borderRadius: 999,
-    backgroundColor: colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  joinButtonText: {
-    color: "#1A1A1A",
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  joinedButton: {
-    backgroundColor: "#2E4E3A",
-    borderWidth: 1,
-    borderColor: "#4ADE80",
-  },
-  joinedButtonText: {
-    color: "#4ADE80",
+    color: colors.textSecondary,
   },
   pressed: {
     opacity: 0.85,

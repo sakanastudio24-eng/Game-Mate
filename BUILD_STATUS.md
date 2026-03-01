@@ -78,6 +78,7 @@ Canonical contract: `docs/FLOWS_BACKEND.md`
 ### Feed
 - `GET /api/posts`
 - `POST /api/posts/:id/like`
+- `POST /api/posts/:id/share`
 - `POST /api/posts/:id/save`
 - `POST /api/posts/:id/report`
 - `GET /api/posts/:id/comments`

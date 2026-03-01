@@ -114,6 +114,10 @@ export default function NewsScreen() {
     "news:liked-ids",
     [],
   );
+  const { value: sharedIds, setValue: setSharedIds } = useLocalCache<string[]>(
+    "news:shared-ids",
+    [],
+  );
   const {
     selectedIds: likedIds,
     setSelectedIds: setLikedIds,
@@ -125,7 +129,11 @@ export default function NewsScreen() {
   const [commentThreads, setCommentThreads] = useState<Record<string, CommentItem[]>>({});
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [commentDraft, setCommentDraft] = useState("");
-  const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
+  const [shareTarget, setShareTarget] = useState<{
+    feedId: string;
+    title: string;
+    message: string;
+  } | null>(null);
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
@@ -148,6 +156,10 @@ export default function NewsScreen() {
   const isSaved = useCallback(
     (feedId: string) => savedIds.includes(feedId),
     [savedIds],
+  );
+  const isShared = useCallback(
+    (feedId: string) => sharedIds.includes(feedId),
+    [sharedIds],
   );
 
   useEffect(() => {
@@ -247,7 +259,9 @@ export default function NewsScreen() {
   };
 
   const openShareDrawer = (item: FeedEntry) => {
+    setSharedIds((prev) => (prev.includes(item.feedId) ? prev : [...prev, item.feedId]));
     setShareTarget({
+      feedId: item.feedId,
       title: item.title,
       message: `${item.title} · ${item.author}\nhttps://gamemate.app/p/${item.id}`,
     });
@@ -371,6 +385,18 @@ export default function NewsScreen() {
                 </Pressable>
 
                 <Pressable
+                  onPress={() => openShareDrawer(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Share ${item.title}`}
+                  style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="share-variant-outline" size={32} color={colors.text} />
+                  <Text style={styles.railCount}>
+                    {compactNumber(item.shares + (isShared(item.feedId) ? 1 : 0))}
+                  </Text>
+                </Pressable>
+
+                <Pressable
                   onPress={() => setActivePostMenu(item)}
                   accessibilityRole="button"
                   accessibilityLabel={`More options for ${item.title}`}
@@ -403,8 +429,7 @@ export default function NewsScreen() {
                 </View>
                 <Text style={styles.title}>{truncateFeedTitle(item.title)}</Text>
                 <Text style={styles.description}>
-                  {item.type === "video" ? "Live clip and highlights" : "Editorial update"} ·{" "}
-                  {item.category.toUpperCase()}
+                  {item.game} · {item.category.toUpperCase()} · #{item.hashtags[0]}
                 </Text>
               </View>
             </View>

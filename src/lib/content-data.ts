@@ -6,10 +6,13 @@ export interface NewsFeedItem {
   title: string;
   author: string;
   date: string;
+  game: string;
+  hashtags: string[];
   duration?: string;
   thumbnail: string;
   likes: number;
   comments: number;
+  shares: number;
   category: NewsCategoryId;
 }
 
@@ -66,11 +69,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Disco 2024 Tournament Finals Recap",
     author: "ProGamingLeague",
     date: "Aug 25, 2026",
+    game: "Overwatch 2",
+    hashtags: ["tournament", "finals", "esports"],
     duration: "1:20",
     thumbnail:
       "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80",
     likes: 1240,
     comments: 89,
+    shares: 321,
     category: "fyp",
   },
   {
@@ -79,11 +85,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "New Meta Breakdown Season 5 Tier List",
     author: "GameStrategy",
     date: "Feb 12, 2026",
+    game: "Valorant",
+    hashtags: ["meta", "ranked", "tierlist"],
     duration: "0:58",
     thumbnail:
       "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80",
     likes: 856,
     comments: 45,
+    shares: 204,
     category: "fyp",
   },
   {
@@ -92,11 +101,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Patch Notes 3.2 Fast Breakdown",
     author: "GameDevs",
     date: "Feb 10, 2026",
+    game: "Apex Legends",
+    hashtags: ["patchnotes", "balance", "update"],
     duration: "1:16",
     thumbnail:
       "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&q=80",
     likes: 2100,
     comments: 156,
+    shares: 486,
     category: "patches",
   },
   {
@@ -105,11 +117,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Top 5 Clutch Plays This Week Ranked",
     author: "StreamScout",
     date: "Feb 09, 2026",
+    game: "Counter-Strike 2",
+    hashtags: ["clutch", "highlights", "montage"],
     duration: "2:03",
     thumbnail:
       "https://images.unsplash.com/photo-1511882150382-421056c89033?w=600&q=80",
     likes: 930,
     comments: 74,
+    shares: 267,
     category: "streams",
   },
   {
@@ -118,11 +133,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Esports Calendar March Events Explained",
     author: "ProGamingLeague",
     date: "Feb 08, 2026",
+    game: "League of Legends",
+    hashtags: ["esports", "calendar", "events"],
     duration: "1:12",
     thumbnail:
       "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=600&q=80",
     likes: 640,
     comments: 38,
+    shares: 175,
     category: "esports",
   },
   {
@@ -131,11 +149,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Aim Training Routine in 60 Seconds",
     author: "MetaWatch",
     date: "Feb 07, 2026",
+    game: "Valorant",
+    hashtags: ["aim", "training", "mechanics"],
     duration: "1:00",
     thumbnail:
       "https://images.unsplash.com/photo-1614027164847-1b28cfe1df60?w=600&q=80",
     likes: 788,
     comments: 56,
+    shares: 198,
     category: "fyp",
   },
   {
@@ -144,11 +165,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Balance Hotfix 3.2.1 Released Today",
     author: "GameDevs",
     date: "Feb 06, 2026",
+    game: "Marvel Rivals",
+    hashtags: ["hotfix", "patch", "devnotes"],
     duration: "0:54",
     thumbnail:
       "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80",
     likes: 525,
     comments: 41,
+    shares: 139,
     category: "patches",
   },
   {
@@ -157,11 +181,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Live Scrim Analysis Team Rotations",
     author: "StreamScout",
     date: "Feb 05, 2026",
+    game: "Rainbow Six Siege",
+    hashtags: ["scrim", "analysis", "strategy"],
     duration: "1:41",
     thumbnail:
       "https://images.unsplash.com/photo-1548686304-89d188a80029?w=600&q=80",
     likes: 702,
     comments: 63,
+    shares: 182,
     category: "streams",
   },
   {
@@ -170,11 +197,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Controller Settings Pros Are Using Now",
     author: "GameStrategy",
     date: "Feb 04, 2026",
+    game: "Call of Duty",
+    hashtags: ["controller", "settings", "protips"],
     duration: "1:27",
     thumbnail:
       "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80",
     likes: 834,
     comments: 72,
+    shares: 228,
     category: "fyp",
   },
   {
@@ -183,11 +213,14 @@ export const NEWS_FEED: NewsFeedItem[] = [
     title: "Underrated Team Comps You Should Try",
     author: "MetaWatch",
     date: "Feb 03, 2026",
+    game: "Overwatch 2",
+    hashtags: ["teamcomp", "meta", "ranked"],
     duration: "1:35",
     thumbnail:
       "https://images.unsplash.com/photo-1511882150382-421056c89033?w=600&q=80",
     likes: 765,
     comments: 58,
+    shares: 211,
     category: "esports",
   },
 ];

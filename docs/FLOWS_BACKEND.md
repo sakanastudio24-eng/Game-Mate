@@ -90,6 +90,7 @@ Frontend references:
 ### Feed
 - `GET /api/posts`
 - `POST /api/posts/:id/like`
+- `POST /api/posts/:id/share`
 - `POST /api/posts/:id/save`
 - `POST /api/posts/:id/report`
 - `GET /api/posts/:id/comments`
@@ -341,6 +342,10 @@ Response:
 
 Query:
 - `category=fyp|esports|patches|streams` optional
+- `game` optional (example: `valorant`)
+- `hashtag` optional (example: `ranked`)
+- `q` optional (title/author text query)
+- `type` optional (`video|article`, default `video`)
 - `limit` default 20
 - `cursor` optional
 
@@ -354,10 +359,13 @@ Response:
       "title": "Disco 2024 Tournament Finals",
       "author": "ProGamingLeague",
       "date": "2026-08-25",
+      "game": "valorant",
+      "hashtags": ["ranked", "esports", "highlights"],
       "duration": "1:20",
       "thumbnail": "https://...",
       "likes": 1240,
       "comments": 89,
+      "shares": 321,
       "category": "fyp"
     }
   ],
@@ -366,11 +374,42 @@ Response:
 }
 ```
 
+Required feed video fields for `type=video`:
+- `id`
+- `title`
+- `author`
+- `date`
+- `game`
+- `hashtags[]`
+- `thumbnail`
+- `likes`
+- `comments`
+- `shares`
+- `category`
+
 #### POST `/api/posts/:id/like`
 
 Response:
 ```json
 { "liked": true, "likeCount": 1241 }
+```
+
+#### POST `/api/posts/:id/share`
+
+Request:
+```json
+{
+  "target": "friends|contacts|copy_link",
+  "channel": "in_app|system_share"
+}
+```
+
+Response:
+```json
+{
+  "shared": true,
+  "shareCount": 322
+}
 ```
 
 #### POST `/api/posts/:id/save`
@@ -510,6 +549,7 @@ Recommended defaults:
 - Video recommendations: `30 req/min/user`
 - Suggested tags: `60 req/min/user`
 - Autocomplete: `120 req/min/user`
+- Feed shares: `60 req/min/user`
 - Draft intro: `30 req/min/user`
 - Feed + groups list: `120 req/min/user`
 - Messaging send: `40 req/min/user`

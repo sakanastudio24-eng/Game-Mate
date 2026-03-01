@@ -6,7 +6,6 @@ import {
   FlatList,
   Image,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   View,
@@ -48,10 +47,7 @@ export default function NewsScreen() {
   const [visibleCount, setVisibleCount] = useState(initialLoadCount);
   const [activePostMenu, setActivePostMenu] = useState<NewsFeedItem | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
-  const [categoryRowWidth, setCategoryRowWidth] = useState(0);
-  const [categoryContentWidth, setCategoryContentWidth] = useState(0);
   const mediaHeight = responsive.isSmallPhone ? 184 : responsive.isLargePhone ? 224 : 200;
-  const centeredCategoryPadding = Math.max(0, (categoryRowWidth - categoryContentWidth) / 2);
 
   const filteredItems = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
@@ -180,20 +176,8 @@ export default function NewsScreen() {
                 iconColor={colors.textMuted}
               />
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                onLayout={(event) => setCategoryRowWidth(event.nativeEvent.layout.width)}
-                onContentSizeChange={(width) => setCategoryContentWidth(width)}
-                contentContainerStyle={[
-                  styles.pillsRow,
-                  {
-                    minWidth: "100%",
-                    paddingHorizontal: centeredCategoryPadding,
-                  },
-                ]}
-              >
-                {categories.map((category) => {
+              <View style={styles.pillsRow}>
+                {categories.map((category, index) => {
                   const isActive = category.id === activeCategory;
                   return (
                     <Pressable
@@ -204,6 +188,7 @@ export default function NewsScreen() {
                       accessibilityState={{ selected: isActive }}
                       style={[
                         styles.pill,
+                        index > 0 ? styles.pillSpacing : undefined,
                         { minHeight: responsive.buttonHeightSmall },
                         isActive ? styles.pillActive : undefined,
                       ]}
@@ -214,7 +199,7 @@ export default function NewsScreen() {
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </View>
             </View>
           </AnimatedEntrance>
         }
@@ -548,17 +533,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   pillsRow: {
+    flexDirection: "row",
     paddingBottom: spacing.sm,
     alignItems: "center",
-    columnGap: spacing.sm,
+    justifyContent: "center",
   },
   pill: {
+    flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: "#242424",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pillSpacing: {
+    marginLeft: spacing.sm,
   },
   pillActive: {
     backgroundColor: colors.primary,

@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
-import 'react-native-reanimated';
 
 export const unstable_settings = {
   anchor: '(tabs)',

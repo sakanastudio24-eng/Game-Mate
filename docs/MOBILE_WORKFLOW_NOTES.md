@@ -309,3 +309,30 @@ Priority action order:
 3. Add `updateCellsBatchingPeriod` tuning on core lists.
 4. Memoize heavy row/card components with stable props.
 5. Add request cancellation and query dedupe layer for upcoming backend expansion.
+
+### 12.1) Performance Pass Update (2026-03-01)
+
+Applied in this pass:
+1. Groups list virtualization
+- Converted Groups main discover list from `ScrollView + map` to `FlatList`.
+- Added list defaults: `removeClippedSubviews`, `initialNumToRender`, `maxToRenderPerBatch`, `windowSize`, `updateCellsBatchingPeriod`.
+
+2. Re-render stabilization
+- Added memoized repeated group card component (`GroupDiscoverCard` with `React.memo`).
+- Stabilized core group handlers with `useCallback`.
+
+3. Image path optimization
+- Migrated list-heavy media usage to `expo-image` on:
+  - Feed (`news.tsx`)
+  - Groups (`groups.tsx`)
+  - Search (`ai-advisor.tsx`)
+  - Profile collections (`profile.tsx`)
+
+4. List batching tuning
+- Added `updateCellsBatchingPeriod` on core feed, comments, groups, and search lists.
+
+Updated score direction after this pass:
+- Re-render storms: **Improved**
+- FlatList strategy: **Improved**
+- Image performance: **Improved**
+- UI-thread animations: **Good**

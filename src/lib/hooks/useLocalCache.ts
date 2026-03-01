@@ -7,6 +7,7 @@ type AsyncStorageLike = {
 };
 
 const fallbackMemoryCache = new Map<string, string>();
+let warnedMissingAsyncStorage = false;
 
 function getAsyncStorage(): AsyncStorageLike | null {
   try {
@@ -22,6 +23,12 @@ function getAsyncStorage(): AsyncStorageLike | null {
     }
     return null;
   } catch {
+    if (!warnedMissingAsyncStorage) {
+      warnedMissingAsyncStorage = true;
+      console.warn(
+        "[useLocalCache] AsyncStorage module not installed. Falling back to memory-only cache.",
+      );
+    }
     return null;
   }
 }

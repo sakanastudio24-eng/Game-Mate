@@ -63,7 +63,7 @@ export const NEWS_FEED: NewsFeedItem[] = [
   {
     id: "1",
     type: "video",
-    title: "Disco 2024 Tournament Finals",
+    title: "Disco 2024 Tournament Finals Recap",
     author: "ProGamingLeague",
     date: "Aug 25, 2026",
     duration: "1:20",
@@ -76,7 +76,7 @@ export const NEWS_FEED: NewsFeedItem[] = [
   {
     id: "2",
     type: "video",
-    title: "New Meta Breakdown - Season 5",
+    title: "New Meta Breakdown Season 5 Tier List",
     author: "GameStrategy",
     date: "Feb 12, 2026",
     duration: "0:58",
@@ -88,10 +88,11 @@ export const NEWS_FEED: NewsFeedItem[] = [
   },
   {
     id: "3",
-    type: "article",
-    title: "Patch Notes 3.2 - Major Balance Changes",
+    type: "video",
+    title: "Patch Notes 3.2 Fast Breakdown",
     author: "GameDevs",
     date: "Feb 10, 2026",
+    duration: "1:16",
     thumbnail:
       "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&q=80",
     likes: 2100,
@@ -101,7 +102,7 @@ export const NEWS_FEED: NewsFeedItem[] = [
   {
     id: "4",
     type: "video",
-    title: "Top 5 Clutch Plays This Week",
+    title: "Top 5 Clutch Plays This Week Ranked",
     author: "StreamScout",
     date: "Feb 09, 2026",
     duration: "2:03",
@@ -113,10 +114,11 @@ export const NEWS_FEED: NewsFeedItem[] = [
   },
   {
     id: "5",
-    type: "article",
-    title: "Esports Calendar: March Events",
+    type: "video",
+    title: "Esports Calendar March Events Explained",
     author: "ProGamingLeague",
     date: "Feb 08, 2026",
+    duration: "1:12",
     thumbnail:
       "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=600&q=80",
     likes: 640,
@@ -126,7 +128,7 @@ export const NEWS_FEED: NewsFeedItem[] = [
   {
     id: "6",
     type: "video",
-    title: "Aim Training Routine in 60s",
+    title: "Aim Training Routine in 60 Seconds",
     author: "MetaWatch",
     date: "Feb 07, 2026",
     duration: "1:00",
@@ -138,10 +140,11 @@ export const NEWS_FEED: NewsFeedItem[] = [
   },
   {
     id: "7",
-    type: "article",
-    title: "Balance Hotfix 3.2.1 Released",
+    type: "video",
+    title: "Balance Hotfix 3.2.1 Released Today",
     author: "GameDevs",
     date: "Feb 06, 2026",
+    duration: "0:54",
     thumbnail:
       "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80",
     likes: 525,
@@ -151,7 +154,7 @@ export const NEWS_FEED: NewsFeedItem[] = [
   {
     id: "8",
     type: "video",
-    title: "Live Scrim Analysis: Team Rotations",
+    title: "Live Scrim Analysis Team Rotations",
     author: "StreamScout",
     date: "Feb 05, 2026",
     duration: "1:41",
@@ -160,6 +163,32 @@ export const NEWS_FEED: NewsFeedItem[] = [
     likes: 702,
     comments: 63,
     category: "streams",
+  },
+  {
+    id: "9",
+    type: "video",
+    title: "Controller Settings Pros Are Using Now",
+    author: "GameStrategy",
+    date: "Feb 04, 2026",
+    duration: "1:27",
+    thumbnail:
+      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&q=80",
+    likes: 834,
+    comments: 72,
+    category: "fyp",
+  },
+  {
+    id: "10",
+    type: "video",
+    title: "Underrated Team Comps You Should Try",
+    author: "MetaWatch",
+    date: "Feb 03, 2026",
+    duration: "1:35",
+    thumbnail:
+      "https://images.unsplash.com/photo-1511882150382-421056c89033?w=600&q=80",
+    likes: 765,
+    comments: 58,
+    category: "esports",
   },
 ];
 
@@ -215,6 +244,56 @@ export const MY_GROUPS: GroupListItem[] = [
       "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=700&q=80",
     verified: true,
   },
+  {
+    id: "6",
+    name: "Rocket League Rotations",
+    game: "Rocket League",
+    members: 14,
+    online: 6,
+    thumbnail:
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=700&q=80",
+    verified: false,
+  },
+  {
+    id: "7",
+    name: "Marvel Rivals Night Squad",
+    game: "Marvel Rivals",
+    members: 16,
+    online: 9,
+    thumbnail:
+      "https://images.unsplash.com/photo-1614027164847-1b28cfe1df60?w=700&q=80",
+    verified: true,
+  },
+  {
+    id: "8",
+    name: "Fortnite Build Battles",
+    game: "Fortnite",
+    members: 20,
+    online: 10,
+    thumbnail:
+      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=700&q=80",
+    verified: false,
+  },
+  {
+    id: "9",
+    name: "Overwatch Support Mains",
+    game: "Overwatch 2",
+    members: 18,
+    online: 7,
+    thumbnail:
+      "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=700&q=80",
+    verified: true,
+  },
+  {
+    id: "10",
+    name: "Minecraft Co-op Builders",
+    game: "Minecraft",
+    members: 22,
+    online: 11,
+    thumbnail:
+      "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=700&q=80",
+    verified: false,
+  },
 ];
 
 export const SUGGESTED_GROUPS: SuggestedGroupItem[] = [
@@ -244,5 +323,68 @@ export const SUGGESTED_GROUPS: SuggestedGroupItem[] = [
     online: 9,
     thumbnail:
       "https://images.unsplash.com/photo-1462392246754-28dfa2df8e6b?w=400&q=80",
+  },
+  {
+    id: "s4",
+    name: "Valorant Diamond Stack",
+    game: "Valorant",
+    members: 92,
+    online: 46,
+    thumbnail:
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80",
+  },
+  {
+    id: "s5",
+    name: "Late Night Apex Queue",
+    game: "Apex Legends",
+    members: 74,
+    online: 29,
+    thumbnail:
+      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&q=80",
+  },
+  {
+    id: "s6",
+    name: "Rocket League Rotations",
+    game: "Rocket League",
+    members: 53,
+    online: 20,
+    thumbnail:
+      "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=420&q=80",
+  },
+  {
+    id: "s7",
+    name: "Marvel Rivals Night Squad",
+    game: "Marvel Rivals",
+    members: 61,
+    online: 24,
+    thumbnail:
+      "https://images.unsplash.com/photo-1614027164847-1b28cfe1df60?w=400&q=80",
+  },
+  {
+    id: "s8",
+    name: "Overwatch Support Mains",
+    game: "Overwatch 2",
+    members: 88,
+    online: 41,
+    thumbnail:
+      "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&q=80",
+  },
+  {
+    id: "s9",
+    name: "Fortnite Build Battles",
+    game: "Fortnite",
+    members: 67,
+    online: 31,
+    thumbnail:
+      "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=420&q=80",
+  },
+  {
+    id: "s10",
+    name: "Minecraft Co-op Builders",
+    game: "Minecraft",
+    members: 49,
+    online: 15,
+    thumbnail:
+      "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=420&q=80",
   },
 ];

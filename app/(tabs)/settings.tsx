@@ -5,6 +5,7 @@ import { Image, StyleSheet, View } from "react-native";
 import { Dialog, List, Portal, Text } from "react-native-paper";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
+import { useAuth } from "../../src/context/AuthContext";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
@@ -19,15 +20,17 @@ export default function SettingsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const { showToast } = useToast();
+  const { logoutUser } = useAuth();
   const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     setDeleteDialogVisible(false);
     showToast({
       message: "Account delete request submitted (preview).",
       icon: "alert-circle-outline",
       durationMs: 2800,
     });
+    await logoutUser();
     router.replace("/onboarding" as any);
   };
 
@@ -127,7 +130,10 @@ export default function SettingsScreen() {
         fullWidth
         size="large"
         style={styles.logoutButton}
-        onPress={() => router.replace("/(tabs)/news" as any)}
+        onPress={async () => {
+          await logoutUser();
+          router.replace("/onboarding" as any);
+        }}
       >
         Logout
       </Button>

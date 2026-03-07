@@ -191,6 +191,42 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         return Response({"detail": "User invited successfully."}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["post"])
+    def promote(self, request, pk=None):
+        group = self.get_object()
+
+        if group.owner != request.user:
+            return Response(
+                {"detail": "Only owner can promote members."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        username = request.data.get("username")
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        membership = GroupMembership.objects.filter(
+            group=group,
+            user=user,
+        ).first()
+
+        if not membership:
+            return Response(
+                {"detail": "User not in group."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        membership.role = "admin"
+        membership.save()
+
+        return Response({"detail": "User promoted to admin."})
+
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):
         group = self.get_object()

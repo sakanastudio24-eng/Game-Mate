@@ -123,24 +123,29 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         return Response({"success": True, "message": "Joined."}, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=["post"], url_path="leave")
+    @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
         group = self.get_object()
 
-        if group.owner_id == request.user.id:
+        membership = GroupMembership.objects.filter(
+            group=group,
+            user=request.user,
+        ).first()
+
+        if not membership:
             return Response(
-                {"success": False, "message": "Owner cannot leave their own group."},
+                {"detail": "You are not a member."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        deleted, _ = GroupMembership.objects.filter(group=group, user=request.user).delete()
-        if deleted == 0:
+        if membership.role == "owner":
             return Response(
-                {"success": True, "message": "Not a member."},
-                status=status.HTTP_200_OK,
+                {"detail": "Owner cannot leave their own group."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response({"success": True, "message": "Group left."}, status=status.HTTP_200_OK)
+        membership.delete()
+        return Response({"detail": "You left the group."})
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):

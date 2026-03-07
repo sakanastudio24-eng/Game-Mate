@@ -1,4 +1,36 @@
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
+
+const API_PORT = "8000";
+
+function normalizeBaseUrl(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+function inferExpoDevBaseUrl() {
+  const possibleHostUri =
+    (Constants.expoConfig as any)?.hostUri ??
+    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ??
+    (Constants as any)?.manifest?.debuggerHost;
+
+  if (typeof possibleHostUri === "string" && possibleHostUri.length > 0) {
+    const host = possibleHostUri.split(":")[0];
+    if (host) {
+      return `http://${host}:${API_PORT}`;
+    }
+  }
+
+  // Android emulator localhost bridge.
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:8000";
+  }
+
+  return "http://127.0.0.1:8000";
+}
+
+const BASE_URL = normalizeBaseUrl(
+  process.env.EXPO_PUBLIC_API_URL?.trim() || inferExpoDevBaseUrl(),
+);
 
 export async function apiRequest(
   endpoint: string,
@@ -14,10 +46,16 @@ export async function apiRequest(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "Request failed";
+    throw new Error(`Network request failed (${BASE_URL}). ${detail}`);
+  }
 
   const contentType = response.headers.get("content-type");
   const data = contentType?.includes("application/json")

@@ -1,5 +1,12 @@
 import { apiRequest } from "./api";
 
+function unwrapData<T>(payload: unknown): T {
+  if (payload && typeof payload === "object" && "data" in payload) {
+    return (payload as { data: T }).data;
+  }
+  return payload as T;
+}
+
 export async function login(email: string, password: string) {
   return apiRequest("/api/auth/token/", {
     method: "POST",
@@ -15,11 +22,12 @@ export async function refreshToken(refresh: string) {
 }
 
 export async function getMe(token: string) {
-  return apiRequest(
+  const payload = await apiRequest(
     "/api/accounts/me/",
     {
       method: "GET",
     },
     token
   );
+  return unwrapData(payload);
 }

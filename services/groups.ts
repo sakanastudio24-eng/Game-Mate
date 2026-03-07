@@ -1,14 +1,32 @@
 import { apiRequest } from "./api";
 
+type WrappedResults<T> = { success: boolean; results: T[] };
+type WrappedData<T> = { success: boolean; data: T };
+
+function unwrapResults<T>(payload: unknown): T[] {
+  if (payload && typeof payload === "object" && "results" in payload) {
+    return (payload as WrappedResults<T>).results ?? [];
+  }
+  return Array.isArray(payload) ? (payload as T[]) : [];
+}
+
+function unwrapData<T>(payload: unknown): T {
+  if (payload && typeof payload === "object" && "data" in payload) {
+    return (payload as WrappedData<T>).data;
+  }
+  return payload as T;
+}
+
 export async function listGroups(token: string) {
-  return apiRequest("/api/groups/", { method: "GET" }, token);
+  const payload = await apiRequest("/api/groups/", { method: "GET" }, token);
+  return unwrapResults(payload);
 }
 
 export async function createGroup(
   token: string,
   payload: { name: string; description: string; is_private: boolean }
 ) {
-  return apiRequest(
+  const response = await apiRequest(
     "/api/groups/",
     {
       method: "POST",
@@ -16,6 +34,7 @@ export async function createGroup(
     },
     token
   );
+  return unwrapData(response);
 }
 
 export async function joinGroup(token: string, groupId: number) {
@@ -27,5 +46,6 @@ export async function leaveGroup(token: string, groupId: number) {
 }
 
 export async function getGroupMembers(token: string, groupId: number) {
-  return apiRequest(`/api/groups/${groupId}/members/`, { method: "GET" }, token);
+  const payload = await apiRequest(`/api/groups/${groupId}/members/`, { method: "GET" }, token);
+  return unwrapResults(payload);
 }

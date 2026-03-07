@@ -145,7 +145,10 @@ class GroupViewSet(viewsets.ModelViewSet):
             )
 
         membership.delete()
-        return Response({"detail": "You left the group."})
+        return Response(
+            {"detail": "You left the group."},
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):

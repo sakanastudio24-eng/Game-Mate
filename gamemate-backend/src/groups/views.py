@@ -59,6 +59,21 @@ class GroupViewSet(viewsets.ModelViewSet):
             perms.append(IsGroupOwner())
         return perms
 
+    def get_object(self):
+        # Keep explicit object-level permission enforcement for all detail actions.
+        obj = super().get_object()
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def destroy(self, request, *args, **kwargs):
+        group = self.get_object()
+        if group.owner_id != request.user.id:
+            return Response(
+                {"message": "Only group owner can delete this group."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return super().destroy(request, *args, **kwargs)
+
     @action(detail=True, methods=["post"], url_path="join")
     def join(self, request, pk=None):
         group = self.get_object()

@@ -50,8 +50,13 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = GroupSerializer(page, many=True, context=self.get_serializer_context())
+            return self.get_paginated_response(serializer.data)
+
         serializer = GroupSerializer(queryset, many=True, context=self.get_serializer_context())
-        return Response({"success": True, "results": serializer.data})
+        return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         group = self.get_object()

@@ -31,7 +31,7 @@ export default function SettingsScreen() {
       durationMs: 2800,
     });
     await logoutUser();
-    router.replace("/onboarding" as any);
+    router.replace("/login" as any);
   };
 
   return (
@@ -132,7 +132,7 @@ export default function SettingsScreen() {
         style={styles.logoutButton}
         onPress={async () => {
           await logoutUser();
-          router.replace("/onboarding" as any);
+          router.replace("/login" as any);
         }}
       >
         Logout

@@ -1,6 +1,7 @@
 from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -65,14 +66,10 @@ class GroupViewSet(viewsets.ModelViewSet):
         self.check_object_permissions(self.request, obj)
         return obj
 
-    def destroy(self, request, *args, **kwargs):
-        group = self.get_object()
-        if group.owner_id != request.user.id:
-            return Response(
-                {"message": "Only group owner can delete this group."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-        return super().destroy(request, *args, **kwargs)
+    def perform_destroy(self, instance):
+        if instance.owner != self.request.user:
+            raise PermissionDenied("Only the owner can delete this group.")
+        instance.delete()
 
     @action(detail=True, methods=["post"], url_path="join")
     def join(self, request, pk=None):

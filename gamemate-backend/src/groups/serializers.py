@@ -3,8 +3,13 @@ from rest_framework import serializers
 from .models import Group, GroupMembership
 
 
+class GroupOwnerSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    username = serializers.CharField(read_only=True)
+
+
 class GroupSerializer(serializers.ModelSerializer):
-    owner_email = serializers.EmailField(source="owner.email", read_only=True)
+    owner = GroupOwnerSerializer(read_only=True)
     member_count = serializers.IntegerField(source="memberships.count", read_only=True)
 
     class Meta:
@@ -15,11 +20,10 @@ class GroupSerializer(serializers.ModelSerializer):
             "description",
             "is_private",
             "owner",
-            "owner_email",
             "member_count",
             "created_at",
         ]
-        read_only_fields = ["id", "owner", "owner_email", "member_count", "created_at"]
+        read_only_fields = ["id", "owner", "member_count", "created_at"]
 
 
 class GroupCreateSerializer(serializers.ModelSerializer):

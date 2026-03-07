@@ -45,9 +45,9 @@ class GroupViewSet(viewsets.ModelViewSet):
         return (
             Group.objects.select_related("owner")
             .filter(
-                Q(is_private=False) |
-                Q(owner=user) |
-                Q(memberships__user=user)
+                Q(is_private=False)
+                | Q(is_private=True, owner=user)
+                | Q(is_private=True, memberships__user=user)
             )
             .distinct()
         )

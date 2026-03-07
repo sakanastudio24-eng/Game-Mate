@@ -1,9 +1,23 @@
 # Backend API Contracts + Handoff (v1)
 
-Last updated: 2026-03-01
+Last updated: 2026-03-07
 Owner: Mobile + Backend handoff
 
 This is the canonical backend contract for the current Expo app state.
+
+## Current Implemented Snapshot (2026-03-07)
+
+Implemented now:
+- `POST /api/auth/token/`, `POST /api/auth/token/refresh/`, `POST /api/auth/logout/` (custom JWT views)
+- `GET /api/accounts/me/`
+- `GET /api/groups/` (DRF page-number pagination, page size `3`)
+- `POST /api/groups/`, `GET /api/groups/{id}/`, `PATCH /api/groups/{id}/`, `DELETE /api/groups/{id}/`
+- `POST /api/groups/{id}/join/`, `POST /api/groups/{id}/leave/`, `GET /api/groups/{id}/members/`
+- `POST /api/groups/{id}/invite/`, `POST /api/groups/{id}/promote/`
+
+Security settings currently active:
+- Global throttles: `anon=100/day`, `user=1000/day`
+- Login throttle on `/api/auth/token/`: `10/min` per IP
 
 ## 1) Scope
 
@@ -23,7 +37,7 @@ Frontend references:
 ## 2) API Conventions
 
 ### Base URL and versioning
-- Base URL from mobile env: `EXPO_PUBLIC_API_BASE_URL`
+- Base URL from mobile env: `EXPO_PUBLIC_API_URL`
 - Current namespace: `/api`
 - Breaking changes: introduce `/api/v2/*`.
 
@@ -40,9 +54,8 @@ Frontend references:
 - Timestamps use ISO-8601 UTC (example: `2026-02-28T17:20:00Z`).
 
 ### Pagination
-- Cursor pagination for lists where possible.
-- Request fields: `limit`, `cursor`
-- Response fields: `nextCursor`, `hasMore`
+- Current implementation for groups uses DRF `PageNumberPagination` (`PAGE_SIZE=3`).
+- Planned cursor pagination remains recommended for high-volume feed/search endpoints.
 
 ### Standard error contract
 

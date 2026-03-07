@@ -84,29 +84,37 @@ This repo has already applied that order with `User` + `Profile` in `accounts`.
   - frontend/backend route contracts in `../docs/FLOWS_BACKEND.md`
   - AI contracts in `../docs/AI_HANDOFF.md`
 
-## Phase 2 Notes (DRF + JWT + Base Routes)
+## Current API Notes
 
-Implemented in this phase:
-- SimpleJWT blacklist support enabled in settings:
-  - `rest_framework_simplejwt.token_blacklist`
-  - token lifetimes + rotation + blacklist-after-rotation
-- Auth endpoints:
+Implemented and active:
+- Custom JWT auth views with response envelopes:
   - `POST /api/auth/token/`
   - `POST /api/auth/token/refresh/`
-  - `POST /api/auth/logout/` (blacklist refresh token)
+  - `POST /api/auth/logout/`
 - Account bootstrap endpoint:
-  - `GET /api/accounts/me/` (authenticated user + profile payload)
-- Groups domain hardening:
-  - Owner auto-membership signal on group create
-  - Explicit unique membership constraint (`user`, `group`)
-  - Admin registration for `Group` and `GroupMembership`
+  - `GET /api/accounts/me/`
+- Groups endpoints:
+  - paginated `GET /api/groups/` (PageNumberPagination, `PAGE_SIZE=3`)
+  - `POST /api/groups/{id}/join/`
+  - `POST /api/groups/{id}/leave/`
+  - `GET /api/groups/{id}/members/`
+  - `POST /api/groups/{id}/invite/`
+  - `POST /api/groups/{id}/promote/`
+
+Security and reliability:
+- Global throttling:
+  - anon `100/day`
+  - user `1000/day`
+- Login throttle:
+  - `10/min` per IP on `/api/auth/token/`
 
 Quick API smoke test:
 1. `POST /api/auth/token/` with email/password
 2. `GET /api/accounts/me/` with `Authorization: Bearer <access>`
-3. `POST /api/auth/logout/` with refresh token to revoke
+3. `GET /api/groups/` and verify `count/next/previous/results` pagination shape
+4. `POST /api/auth/logout/` with refresh token to revoke
 
-### Auth Troubleshooting Notes
+### Auth + Local Troubleshooting Notes
 - `405 Method "GET" not allowed` on `/api/auth/token/` means the request was sent as `GET`. Use `POST`.
 - `curl: (7) Failed to connect to 127.0.0.1:8000` means Django server is not running.
 - Start server:

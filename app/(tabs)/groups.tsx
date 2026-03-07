@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
+import { useFocusEffect } from "@react-navigation/native";
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
@@ -338,9 +339,11 @@ export default function GroupsScreen() {
     }
   }, [accessToken]);
 
-  useEffect(() => {
-    void loadGroups();
-  }, [loadGroups]);
+  useFocusEffect(
+    useCallback(() => {
+      void loadGroups();
+    }, [loadGroups]),
+  );
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();

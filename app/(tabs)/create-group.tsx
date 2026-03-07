@@ -1,11 +1,13 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { SegmentedButtons, Text } from "react-native-paper";
+import { createGroup } from "../../services/groups";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
-import { useSafeBackNavigation } from "../../src/lib/navigation";
+import { useAuth } from "../../src/context/AuthContext";
 import { Screen } from "../../src/components/ui/Screen";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -26,15 +28,18 @@ const ranks = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Radiant"];
 const mediaSources = ["None", "Upload", "Camera"];
 
 export default function CreateGroupScreen() {
-  const safeBack = useSafeBackNavigation();
+  const router = useRouter();
+  const { accessToken } = useAuth();
   const responsive = useResponsive();
   const [groupName, setGroupName] = useState("");
   const [selectedGame, setSelectedGame] = useState("Valorant");
   const [mode, setMode] = useState<"ranked" | "casual">("ranked");
+  const [isPrivate, setIsPrivate] = useState(false);
   const [micRequired, setMicRequired] = useState(true);
   const [minRank, setMinRank] = useState("Gold");
   const [description, setDescription] = useState("");
   const [mediaSource, setMediaSource] = useState("Upload");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
@@ -49,10 +54,35 @@ export default function CreateGroupScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleCreate = () => {
-    if (validateForm()) {
-      // Backend: POST /api/groups with form data.
-      safeBack();
+  const handleCreate = async () => {
+    if (!validateForm()) return;
+    if (!accessToken) {
+      setErrors((previous) => ({
+        ...previous,
+        api: "Sign in again to create a group.",
+      }));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors((previous) => ({ ...previous, api: "" }));
+
+    try {
+      await createGroup(accessToken, {
+        name: groupName.trim(),
+        description: description.trim(),
+        is_private: isPrivate,
+      });
+
+      // Return to groups after creation; groups screen refreshes data on focus.
+      router.replace("/(tabs)/groups");
+    } catch (error) {
+      setErrors((previous) => ({
+        ...previous,
+        api: error instanceof Error ? error.message : "Unable to create group right now.",
+      }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -99,6 +129,19 @@ export default function CreateGroupScreen() {
           buttons={[
             { value: "ranked", label: "Ranked" },
             { value: "casual", label: "Casual" },
+          ]}
+          style={styles.segmented}
+        />
+      </Card>
+
+      <Card style={styles.card}>
+        <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Visibility</Text>
+        <SegmentedButtons
+          value={isPrivate ? "private" : "public"}
+          onValueChange={(value) => setIsPrivate(value === "private")}
+          buttons={[
+            { value: "public", label: "Public" },
+            { value: "private", label: "Private" },
           ]}
           style={styles.segmented}
         />
@@ -174,10 +217,14 @@ export default function CreateGroupScreen() {
         fullWidth
         size="large"
         onPress={handleCreate}
+        disabled={isSubmitting}
+        loading={isSubmitting}
         style={styles.createButton}
       >
         Create Group
       </Button>
+
+      {errors.api ? <Text style={styles.error}>{errors.api}</Text> : null}
     </Screen>
   );
 }

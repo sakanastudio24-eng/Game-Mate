@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { listGroups } from "../../services/groups";
 import {
   AIGroupCandidate,
   AIRecommendationsResponse,
@@ -33,17 +34,40 @@ import {
 } from "../../src/lib/content-data";
 import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
+import { useAuth } from "../../src/context/AuthContext";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
+type BackendGroup = {
+  id: number;
+  name: string;
+  description: string;
+  is_private: boolean;
+  owner: number;
+  owner_email: string;
+  member_count: number;
+  created_at: string;
+};
+
 type AISwipeItem = {
-  group: (typeof SUGGESTED_GROUPS)[number];
+  group: SuggestedGroup;
   score: number;
   reasons: string[];
 };
-type SuggestedGroup = (typeof SUGGESTED_GROUPS)[number];
+
+type SuggestedGroup = {
+  id: string;
+  name: string;
+  description: string;
+  game: string;
+  members: number;
+  online: number;
+  thumbnail: string;
+  isPrivate: boolean;
+  ownerEmail: string;
+};
 
 const SWIPE_ACTION_THRESHOLD = 90;
 
@@ -141,7 +165,7 @@ const GroupDiscoverCard = memo(function GroupDiscoverCard({
         <Pressable
           onPress={handleOpen}
           accessibilityRole="button"
-          accessibilityLabel={`${group.name}, ${group.game}, ${group.members} members, ${group.online} online`}
+          accessibilityLabel={`${group.name}, ${group.isPrivate ? "private" : "public"}, ${group.game}, ${group.members} members, ${group.online} online`}
           accessibilityHint="Open group details"
           style={[
             styles.groupCard,
@@ -164,6 +188,21 @@ const GroupDiscoverCard = memo(function GroupDiscoverCard({
             <View style={styles.groupInfo}>
               <Text style={styles.groupName}>{group.name}</Text>
               <Text style={styles.groupGame}>{group.game}</Text>
+              <View style={styles.groupVisibilityRow}>
+                <View
+                  style={[
+                    styles.groupVisibilityBadge,
+                    group.isPrivate ? styles.groupVisibilityPrivate : styles.groupVisibilityPublic,
+                  ]}
+                >
+                  <Text style={styles.groupVisibilityText}>
+                    {group.isPrivate ? "Private" : "Public"}
+                  </Text>
+                </View>
+              </View>
+              <Text numberOfLines={2} style={styles.groupDescription}>
+                {group.description?.trim().length ? group.description : "No description provided."}
+              </Text>
               <Text style={styles.groupMeta}>
                 {group.members} members · {group.online} online
               </Text>
@@ -218,6 +257,7 @@ const GroupDiscoverCard = memo(function GroupDiscoverCard({
 
 export default function GroupsScreen() {
   const router = useRouter();
+  const { accessToken } = useAuth();
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -251,6 +291,9 @@ export default function GroupsScreen() {
     game: string;
   } | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
+  const [apiGroups, setApiGroups] = useState<SuggestedGroup[]>([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const [aiSwipeVisible, setAiSwipeVisible] = useState(false);
   const [aiSwipeLoading, setAiSwipeLoading] = useState(false);
   const [aiSwipeError, setAiSwipeError] = useState<string | null>(null);
@@ -258,13 +301,54 @@ export default function GroupsScreen() {
   const groupThumbSize = responsive.isSmallPhone ? 66 : responsive.isLargePhone ? 86 : 78;
   const swipeX = useRef(new Animated.Value(0)).current;
 
+  const loadGroups = useCallback(async () => {
+    if (!accessToken) {
+      setApiGroups([]);
+      setApiError("Sign in to load groups.");
+      setApiLoading(false);
+      return;
+    }
+
+    setApiLoading(true);
+    setApiError(null);
+
+    try {
+      const result = (await listGroups(accessToken)) as BackendGroup[];
+      const mapped: SuggestedGroup[] = result.map((group, index) => {
+        const fallback = SUGGESTED_GROUPS[index % SUGGESTED_GROUPS.length];
+        const members = Number(group.member_count ?? 0);
+        return {
+          id: String(group.id),
+          name: group.name,
+          description: group.description ?? "",
+          game: fallback?.game ?? "Mixed Games",
+          members,
+          online: Math.max(0, Math.min(members, Math.round(members * 0.35))),
+          thumbnail: fallback?.thumbnail ?? "https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?w=800&h=800&fit=crop",
+          isPrivate: Boolean(group.is_private),
+          ownerEmail: group.owner_email ?? "",
+        };
+      });
+      setApiGroups(mapped);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Unable to load groups.");
+      setApiGroups([]);
+    } finally {
+      setApiLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => {
+    void loadGroups();
+  }, [loadGroups]);
+
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return SUGGESTED_GROUPS;
-    return SUGGESTED_GROUPS.filter((group) =>
-      [group.name, group.game].join(" ").toLowerCase().includes(q),
+    if (!q) return apiGroups;
+    return apiGroups.filter((group) =>
+      [group.name, group.game, group.description].join(" ").toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [apiGroups, query]);
 
   const discoverableGroups = useMemo(
     () =>
@@ -294,7 +378,7 @@ export default function GroupsScreen() {
     [discoverableGroups, visibleCount],
   );
 
-  const totalOnline = SUGGESTED_GROUPS.reduce((total, group) => total + group.online, 0);
+  const totalOnline = apiGroups.reduce((total, group) => total + group.online, 0);
 
   const toggleJoin = useCallback((id: string, groupName: string) => {
     const wasJoined = joinedGroupIds.includes(id);
@@ -667,6 +751,44 @@ export default function GroupsScreen() {
           </View>
         ) : null}
 
+        {apiLoading ? (
+          <View
+            style={{
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
+              width: "100%",
+            }}
+          >
+            <Skeleton width="100%" height={120} borderRadius={responsive.cardRadius} style={{ marginBottom: spacing.sm }} />
+            <Skeleton width="100%" height={120} borderRadius={responsive.cardRadius} style={{ marginBottom: spacing.sm }} />
+          </View>
+        ) : null}
+
+        {apiError ? (
+          <View
+            style={{
+              paddingHorizontal: responsive.horizontalPadding,
+              maxWidth: responsive.contentMaxWidth,
+              alignSelf: "center",
+              width: "100%",
+            }}
+          >
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>Unable to load groups</Text>
+              <Text style={styles.emptyCopy}>{apiError}</Text>
+              <Pressable
+                onPress={() => void loadGroups()}
+                accessibilityRole="button"
+                accessibilityLabel="Retry loading groups"
+                style={({ pressed }) => [styles.loadMoreButton, pressed && styles.pressed, { marginTop: spacing.sm }]}
+              >
+                <Text style={styles.loadMoreText}>Retry</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
         {discoverableGroups.length === 0 ? (
           <View
             style={{
@@ -686,6 +808,9 @@ export default function GroupsScreen() {
     ),
     [
       discoverableGroups.length,
+      apiError,
+      apiLoading,
+      loadGroups,
       loadMoreGroups,
       responsive.buttonHeightMedium,
       responsive.contentMaxWidth,
@@ -1176,6 +1301,37 @@ const styles = StyleSheet.create({
     color: "#4ADE80",
     fontSize: 11,
     marginTop: 4,
+  },
+  groupDescription: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  groupVisibilityRow: {
+    flexDirection: "row",
+    marginTop: 6,
+  },
+  groupVisibilityBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+  },
+  groupVisibilityPublic: {
+    borderColor: "#4ADE80",
+    backgroundColor: "rgba(74,222,128,0.14)",
+  },
+  groupVisibilityPrivate: {
+    borderColor: colors.primary,
+    backgroundColor: "rgba(255,159,102,0.14)",
+  },
+  groupVisibilityText: {
+    color: colors.text,
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   groupActionRow: {
     marginTop: spacing.md,

@@ -29,3 +29,30 @@
 
 ### Team Note
 - Common false alarm: password and JWT look valid, but credentials are not transmitted because header was placed in body.
+
+## 2026-03-07: Phone Login `Network request failed`
+
+### Symptom
+- Expo app was running and Django `runserver` was running, but login requests failed with network errors.
+
+### Root Cause
+- Backend was started from the wrong directory and/or on loopback only.
+- Frontend sometimes pointed at `localhost`, which resolves to the phone itself.
+- `ALLOWED_HOSTS` did not include the Mac LAN IP.
+
+### Fastest Stable Process
+- Backend:
+  - `cd /Users/zech/Downloads/The-Big-One/GameMate/gamemate-backend`
+  - `./.venv/bin/python ./src/manage.py runserver 0.0.0.0:8002`
+- Frontend:
+  - `cd /Users/zech/Downloads/The-Big-One/GameMate`
+  - `LAN_IP=$(ipconfig getifaddr en0)`
+  - `echo "EXPO_PUBLIC_API_URL=http://$LAN_IP:8002" > .env`
+  - `npx expo start --lan -c`
+- Backend `.env`:
+  - `ALLOWED_HOSTS=localhost,127.0.0.1,<LAN_IP>`
+
+### Prevention
+- Always run backend using absolute repo paths (avoid `cd src` from frontend repo).
+- Use `EXPO_PUBLIC_API_URL` with LAN IP for phone testing.
+- Keep port consistent across backend and frontend (`8000` or `8002`, not mixed).

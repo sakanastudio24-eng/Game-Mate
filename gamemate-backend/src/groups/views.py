@@ -24,7 +24,10 @@ class GroupViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         group = serializer.save(owner=request.user)
         return Response(
-            GroupSerializer(group, context=self.get_serializer_context()).data,
+            {
+                "success": True,
+                "data": GroupSerializer(group, context=self.get_serializer_context()).data,
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -34,11 +37,26 @@ class GroupViewSet(viewsets.ModelViewSet):
         serializer = GroupCreateSerializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         group = serializer.save()
-        return Response(GroupSerializer(group, context=self.get_serializer_context()).data)
+        return Response(
+            {
+                "success": True,
+                "data": GroupSerializer(group, context=self.get_serializer_context()).data,
+            }
+        )
 
     def partial_update(self, request, *args, **kwargs):
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = GroupSerializer(queryset, many=True, context=self.get_serializer_context())
+        return Response({"success": True, "results": serializer.data})
+
+    def retrieve(self, request, *args, **kwargs):
+        group = self.get_object()
+        serializer = GroupSerializer(group, context=self.get_serializer_context())
+        return Response({"success": True, "data": serializer.data})
 
     def get_queryset(self):
         user = self.request.user
@@ -71,13 +89,18 @@ class GroupViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Only the owner can delete this group.")
         instance.delete()
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response({"success": True, "message": "Group deleted."}, status=status.HTTP_200_OK)
+
     @action(detail=True, methods=["post"], url_path="join")
     def join(self, request, pk=None):
         group = self.get_object()
 
         if group.is_private:
             return Response(
-                {"message": "This group is private. Invite required."},
+                {"success": False, "message": "This group is private. Invite required."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -88,9 +111,12 @@ class GroupViewSet(viewsets.ModelViewSet):
         )
 
         if not created:
-            return Response({"message": "Already a member."}, status=status.HTTP_200_OK)
+            return Response(
+                {"success": True, "message": "Already a member."},
+                status=status.HTTP_200_OK,
+            )
 
-        return Response({"message": "Joined."}, status=status.HTTP_201_CREATED)
+        return Response({"success": True, "message": "Joined."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], url_path="leave")
     def leave(self, request, pk=None):
@@ -98,18 +124,23 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if group.owner_id == request.user.id:
             return Response(
-                {"message": "Owner cannot leave their own group."},
+                {"success": False, "message": "Owner cannot leave their own group."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         deleted, _ = GroupMembership.objects.filter(group=group, user=request.user).delete()
         if deleted == 0:
-            return Response({"message": "Not a member."}, status=status.HTTP_200_OK)
+            return Response(
+                {"success": True, "message": "Not a member."},
+                status=status.HTTP_200_OK,
+            )
 
-        return Response({"message": "Group left."}, status=status.HTTP_200_OK)
+        return Response({"success": True, "message": "Group left."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):
         group = self.get_object()
         qs = GroupMembership.objects.filter(group=group).select_related("user").order_by("joined_at")
-        return Response(GroupMembershipListSerializer(qs, many=True).data)
+        return Response(
+            {"success": True, "results": GroupMembershipListSerializer(qs, many=True).data}
+        )

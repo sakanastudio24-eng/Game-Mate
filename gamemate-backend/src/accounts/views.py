@@ -9,4 +9,4 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response(MeSerializer(request.user).data)
+        return Response({"success": True, "data": MeSerializer(request.user).data})

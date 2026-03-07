@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -7,7 +8,10 @@ from rest_framework.response import Response
 
 from .models import Group, GroupMembership
 from .permissions import IsGroupMember, IsGroupOwner
+from .serializers_invite import InviteSerializer
 from .serializers import GroupCreateSerializer, GroupMembershipListSerializer, GroupSerializer
+
+User = get_user_model()
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -149,6 +153,43 @@ class GroupViewSet(viewsets.ModelViewSet):
             {"detail": "You left the group."},
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=True, methods=["post"])
+    def invite(self, request, pk=None):
+        group = self.get_object()
+
+        if group.owner != request.user:
+            return Response(
+                {"detail": "Only the owner can invite users."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = InviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        identifier = serializer.validated_data["username"].strip()
+
+        try:
+            user = User.objects.get(Q(username=identifier) | Q(email__iexact=identifier))
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if GroupMembership.objects.filter(group=group, user=user).exists():
+            return Response(
+                {"detail": "User already in group."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        GroupMembership.objects.create(
+            group=group,
+            user=user,
+            role="member",
+        )
+
+        return Response({"detail": "User invited successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):

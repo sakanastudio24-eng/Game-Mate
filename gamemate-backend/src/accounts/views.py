@@ -10,11 +10,13 @@ from rest_framework_simplejwt.serializers import (
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .serializers import MeSerializer
+from .throttles import LoginThrottle
 
 
-class AuthTokenObtainPairView(TokenObtainPairView):
+class LoginView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
     permission_classes = [AllowAny]
+    throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

@@ -1,9 +1,9 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export async function apiRequest(
   endpoint: string,
   options: RequestInit = {},
-  token?: string
+  token?: string,
 ) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -28,7 +28,7 @@ export async function apiRequest(
     throw new Error(
       typeof data === "string"
         ? data
-        : data?.message || data?.detail || "Request failed"
+        : data?.message || data?.detail || "Request failed",
     );
   }
 

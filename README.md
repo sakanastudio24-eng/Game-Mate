@@ -57,6 +57,14 @@ npm install
 npm run start
 ```
 
+Set API base URL via env:
+
+```bash
+cp .env.example .env
+# use your backend host (LAN IP for physical phone testing)
+# EXPO_PUBLIC_API_URL=http://192.168.1.183:8000
+```
+
 ### Useful Commands
 
 ```bash

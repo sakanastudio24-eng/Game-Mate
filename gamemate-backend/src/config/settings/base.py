@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "groups",
     "posts",
     "connections",
+    "notifications",
 ]
 
 MIDDLEWARE = [

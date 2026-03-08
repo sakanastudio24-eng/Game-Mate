@@ -3,6 +3,8 @@ from django.conf import settings
 
 
 class Group(models.Model):
+    """Core group entity owned by a user with optional private visibility."""
+
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
@@ -16,10 +18,13 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        """Return group name for admin/debug display."""
         return self.name
 
 
 class GroupMembership(models.Model):
+    """Join table storing membership and role metadata for each group user."""
+
     ROLE_OWNER = "owner"
     ROLE_ADMIN = "admin"
     ROLE_MEMBER = "member"
@@ -51,4 +56,5 @@ class GroupMembership(models.Model):
         ]
 
     def __str__(self):
+        """Return readable relation label with role context."""
         return f"{self.user.email} → {self.group.name} ({self.role})"

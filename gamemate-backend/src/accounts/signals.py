@@ -6,5 +6,5 @@ from .models import User
 
 @receiver(post_save, sender=User)
 def handle_user_post_save(sender, instance: User, created: bool, **kwargs):
-    # Placeholder hook for future profile/bootstrap logic.
+    """Reserved hook for future user bootstrap side effects."""
     return None

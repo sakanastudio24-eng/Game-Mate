@@ -6,4 +6,5 @@ class AccountsConfig(AppConfig):
     name = "accounts"
 
     def ready(self):
+        """Load signal registrations when Django starts the accounts app."""
         import accounts.signals  # noqa: F401

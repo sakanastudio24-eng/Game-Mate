@@ -6,4 +6,5 @@ class GroupsConfig(AppConfig):
     name = "groups"
 
     def ready(self):
+        """Load group signal registrations when Django starts the app."""
         import groups.signals  # noqa: F401

@@ -15,15 +15,19 @@ User = get_user_model()
 
 
 class GroupViewSet(viewsets.ModelViewSet):
+    """CRUD and member-management endpoints for groups."""
+
     permission_classes = [IsAuthenticated]
     queryset = Group.objects.all().select_related("owner")
 
     def get_serializer_class(self):
+        """Use write serializer for mutations and read serializer for response payloads."""
         if self.action in ["create", "update", "partial_update"]:
             return GroupCreateSerializer
         return GroupSerializer
 
     def create(self, request, *args, **kwargs):
+        """Create a group owned by the authenticated user and return full group details."""
         serializer = GroupCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         group = serializer.save(owner=request.user)
@@ -36,6 +40,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         )
 
     def update(self, request, *args, **kwargs):
+        """Handle full update with write serializer and return read serializer output."""
         partial = kwargs.pop("partial", False)
         instance = self.get_object()
         serializer = GroupCreateSerializer(instance, data=request.data, partial=partial)
@@ -49,10 +54,12 @@ class GroupViewSet(viewsets.ModelViewSet):
         )
 
     def partial_update(self, request, *args, **kwargs):
+        """Route PATCH requests through shared update logic."""
         kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
+        """List only groups visible to the requester, with pagination support."""
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -63,11 +70,13 @@ class GroupViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
+        """Return detail for a single visible group."""
         group = self.get_object()
         serializer = GroupSerializer(group, context=self.get_serializer_context())
         return Response({"success": True, "data": serializer.data})
 
     def get_queryset(self):
+        """Restrict list results to public groups or private groups owned/joined by user."""
         user = self.request.user
         return (
             Group.objects.select_related("owner")
@@ -80,6 +89,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         )
 
     def get_permissions(self):
+        """Apply action-specific object permissions for detail and destructive operations."""
         perms = [IsAuthenticated()]
         if self.action in ["retrieve", "members"]:
             perms.append(IsGroupMember())
@@ -88,23 +98,26 @@ class GroupViewSet(viewsets.ModelViewSet):
         return perms
 
     def get_object(self):
-        # Keep explicit object-level permission enforcement for all detail actions.
+        """Fetch object and enforce object-level permissions on every detail action."""
         obj = super().get_object()
         self.check_object_permissions(self.request, obj)
         return obj
 
     def perform_destroy(self, instance):
+        """Guard delete so only owners can remove their group."""
         if instance.owner != self.request.user:
             raise PermissionDenied("Only the owner can delete this group.")
         instance.delete()
 
     def destroy(self, request, *args, **kwargs):
+        """Delete a group and return a stable success message payload."""
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response({"success": True, "message": "Group deleted."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="join")
     def join(self, request, pk=None):
+        """Join a public group; reject private groups until invite flow is used."""
         group = self.get_object()
 
         if group.is_private:
@@ -129,6 +142,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
+        """Leave a group membership unless requester is the group owner."""
         group = self.get_object()
 
         membership = GroupMembership.objects.filter(
@@ -153,6 +167,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def invite(self, request, pk=None):
+        """Owner-only invite endpoint using username or email lookup."""
         group = self.get_object()
 
         if group.owner != request.user:
@@ -190,6 +205,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def promote(self, request, pk=None):
+        """Owner-only promotion endpoint to elevate a member into admin role."""
         group = self.get_object()
 
         if group.owner != request.user:
@@ -229,6 +245,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):
+        """Return ordered membership details for a group."""
         group = self.get_object()
         qs = GroupMembership.objects.filter(group=group).select_related("user").order_by("joined_at")
         return Response(

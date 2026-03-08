@@ -3,6 +3,8 @@ from django.db import models
 
 
 class Post(models.Model):
+    """Feed post entity containing creator metadata and optional video content."""
+
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -18,10 +20,13 @@ class Post(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
+        """Return compact label for admin/debug displays."""
         return f"{self.title} - {self.creator.username}"
 
 
 class Interaction(models.Model):
+    """User interaction event used for engagement analytics and feed ranking."""
+
     INTERACTION_TYPES = [
         ("like", "Like"),
         ("comment", "Comment"),

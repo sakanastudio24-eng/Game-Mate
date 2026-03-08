@@ -3,7 +3,10 @@ from rest_framework.response import Response
 
 
 class StandardPageNumberPagination(PageNumberPagination):
+    """Project-wide pagination envelope for consistent API list responses."""
+
     def get_paginated_response(self, data):
+        """Return paginated payload with success flag and navigation metadata."""
         return Response(
             {
                 "success": True,

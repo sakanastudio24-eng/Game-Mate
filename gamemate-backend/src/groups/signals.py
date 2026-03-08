@@ -6,6 +6,7 @@ from .models import Group, GroupMembership
 
 @receiver(post_save, sender=Group)
 def add_owner_membership(sender, instance: Group, created: bool, **kwargs):
+    """Create owner membership row whenever a new group is created."""
     if not created:
         return
 

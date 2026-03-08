@@ -2,19 +2,30 @@
 
 Purpose: Group lifecycle, membership, and authorization rules.
 
-## Responsibilities
-- Manages `Group` and `GroupMembership` models.
-- Enforces owner/member access rules for private/public groups.
-- Provides group API endpoints for CRUD and member actions.
-- Supports invite and promote flows.
+## Definition Notes
+- Manages group ownership and membership roles.
+- Enforces public/private visibility and owner-only destructive actions.
+- Hosts join/leave/members/invite/promote endpoints.
+- Contains validation helpers and object-level permission classes.
+
+## Class Notes
+- `Group` (`models.py`): core group entity (`owner`, `is_private`, metadata).
+- `GroupMembership` (`models.py`): join table with role (`owner/admin/member`).
+- `IsGroupMember` (`permissions.py`): object permission for owner/member access.
+- `IsGroupOwner` (`permissions.py`): object permission for owner-only actions.
+- `GroupOwnerSerializer` (`serializers.py`): compact owner payload in group responses.
+- `GroupSerializer` (`serializers.py`): read serializer for group payloads.
+- `GroupCreateSerializer` (`serializers.py`): write serializer for create/update operations.
+- `MembershipSerializer` (`serializers.py`): single membership payload serializer.
+- `GroupMembershipListSerializer` (`serializers.py`): members list serializer.
+- `InviteSerializer` (`serializers_invite.py`): validates invite target identifier.
+- `GroupViewSet` (`views.py`): groups CRUD + membership actions + permissions orchestration.
+- `GroupsConfig` (`apps.py`): app boot config; loads signals on startup.
+
+## Function Notes
+- `_validate_group_name(...)` (`serializers.py`): shared name normalization + bounds checks.
+- `_validate_group_description(...)` (`serializers.py`): shared description normalization + bounds checks.
+- `add_owner_membership(...)` (`signals.py`): auto-adds owner as membership when group is created.
 
 ## File map
-- `models.py`: group and membership entities.
-- `views.py`: `GroupViewSet` and custom actions (`join`, `leave`, `members`, `invite`, `promote`).
-- `serializers.py`: read/write/member serializers and validation helpers.
-- `serializers_invite.py`: invite request serializer.
-- `permissions.py`: object-level membership/owner permissions.
-- `signals.py`: owner membership bootstrap on group creation.
-- `urls.py`: router registration for `/api/groups/...` routes.
-- `admin.py`: admin views for groups and memberships.
-- `migrations/`: schema history for group models.
+- `models.py`, `permissions.py`, `serializers.py`, `serializers_invite.py`, `views.py`, `urls.py`, `admin.py`, `signals.py`, `migrations/`.

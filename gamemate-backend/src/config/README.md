@@ -2,15 +2,14 @@
 
 Purpose: Django project wiring and runtime configuration entrypoints.
 
-## Responsibilities
-- Global URL routing for API/admin.
-- WSGI/ASGI startup configuration.
-- Shared API pagination shape.
-- Settings package bootstrap via `config.settings`.
+## Definition Notes
+- Hosts root URL includes and auth/group/post route wiring.
+- Provides ASGI/WSGI startup modules.
+- Standardizes paginated API response envelope.
+- Delegates environment settings to `config/settings/` package.
+
+## Class Notes
+- `StandardPageNumberPagination` (`pagination.py`): pagination class returning `{success,count,next,previous,results}` envelope.
 
 ## File map
-- `urls.py`: root route table and app includes.
-- `pagination.py`: custom paginated response envelope.
-- `asgi.py`: ASGI app entrypoint.
-- `wsgi.py`: WSGI app entrypoint.
-- `settings/`: environment-specific settings modules.
+- `urls.py`, `pagination.py`, `asgi.py`, `wsgi.py`, `settings/`.

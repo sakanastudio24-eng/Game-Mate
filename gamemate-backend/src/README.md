@@ -2,16 +2,18 @@
 
 Purpose: Django project runtime root for the GameMate backend.
 
-## Key files
-- `manage.py`: Django management entry point (runserver, migrate, shell, etc.).
-- `requirements.txt`: Python dependency lock snapshot used by this backend workspace.
-- `db.sqlite3`: local SQLite artifact from early bootstrap/testing.
+## Definition Notes
+- `manage.py`: management entrypoint (`runserver`, `migrate`, `check`, `shell`).
+- `accounts/`: authentication and user identity domain.
+- `groups/`: group lifecycle and membership domain.
+- `posts/`: feed content + interaction + ranking domain.
+- `config/`: runtime wiring (urls/settings/pagination/ASGI/WSGI).
 
-## Key folders
-- `accounts/`: auth domain (custom user, profile, JWT/me endpoints).
-- `groups/`: group domain (groups, memberships, permissions, join/leave/invite/promote).
-- `posts/`: feed domain foundation (posts + interactions).
-- `config/`: project wiring (settings, urls, pagination, ASGI/WSGI).
+## Class Notes (Cross-Folder Index)
+- Accounts: `User`, `Profile`, `LoginView`, `MeView`, `LoginThrottle`.
+- Groups: `Group`, `GroupMembership`, `GroupViewSet`, permission classes.
+- Posts: `Post`, `PostInteraction`, `PostViewSet`, `PostInteractionViewSet`, `FeedView`, `FeedService`.
+- Config: `StandardPageNumberPagination`.
 
 ## Quick command
 ```bash

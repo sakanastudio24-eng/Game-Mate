@@ -1,14 +1,14 @@
 # `config/settings/` Folder Overview
 
-Purpose: Environment-split Django settings modules.
+Purpose: Environment-split settings package.
 
-## Module roles
-- `base.py`: shared defaults (apps, middleware, DB, DRF, JWT, auth model).
-- `dev.py`: development overrides (debug/logging/CORS hosts).
-- `prod.py`: production hardening flags.
-- `__init__.py`: selects `dev` or `prod` based on `DJANGO_ENV`.
+## Definition Notes
+- `base.py`: shared defaults (installed apps, middleware, DB config, DRF, JWT, auth model).
+- `dev.py`: development overrides (debug/logging/CORS).
+- `prod.py`: production security flags.
+- `__init__.py`: runtime selector by `DJANGO_ENV`.
 
-## Rule of use
-- Keep shared defaults in `base.py`.
-- Put environment-only differences in `dev.py` and `prod.py`.
-- Never store real secrets in settings files; use `.env`.
+## Module Notes
+- Keep shared values in `base.py` only.
+- Keep environment-only differences in `dev.py`/`prod.py`.
+- Keep credentials in `.env` and never hardcode secrets here.

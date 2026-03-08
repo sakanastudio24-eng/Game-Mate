@@ -12,5 +12,5 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "display_name", "created_at")
-    search_fields = ("user__email", "display_name")
+    list_display = ("id", "user", "avatar_url", "created_at")
+    search_fields = ("user__email", "user__username")

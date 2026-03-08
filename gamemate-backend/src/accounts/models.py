@@ -27,13 +27,14 @@ class Profile(models.Model):
         on_delete=models.CASCADE,
         related_name="profile"
     )
-    display_name = models.CharField(max_length=150)
     bio = models.TextField(blank=True)
+    avatar_url = models.URLField(blank=True)
+    favorite_games = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        """Return display name for admin/debug output."""
-        return self.display_name
+        """Return username for admin/debug output."""
+        return self.user.username
 
 
 @receiver(post_save, sender=User)
@@ -41,7 +42,4 @@ class Profile(models.Model):
 def create_profile(sender, instance, created, **kwargs):
     """Ensure every user has a profile row immediately after account creation."""
     if created:
-        Profile.objects.create(
-            user=instance,
-            display_name=instance.username
-        )
+        Profile.objects.create(user=instance)

@@ -2,6 +2,8 @@ import os
 from datetime import timedelta
 from pathlib import Path
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # --------------------------------------------------
 # Base directory
@@ -21,6 +23,20 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = []
+
+# --------------------------------------------------
+# Sentry
+# --------------------------------------------------
+sentry_sdk.init(
+    dsn=env(
+        "SENTRY_DSN",
+        default="https://603cd391d0d277f1803e8df236da2fd2@o4511007630753792.ingest.us.sentry.io/4511007632261120",
+    ),
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,
+    send_default_pii=True,
+    debug=True,
+)
 
 # --------------------------------------------------
 # Applications

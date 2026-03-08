@@ -3,6 +3,17 @@ from django.urls import include, path
 
 from accounts.views import AuthLogoutView, AuthTokenRefreshView, LoginView, ProfileMeView
 
+
+def trigger_error(_request):
+    # Intentional crash route for Sentry verification in development.
+    return 1 / 0
+
+
+def crash(_request):
+    # Temporary test error endpoint for Sentry verification.
+    raise Exception("Sentry test error")
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/token/", LoginView.as_view(), name="token_obtain_pair"),
@@ -16,4 +27,6 @@ urlpatterns = [
     path("api/", include("posts.urls")),
     path("api/", include("notifications.urls")),
     path("api/messages/", include("messages.urls")),
+    path("sentry-debug/", trigger_error, name="sentry_debug"),
+    path("crash/", crash, name="sentry_crash"),
 ]

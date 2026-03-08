@@ -69,6 +69,18 @@ Use this as the one high-level backend map (instead of per-folder markdown files
   - Definition: feed posts, interactions, and feed endpoint assembly.
   - Main classes: `Post`, `PostInteraction`, `PostViewSet`, `PostInteractionViewSet`, `FeedView`.
   - Services: `FeedService.get_feed(...)` (ranking + diversity + metadata).
+- `src/connections/`
+  - Definition: friend-request graph and accepted-connection list.
+  - Main classes: `Connection`.
+  - Main functions: `send_request`, `accept_request`, `friends_list`.
+- `src/notifications/`
+  - Definition: event -> notification store for social actions.
+  - Main classes: `Notification`.
+  - Main functions: `create_notification`, `get_notifications`.
+- `src/messages/`
+  - Definition: direct-message threads, messages, unread tracking.
+  - Main classes: `Thread`, `Message`.
+  - Main functions: `create_thread`, `send_message`, `get_messages`, `list_threads`.
 - `src/config/`
   - Definition: project routing + pagination + settings package.
   - Main classes: `StandardPageNumberPagination`.
@@ -113,6 +125,8 @@ Implemented and active:
   - `POST /api/auth/logout/`
 - Account bootstrap endpoint:
   - `GET /api/accounts/me/`
+  - `GET /api/profile/me/`
+  - `PATCH /api/profile/me/`
 - Groups endpoints:
   - paginated `GET /api/groups/` (PageNumberPagination, `PAGE_SIZE=3`)
   - `POST /api/groups/{id}/join/`
@@ -120,6 +134,27 @@ Implemented and active:
   - `GET /api/groups/{id}/members/`
   - `POST /api/groups/{id}/invite/`
   - `POST /api/groups/{id}/promote/`
+- Post + feed endpoints:
+  - CRUD `POST/GET/PATCH/DELETE /api/posts/`
+  - `POST /api/posts/{id}/like/`
+  - `POST /api/posts/{id}/share/`
+  - `POST /api/posts/{id}/skip/`
+  - `POST /api/posts/restore/{post_id}/`
+  - `GET /api/feed/`
+  - `GET /api/feed/explain/{post_id}/`
+  - `POST /api/interactions/`
+  - `POST /api/share/{post_id}/{user_id}/`
+- Connections endpoints:
+  - `POST /api/connections/add/{user_id}/`
+  - `POST /api/connections/accept/{connection_id}/`
+  - `GET /api/connections/friends/`
+- Notifications endpoint:
+  - `GET /api/notifications/`
+- Messaging endpoints:
+  - `GET /api/messages/threads/`
+  - `POST /api/messages/thread/{user_id}/`
+  - `POST /api/messages/send/{thread_id}/`
+  - `GET /api/messages/messages/{thread_id}/`
 
 Security and reliability:
 - Global throttling:
@@ -132,7 +167,11 @@ Quick API smoke test:
 1. `POST /api/auth/token/` with email/password
 2. `GET /api/accounts/me/` with `Authorization: Bearer <access>`
 3. `GET /api/groups/` and verify `count/next/previous/results` pagination shape
-4. `POST /api/auth/logout/` with refresh token to revoke
+4. `GET /api/feed/` and verify `feed_meta.reasons/signals/source` fields
+5. `POST /api/connections/add/{user_id}/` and `POST /api/connections/accept/{connection_id}/`
+6. `GET /api/notifications/` to confirm social event notifications
+7. `POST /api/messages/thread/{user_id}/` then `POST /api/messages/send/{thread_id}/`
+8. `POST /api/auth/logout/` with refresh token to revoke
 
 ### Auth + Local Troubleshooting Notes
 - `405 Method "GET" not allowed` on `/api/auth/token/` means the request was sent as `GET`. Use `POST`.

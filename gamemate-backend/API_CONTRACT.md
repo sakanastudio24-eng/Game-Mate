@@ -1,9 +1,13 @@
 # GameMate Backend API Contract
 
-**Version:** v1 (current implementation)
+**Version:** v1 (implemented)
 **Stack:** Django + DRF + PostgreSQL
 **Auth:** JWT Bearer
 **Base URL (local):** `http://127.0.0.1:8000`
+
+All protected routes require:
+
+`Authorization: Bearer <access_token>`
 
 ---
 
@@ -24,7 +28,7 @@ Response:
   }
 }
 ```
-Throttle: `login` scope (`10/min` per IP)
+Throttle: `10/min` per IP.
 
 ### POST `/api/auth/token/refresh/`
 Request:
@@ -53,12 +57,9 @@ Response:
 
 ---
 
-## Account
+## Account + Profile
 
 ### GET `/api/accounts/me/`
-Headers:
-`Authorization: Bearer <access_token>`
-
 Response:
 ```json
 {
@@ -68,47 +69,60 @@ Response:
     "email": "user@email.com",
     "username": "dan",
     "profile": {
-      "display_name": "dan",
       "bio": "",
-      "created_at": "2026-03-01T20:00:00Z"
+      "avatar_url": "",
+      "favorite_games": []
     }
   }
 }
 ```
 
+### GET `/api/profile/me/`
+Response:
+```json
+{
+  "bio": "",
+  "avatar_url": "",
+  "favorite_games": []
+}
+```
+
+### PATCH `/api/profile/me/`
+Request:
+```json
+{
+  "bio": "Competitive Apex player",
+  "favorite_games": ["Apex Legends", "Valorant"]
+}
+```
+Response shape matches GET `/api/profile/me/`.
+
 ---
 
 ## Groups
 
-### Group object shape
-```json
-{
-  "id": 1,
-  "name": "Test Group",
-  "description": "",
-  "is_private": false,
-  "owner": {
-    "id": 1,
-    "username": "dan"
-  },
-  "member_count": 1,
-  "created_at": "2026-03-04T19:34:50Z"
-}
-```
-
 ### GET `/api/groups/`
-Visible groups only:
-- all public groups
+Visibility:
+- public groups
 - private groups where requester is owner/member
 
-Paginated response (`PageNumberPagination`, `PAGE_SIZE=3`):
+Paginated response (`PAGE_SIZE=3`):
 ```json
 {
+  "success": true,
   "count": 8,
   "next": null,
   "previous": null,
   "results": [
-    { "id": 1, "name": "Test Group", "description": "", "is_private": false, "owner": {"id": 1, "username": "dan"}, "member_count": 1, "created_at": "2026-03-04T19:34:50Z" }
+    {
+      "id": 1,
+      "name": "Test Group",
+      "description": "",
+      "is_private": false,
+      "owner": { "id": 1, "username": "dan" },
+      "member_count": 1,
+      "created_at": "2026-03-04T19:34:50Z"
+    }
   ]
 }
 ```
@@ -120,7 +134,18 @@ Request:
 ```
 Response:
 ```json
-{ "success": true, "data": { "id": 4, "name": "Ranked Squad", "description": "Grinding nightly", "is_private": false, "owner": {"id": 1, "username": "dan"}, "member_count": 1, "created_at": "..." } }
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "name": "Ranked Squad",
+    "description": "Grinding nightly",
+    "is_private": false,
+    "owner": { "id": 1, "username": "dan" },
+    "member_count": 1,
+    "created_at": "..."
+  }
+}
 ```
 
 Validation:
@@ -130,15 +155,15 @@ Validation:
 ### GET `/api/groups/{group_id}/`
 Response:
 ```json
-{ "success": true, "data": { "id": 1, "name": "Test Group", "description": "", "is_private": false, "owner": {"id": 1, "username": "dan"}, "member_count": 1, "created_at": "..." } }
+{ "success": true, "data": { "id": 1, "name": "Test Group", "is_private": false } }
 ```
-Private group access requires owner/member.
+Private group detail requires owner/member (`403` for non-member).
 
 ### PATCH `/api/groups/{group_id}/`
 Owner only.
 Response:
 ```json
-{ "success": true, "data": { "id": 1, "name": "Updated Group", "description": "...", "is_private": false, "owner": {"id": 1, "username": "dan"}, "member_count": 1, "created_at": "..." } }
+{ "success": true, "data": { "id": 1, "name": "Updated Group", "description": "..." } }
 ```
 
 ### DELETE `/api/groups/{group_id}/`
@@ -190,13 +215,11 @@ Response:
 ```
 
 ### POST `/api/groups/{group_id}/invite/`
-Owner only.
+Owner only. `username` accepts either username or email.
 Request:
 ```json
 { "username": "zan" }
 ```
-(`username` field accepts either username or email lookup)
-
 Responses:
 ```json
 { "detail": "User invited successfully." }
@@ -225,20 +248,218 @@ Responses:
 { "detail": "Only owner can promote members." }
 ```
 ```json
-{ "detail": "User not found." }
+{ "detail": "Owner role cannot be modified." }
+```
+
+---
+
+## Posts + Feed
+
+### GET `/api/posts/`
+Paginated list (`success/count/next/previous/results`) of non-deleted posts.
+
+### POST `/api/posts/`
+Creates post for authenticated creator.
+
+### DELETE `/api/posts/{post_id}/`
+Soft-delete response:
+```json
+{ "success": true }
+```
+
+### POST `/api/posts/restore/{post_id}/`
+Restore soft-deleted post:
+```json
+{ "success": true }
+```
+
+### POST `/api/posts/{post_id}/like/`
+### POST `/api/posts/{post_id}/share/`
+### POST `/api/posts/{post_id}/skip/`
+Responses:
+```json
+{ "success": true }
+```
+
+### GET `/api/feed/`
+Response:
+```json
+{
+  "success": true,
+  "count": 5,
+  "results": [
+    {
+      "id": 1,
+      "creator": "dan",
+      "game": "Apex Legends",
+      "title": "Ranked clutch",
+      "description": "1v3 final circle",
+      "video_url": "",
+      "created_at": "...",
+      "feed_meta": {
+        "reasons": ["recent", "game_interest"],
+        "signals": { "likes": 0, "shares": 0, "comments": 0 },
+        "source": "posts"
+      }
+    }
+  ]
+}
+```
+
+### GET `/api/feed/explain/{post_id}/`
+Response:
+```json
+{
+  "post_id": 1,
+  "score": 7,
+  "reasons": ["recent", "friend_post"],
+  "signals": { "likes": 3, "shares": 1, "comments": 0 }
+}
+```
+
+### POST `/api/interactions/`
+Request:
+```json
+{ "post": 1, "interaction_type": "comment" }
+```
+Response:
+```json
+{
+  "success": true,
+  "created": true,
+  "data": {
+    "id": 10,
+    "post": 1,
+    "interaction_type": "comment",
+    "created_at": "..."
+  }
+}
+```
+
+### POST `/api/share/{post_id}/{user_id}/`
+Direct share response:
+```json
+{ "success": true }
+```
+
+---
+
+## Connections
+
+### POST `/api/connections/add/{user_id}/`
+Responses:
+```json
+{ "success": true }
 ```
 ```json
-{ "detail": "User not in group." }
+{ "detail": "Request already exists." }
+```
+
+### POST `/api/connections/accept/{connection_id}/`
+Response:
+```json
+{ "success": true }
+```
+
+### GET `/api/connections/friends/`
+Response:
+```json
+{
+  "count": 1,
+  "results": [
+    {
+      "id": 1,
+      "sender": "dan",
+      "receiver": "zan",
+      "status": "accepted",
+      "created_at": "..."
+    }
+  ]
+}
+```
+
+---
+
+## Notifications
+
+### GET `/api/notifications/`
+Response:
+```json
+[
+  {
+    "actor": "zan",
+    "type": "friend_request",
+    "post_id": null,
+    "is_read": false,
+    "created_at": "..."
+  }
+]
+```
+
+Supported `type` values currently emitted:
+- `like`
+- `comment`
+- `share`
+- `friend_request`
+- `friend_accept`
+- `message`
+
+---
+
+## Messages (DM)
+
+### GET `/api/messages/threads/`
+Response:
+```json
+[
+  {
+    "thread_id": 1,
+    "participants": ["zan"],
+    "last_message": "yo wanna play ranked?",
+    "unread": 2
+  }
+]
+```
+
+### POST `/api/messages/thread/{user_id}/`
+Creates or returns existing 1:1 thread.
+Response:
+```json
+{ "thread_id": 1 }
+```
+
+### POST `/api/messages/send/{thread_id}/`
+Request:
+```json
+{ "content": "yo wanna play ranked?" }
+```
+Response:
+```json
+{ "success": true, "message_id": 42 }
+```
+
+### GET `/api/messages/messages/{thread_id}/`
+Returns message history; unread incoming messages are marked read.
+Response:
+```json
+[
+  {
+    "sender": "dan",
+    "content": "yo wanna play ranked?",
+    "is_read": true,
+    "created_at": "..."
+  }
+]
 ```
 
 ---
 
 ## Rate Limiting
 
-Configured globally in DRF:
+Configured globally:
 - `anon`: `100/day`
 - `user`: `1000/day`
-- `login`: `10/min` (via `LoginThrottle` on token endpoint)
+- `login`: `10/min`
 
 Throttle response:
 ```json
@@ -250,5 +471,5 @@ Throttle response:
 ## Notes
 
 - Keep trailing slashes in routes.
-- All protected routes require `Authorization: Bearer <access_token>`.
-- JWT auth endpoints are custom views returning wrapped envelopes.
+- For Postman, set bearer token in Headers/Auth tab (not request body).
+- Some endpoints use response envelopes while others return direct payloads; this reflects current v1 implementation.

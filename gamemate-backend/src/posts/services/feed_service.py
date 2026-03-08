@@ -10,6 +10,15 @@ class FeedService:
     @staticmethod
     def get_feed(user, limit=20):
         """Return top posts ranked by engagement score with recency pre-filtering."""
+        favorite_games = set()
+        profile = getattr(user, "profile", None)
+        if profile and isinstance(profile.favorite_games, list):
+            favorite_games = {
+                game.strip().lower()
+                for game in profile.favorite_games
+                if isinstance(game, str) and game.strip()
+            }
+
         posts = (
             Post.objects
             .annotate(
@@ -60,7 +69,11 @@ class FeedService:
             feed_meta["reasons"].append("recent")
 
             # category / game interest
-            feed_meta["reasons"].append("game_interest")
+            post_game_key = (post.game or "").strip().lower()
+            if post_game_key in favorite_games:
+                score += 3
+                feed_meta["reasons"].append("game_interest")
+                feed_meta["score"] = score
 
             ranked_posts.append((score, post, feed_meta))
 

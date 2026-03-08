@@ -128,11 +128,21 @@ class PostInteractionViewSet(viewsets.ModelViewSet):
         if serializer.validated_data["post"].is_deleted:
             return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        interaction_type = serializer.validated_data["interaction_type"]
+        post = serializer.validated_data["post"]
         interaction, created = PostInteraction.objects.get_or_create(
             user=request.user,
-            post=serializer.validated_data["post"],
-            interaction_type=serializer.validated_data["interaction_type"],
+            post=post,
+            interaction_type=interaction_type,
         )
+
+        if created and interaction_type in {"like", "comment", "share"}:
+            create_notification(
+                user=post.creator,
+                actor=request.user,
+                type=interaction_type,
+                post_id=post.id,
+            )
 
         data = self.get_serializer(interaction).data
         return Response(

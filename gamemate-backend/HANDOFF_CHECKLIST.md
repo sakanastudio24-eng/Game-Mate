@@ -1,59 +1,73 @@
 # Backend Handoff Checklist (Django + DRF)
 
-Use this checklist before handing backend work back to frontend integration.
+Use this checklist before handing backend work to frontend integration.
 
 ## 1) Environment and Project Setup
-- [ ] Python 3.12+ confirmed
-- [ ] Virtual environment created and activated
-- [ ] Django project initialized inside `src/`
-- [ ] Django REST Framework installed and configured
-- [ ] `.env` loaded from `.env.example`
-- [ ] Database configured and migrations run
+- [x] Python 3.12+ confirmed
+- [x] Virtual environment created and activated
+- [x] Django project initialized inside `src/`
+- [x] DRF installed and configured
+- [x] `.env` loaded from `.env.example`
+- [x] PostgreSQL configured and migrations running
 
 ## 2) API Contract Alignment
-- [ ] Endpoints match `docs/FLOWS_BACKEND.md`
-- [ ] AI routes match `docs/AI_HANDOFF.md`
-- [ ] Request/response field names match frontend expectations
-- [ ] Notification presets/time-sheet payload schema implemented
+- [x] Auth, groups, posts/feed, connections, notifications, and messages are documented in `API_CONTRACT.md`
+- [x] Request/response field names aligned to current implementation
+- [ ] Standardized response envelope across all endpoints (planned v1.1 cleanup)
 - [ ] Delete-account endpoint (`DELETE /api/me`) implemented
 
-## 3) Error and Validation Behavior
-- [ ] Standard error envelope implemented
-- [ ] 400/401/403/404/409/422/429/500 statuses used correctly
-- [ ] Enum/time/day validations implemented for notifications
-- [ ] Idempotent behavior for retry-prone routes (join/leave/delete)
+## 3) Security and Validation
+- [x] JWT auth middleware applied to protected routes
+- [x] Group permission model enforced (owner/member/private visibility)
+- [x] Group validation rules implemented (name + description bounds)
+- [x] Post soft-delete implemented (`is_deleted`, `deleted_at`)
+- [x] Messaging participant checks implemented for read/send
 
-## 4) Security and Reliability
-- [ ] CORS restricted to known origins
-- [ ] Secret key and DB credentials not committed
-- [ ] Auth middleware applied to protected routes
-- [ ] Pagination implemented for list-heavy endpoints
-- [ ] Rate limiting applied to AI and messaging routes
+## 4) Reliability and Operations
+- [x] Pagination enabled (`StandardPageNumberPagination`, `PAGE_SIZE=3`)
+- [x] Global throttling enabled (`anon`, `user`)
+- [x] Login throttle enabled (`10/min`)
+- [x] Local system check passes (`python manage.py check`)
+- [x] Notification events emitted from social actions
 
 ## 5) Integration Readiness
-- [ ] Local health endpoint returns success
-- [ ] Frontend can hit API base URL without schema mismatch
-- [ ] Sample data/fixtures available for local testing
-- [ ] README updated with run/setup steps
-- [ ] Open items and risks documented
+- [x] Auth endpoints active
+- [x] Account + profile endpoints active
+- [x] Group lifecycle + membership endpoints active
+- [x] Feed + interactions endpoints active
+- [x] Connections endpoints active
+- [x] Notifications endpoint active
+- [x] DM thread/message endpoints active
 
 ## 6) Deployment and Database Path
-- [ ] Local dev uses PostgreSQL (confirmed)
-- [ ] Initial deploy target selected (Render/Fly.io/Hetzner/etc.)
-- [ ] Production environment variables defined per platform
-- [ ] Migration plan documented from initial hosted PostgreSQL to Supabase PostgreSQL
+- [x] Local dev uses PostgreSQL
+- [x] Deployment strategy documented (`DEPLOYMENT_PLAN.md`)
+- [x] Production env var strategy documented
+- [x] Path to managed Postgres documented
 
-## Current Build Notes (Phase 2)
-- JWT auth routes are active:
+## Current Build Notes (March 2026)
+- JWT routes:
   - `POST /api/auth/token/`
   - `POST /api/auth/token/refresh/`
   - `POST /api/auth/logout/`
-- Accounts baseline route is active:
+- Profile routes:
   - `GET /api/accounts/me/`
-- Token blacklist migrations are applied.
-- Group owner membership auto-creation signal is implemented and verified.
-- Common local auth test pitfalls:
-  - `405` occurs when `/api/auth/token/` is called with `GET` instead of `POST`.
-  - `curl (7)` occurs when `runserver` is not active on `127.0.0.1:8000`.
-  - `401 Authentication credentials were not provided` occurs when `Authorization` is added to request body instead of headers.
-  - Detailed incident note: `POSTMORTEM.md` (2026-03-05 entry).
+  - `GET/PATCH /api/profile/me/`
+- Feed + social routes:
+  - `GET /api/feed/`
+  - `GET /api/feed/explain/{post_id}/`
+  - `POST /api/interactions/`
+  - `POST /api/share/{post_id}/{user_id}/`
+- Notifications:
+  - `GET /api/notifications/`
+- Messages:
+  - `GET /api/messages/threads/`
+  - `POST /api/messages/thread/{user_id}/`
+  - `POST /api/messages/send/{thread_id}/`
+  - `GET /api/messages/messages/{thread_id}/`
+
+## Known Follow-Ups
+- Normalize all endpoints to one envelope format (`success/data` or equivalent).
+- Add read/update endpoints for notifications (`mark-read`, `mark-all-read`).
+- Add message pagination for large threads.
+- Add health endpoint and deployment smoke probes.

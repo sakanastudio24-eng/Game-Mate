@@ -56,3 +56,26 @@
 - Always run backend using absolute repo paths (avoid `cd src` from frontend repo).
 - Use `EXPO_PUBLIC_API_URL` with LAN IP for phone testing.
 - Keep port consistent across backend and frontend (`8000` or `8002`, not mixed).
+
+## 2026-03-08: Messages App Label Collision (`messages`)
+
+### Symptom
+- `python manage.py makemigrations messages` failed with:
+  - `ImproperlyConfigured: Application labels aren't unique, duplicates: messages`
+
+### Root Cause
+- Django already uses app label `messages` from `django.contrib.messages`.
+- New DM app used package name `messages`, which duplicated the app label.
+
+### Fix
+- Set explicit app config label in `src/messages/apps.py`:
+  - `label = "dm_messages"`
+- Register app in `INSTALLED_APPS` as:
+  - `"messages.apps.MessagesConfig"`
+- Run migrations with the unique label:
+  - `python manage.py makemigrations dm_messages`
+  - `python manage.py migrate dm_messages`
+
+### Prevention
+- Before adding new apps, check for collisions against built-in Django app labels.
+- Prefer explicit app labels for common names (`messages`, `auth`, `admin`, etc.).

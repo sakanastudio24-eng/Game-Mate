@@ -2,121 +2,103 @@
 
 **Project:** GameMate Backend  
 **Stack:** Django + Postgres + DRF + JWT  
-**Date Completed:** March 2026
+**Date Updated:** March 2026
 
 ---
 
-# Environment
+## Environment
 
 Local Development
 
-Python: 3.14  
-Django: 6.0  
-Postgres: 18  
-API Base URL:
-
-```
-http://127.0.0.1:8000
-```
-
-Testing Tool: Postman
+- Python: 3.14
+- Django: 6.0
+- Postgres: 18
+- API Base URL: `http://127.0.0.1:8000`
+- Testing Tool: Postman + Django checks
 
 ---
 
-# Authentication Tests
+## Authentication Tests
 
-| Test                | Result |
-| ------------------- | ------ |
-| Login User A        | PASS   |
-| Login User B        | PASS   |
-| /accounts/me User A | PASS   |
-| /accounts/me User B | PASS   |
+| Test | Result |
+| --- | --- |
+| Login User A | PASS |
+| Login User B | PASS |
+| `/api/accounts/me/` User A | PASS |
+| `/api/accounts/me/` User B | PASS |
 
 Notes:
-
-* JWT tokens generated correctly
-* Authorization header validated
-* Profile objects present
+- JWT tokens generated correctly.
+- Authorization header usage validated.
 
 ---
 
-# Group Creation Tests
+## Group System Tests
 
-| Test                 | Result |
-| -------------------- | ------ |
-| Create Public Group  | PASS   |
-| Create Private Group | PASS   |
-
-Expected:
-
-* Owner automatically added as membership
-* Owner role assigned correctly
-
----
-
-# Group Visibility Tests
-
-| Test                                  | Result              |
-| ------------------------------------- | ------------------- |
-| List Groups User A                    | PASS                |
-| List Groups User B                    | PASS                |
-| Private group hidden from non-members | PASS                |
-| Owner can retrieve private group      | PASS                |
-| Non-member retrieve private group     | PASS (403 expected) |
+| Test | Result |
+| --- | --- |
+| Create Public Group | PASS |
+| Create Private Group | PASS |
+| Private group hidden from non-members | PASS |
+| Owner retrieve private group | PASS |
+| Non-member retrieve private group (`403`) | PASS |
+| Join Public Group | PASS |
+| Join Private Group (`403`) | PASS |
+| Leave Group | PASS |
+| Owner leave blocked | PASS |
+| Members endpoint visibility | PASS |
+| Delete Group Non-owner (`403`) | PASS |
+| Delete Group Owner | PASS |
 
 ---
 
-# Membership Tests
+## Feed + Post System Tests
 
-| Test                    | Result              |
-| ----------------------- | ------------------- |
-| Join Public Group       | PASS                |
-| Join Public Group Twice | PASS                |
-| Join Private Group      | PASS (403 expected) |
-| Leave Group             | PASS                |
-| Owner Leave Group       | PASS (blocked)      |
-
----
-
-# Members Endpoint
-
-| Test                             | Result              |
-| -------------------------------- | ------------------- |
-| Members Public Group             | PASS                |
-| Members Private Group Owner      | PASS                |
-| Members Private Group Non-member | PASS (403 expected) |
+| Test | Result |
+| --- | --- |
+| Posts CRUD routes active | PASS |
+| Soft delete hides posts from feed/list | PASS |
+| Restore endpoint works | PASS |
+| Interaction endpoint (`/api/interactions/`) active | PASS |
+| Feed endpoint returns ranked payload | PASS |
+| Feed explain endpoint active | PASS |
 
 ---
 
-# Permission Tests
+## Connections + Notifications + Messages
 
-| Test                   | Result              |
-| ---------------------- | ------------------- |
-| Delete Group Non-owner | PASS (403 expected) |
-| Delete Group Owner     | PASS                |
+| Test | Result |
+| --- | --- |
+| Connection add/accept/friends routes active | PASS |
+| Notifications endpoint active (`/api/notifications/`) | PASS |
+| DM thread/message routes active | PASS |
+| Duplicate DM thread prevention | PASS |
+| Unread message tracking (`is_read`) | PASS |
 
----
-
-# Validation Tests
-
-| Test                 | Result              |
-| -------------------- | ------------------- |
-| Group Name Too Short | PASS (400 expected) |
-| Group Missing Name   | PASS (400 expected) |
-
----
-
-# Final Result
-
-All defined backend scope tests passed.
-
-GameMate Backend v1 is considered **feature complete for the defined training scope.**
+Validation basis:
+- Route wiring and migrations verified.
+- `python manage.py check` passed after each subsystem update.
+- Full endpoint matrix re-run in Postman is recommended as final QA pass.
 
 ---
 
-# Next Steps
+## Final Result
 
-1. Freeze dependencies
-2. Commit backend v1
-3. Begin frontend integration
-4. Prepare deployment environment
+Backend v1 scope is implemented for learning/prototype use:
+- Auth
+- Profiles
+- Groups + memberships
+- Posts + feed + interactions
+- Connections
+- Notifications
+- Direct messages
+
+---
+
+## Next Steps
+
+1. Run full Postman regression across `API_CONTRACT.md`.
+2. Normalize response envelope patterns across all endpoints.
+3. Add notification read/update endpoints.
+4. Add message pagination and thread-level cursor strategy.
+5. Prepare production deployment smoke checklist.

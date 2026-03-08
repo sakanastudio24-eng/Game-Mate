@@ -47,3 +47,19 @@ class PostInteraction(models.Model):
 
     class Meta:
         unique_together = ("user", "post", "interaction_type")
+
+
+# Share record used for post-to-friend delivery history.
+class PostShare(models.Model):
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_shares",
+    )
+    receiver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_shares",
+    )
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)

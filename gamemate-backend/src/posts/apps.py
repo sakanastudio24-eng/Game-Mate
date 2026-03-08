@@ -5,4 +5,9 @@ from django.apps import AppConfig
 class PostsConfig(AppConfig):
     """App configuration for feed post and interaction models."""
 
-    name = 'posts'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "posts"
+
+    def ready(self):
+        """Register app signal handlers."""
+        import posts.signals  # noqa: F401

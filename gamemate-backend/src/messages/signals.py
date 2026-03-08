@@ -1,0 +1,21 @@
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from notifications.services import create_notification
+
+from .models import Message
+
+
+# Emit message notification when a new message is created.
+@receiver(post_save, sender=Message)
+def message_created(sender, instance, created, **kwargs):
+    if not created:
+        return
+
+    receivers = instance.thread.participants.exclude(id=instance.sender_id)
+    for receiver in receivers:
+        create_notification(
+            user=receiver,
+            actor=instance.sender,
+            type="message",
+        )

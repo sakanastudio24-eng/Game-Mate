@@ -2,4 +2,9 @@ from django.apps import AppConfig
 
 
 class ConnectionsConfig(AppConfig):
-    name = 'connections'
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "connections"
+
+    def ready(self):
+        """Register app signal handlers."""
+        import connections.signals  # noqa: F401

@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "groups",
-    "posts",
-    "connections",
+    "posts.apps.PostsConfig",
+    "connections.apps.ConnectionsConfig",
     "notifications",
     "messages.apps.MessagesConfig",
 ]

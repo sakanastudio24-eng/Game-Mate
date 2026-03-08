@@ -10,14 +10,13 @@ class FeedService:
     @staticmethod
     def get_feed(user, limit=20):
         """Return top posts ranked by engagement score with recency pre-filtering."""
-        favorite_games = set()
-        profile = getattr(user, "profile", None)
-        if profile and isinstance(profile.favorite_games, list):
-            favorite_games = {
-                game.strip().lower()
-                for game in profile.favorite_games
-                if isinstance(game, str) and game.strip()
-            }
+        user_profile = getattr(user, "profile", None)
+        favorite_games = (user_profile.favorite_games or []) if user_profile else []
+        favorite_games = {
+            game.strip().lower()
+            for game in favorite_games
+            if isinstance(game, str) and game.strip()
+        }
 
         posts = (
             Post.objects
@@ -41,32 +40,36 @@ class FeedService:
         ranked_posts = []
 
         for post in posts:
-            score = (
-                post.like_count * 3 +
-                post.share_count * 5 -
-                post.skip_count * 2
-            )
+            score = 0
+            reasons = []
+
+            # recency signal
+            score += 1
+            reasons.append("recent")
+
+            # like signal
+            if post.like_count >= 1:
+                score += 2
+                reasons.append("popular")
+
+            # share signal
+            if post.share_count >= 1:
+                score += 3
+                reasons.append("shared")
+
+            # skip signal
+            if post.skip_count >= 1:
+                score -= 2
 
             feed_meta = {
                 "score": score,
-                "reasons": [],
+                "reasons": reasons,
                 "signals": {
                     "likes": post.like_count,
                     "shares": post.share_count,
                     "comments": post.comment_count if hasattr(post, "comment_count") else 0,
                 },
             }
-
-            # popularity signal
-            if post.like_count >= 2:
-                feed_meta["reasons"].append("popular")
-
-            # share signal
-            if post.share_count >= 1:
-                feed_meta["reasons"].append("shared")
-
-            # recency signal
-            feed_meta["reasons"].append("recent")
 
             # category / game interest
             post_game_key = (post.game or "").strip().lower()

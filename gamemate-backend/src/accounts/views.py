@@ -77,7 +77,7 @@ class ProfileMeView(APIView):
     def get(self, request):
         """Return current profile data used by personalization and feed logic."""
         profile, _ = Profile.objects.get_or_create(user=request.user)
-        return Response(ProfileSerializer(profile).data)
+        return Response({"success": True, "data": ProfileSerializer(profile).data})
 
     def patch(self, request):
         """Apply partial profile updates for bio/avatar/favorite_games."""
@@ -85,4 +85,4 @@ class ProfileMeView(APIView):
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"success": True, "data": serializer.data}, status=status.HTTP_200_OK)

@@ -26,4 +26,4 @@ def get_notifications(request):
         for notification in notifications
     ]
 
-    return Response(data)
+    return Response({"success": True, "count": len(data), "results": data})

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -23,10 +24,15 @@ urlpatterns = [
     path("api/profile/me/", ProfileMeView.as_view(), name="profile_me_slash"),
     path("api/accounts/", include("accounts.urls")),
     path("api/connections/", include("connections.urls")),
+    path("api/friends/", include("connections.urls")),
     path("api/", include("groups.urls")),
     path("api/", include("posts.urls")),
     path("api/", include("notifications.urls")),
     path("api/messages/", include("messages.urls")),
-    path("sentry-debug/", trigger_error, name="sentry_debug"),
-    path("crash/", crash, name="sentry_crash"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += [
+        path("sentry-debug/", trigger_error, name="sentry_debug"),
+        path("crash/", crash, name="sentry_crash"),
+    ]

@@ -81,9 +81,12 @@ Response:
 Response:
 ```json
 {
-  "bio": "",
-  "avatar_url": "",
-  "favorite_games": []
+  "success": true,
+  "data": {
+    "bio": "",
+    "avatar_url": "",
+    "favorite_games": []
+  }
 }
 ```
 
@@ -188,10 +191,10 @@ Responses:
 ### POST `/api/groups/{group_id}/leave/`
 Responses:
 ```json
-{ "detail": "You left the group." }
+{ "success": true, "message": "Group left." }
 ```
 ```json
-{ "detail": "You are not a member." }
+{ "success": false, "message": "You are not a member." }
 ```
 ```json
 { "detail": "Owner cannot leave their own group." }
@@ -202,6 +205,7 @@ Response:
 ```json
 {
   "success": true,
+  "count": 1,
   "results": [
     {
       "user_id": 2,
@@ -222,16 +226,16 @@ Request:
 ```
 Responses:
 ```json
-{ "detail": "User invited successfully." }
+{ "success": true, "message": "User invited successfully." }
 ```
 ```json
-{ "detail": "Only the owner can invite users." }
+{ "success": false, "message": "Only the owner can invite users." }
 ```
 ```json
-{ "detail": "User not found." }
+{ "success": false, "message": "User not found." }
 ```
 ```json
-{ "detail": "User already in group." }
+{ "success": true, "message": "User already in group." }
 ```
 
 ### POST `/api/groups/{group_id}/promote/`
@@ -242,10 +246,10 @@ Request:
 ```
 Responses:
 ```json
-{ "detail": "User promoted to admin." }
+{ "success": true, "message": "User promoted to admin." }
 ```
 ```json
-{ "detail": "Only owner can promote members." }
+{ "success": false, "message": "Only owner can promote members." }
 ```
 ```json
 { "detail": "Owner role cannot be modified." }
@@ -310,10 +314,13 @@ Response:
 Response:
 ```json
 {
-  "post_id": 1,
-  "score": 7,
-  "reasons": ["recent", "friend_post"],
-  "signals": { "likes": 3, "shares": 1, "comments": 0 }
+  "success": true,
+  "data": {
+    "post_id": 1,
+    "score": 7,
+    "reasons": ["recent", "friend_post"],
+    "signals": { "likes": 3, "shares": 1, "comments": 0 }
+  }
 }
 ```
 
@@ -344,27 +351,34 @@ Direct share response:
 
 ---
 
-## Connections
+## Friends / Connections
 
 ### POST `/api/connections/add/{user_id}/`
+### POST `/api/friends/add/{user_id}/` (legacy alias)
+### POST `/api/friends/request/{user_id}/`
 Responses:
 ```json
-{ "success": true }
+{ "success": true, "message": "Friend request sent." }
 ```
 ```json
-{ "detail": "Request already exists." }
+{ "success": true, "message": "Request already exists." }
 ```
 
 ### POST `/api/connections/accept/{connection_id}/`
+### POST `/api/friends/accept/{connection_id}/` (legacy alias)
+### POST `/api/friends/request/{connection_id}/accept/`
 Response:
 ```json
-{ "success": true }
+{ "success": true, "message": "Friend request accepted." }
 ```
 
 ### GET `/api/connections/friends/`
+### GET `/api/friends/friends/`
+### GET `/api/friends/`
 Response:
 ```json
 {
+  "success": true,
   "count": 1,
   "results": [
     {
@@ -385,15 +399,19 @@ Response:
 ### GET `/api/notifications/`
 Response:
 ```json
-[
-  {
-    "actor": "zan",
-    "type": "friend_request",
-    "post_id": null,
-    "is_read": false,
-    "created_at": "..."
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "results": [
+    {
+      "actor": "zan",
+      "type": "friend_request",
+      "post_id": null,
+      "is_read": false,
+      "created_at": "..."
+    }
+  ]
+}
 ```
 
 Supported `type` values currently emitted:
@@ -411,21 +429,25 @@ Supported `type` values currently emitted:
 ### GET `/api/messages/threads/`
 Response:
 ```json
-[
-  {
-    "thread_id": 1,
-    "participants": ["zan"],
-    "last_message": "yo wanna play ranked?",
-    "unread": 2
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "results": [
+    {
+      "thread_id": 1,
+      "participants": ["zan"],
+      "last_message": "yo wanna play ranked?",
+      "unread": 2
+    }
+  ]
+}
 ```
 
 ### POST `/api/messages/thread/{user_id}/`
 Creates or returns existing 1:1 thread.
 Response:
 ```json
-{ "thread_id": 1 }
+{ "success": true, "data": { "thread_id": 1, "created": true } }
 ```
 
 ### POST `/api/messages/send/{thread_id}/`
@@ -435,21 +457,25 @@ Request:
 ```
 Response:
 ```json
-{ "success": true, "message_id": 42 }
+{ "success": true, "data": { "message_id": 42 } }
 ```
 
 ### GET `/api/messages/messages/{thread_id}/`
 Returns message history; unread incoming messages are marked read.
 Response:
 ```json
-[
-  {
-    "sender": "dan",
-    "content": "yo wanna play ranked?",
-    "is_read": true,
-    "created_at": "..."
-  }
-]
+{
+  "success": true,
+  "count": 1,
+  "results": [
+    {
+      "sender": "dan",
+      "content": "yo wanna play ranked?",
+      "is_read": true,
+      "created_at": "..."
+    }
+  ]
+}
 ```
 
 ---
@@ -472,4 +498,7 @@ Throttle response:
 
 - Keep trailing slashes in routes.
 - For Postman, set bearer token in Headers/Auth tab (not request body).
-- Some endpoints use response envelopes while others return direct payloads; this reflects current v1 implementation.
+- API response convention is now normalized around:
+  - list: `{ "success": true, "count": n, "results": [...] }`
+  - single: `{ "success": true, "data": {...} }`
+  - action: `{ "success": true|false, "message": "..." }`

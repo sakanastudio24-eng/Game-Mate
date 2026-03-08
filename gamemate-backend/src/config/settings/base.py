@@ -28,14 +28,11 @@ ALLOWED_HOSTS = []
 # Sentry
 # --------------------------------------------------
 sentry_sdk.init(
-    dsn=env(
-        "SENTRY_DSN",
-        default="https://603cd391d0d277f1803e8df236da2fd2@o4511007630753792.ingest.us.sentry.io/4511007632261120",
-    ),
+    dsn=env("SENTRY_DSN", default=""),
     integrations=[DjangoIntegration()],
     traces_sample_rate=1.0,
     send_default_pii=True,
-    debug=True,
+    debug=env.bool("SENTRY_DEBUG", default=False),
 )
 
 # --------------------------------------------------
@@ -134,6 +131,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+    "EXCEPTION_HANDLER": "config.exceptions.api_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "config.pagination.StandardPageNumberPagination",
     "PAGE_SIZE": 3,
     "DEFAULT_THROTTLE_CLASSES": [

@@ -69,7 +69,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
 
         serializer = GroupSerializer(queryset, many=True, context=self.get_serializer_context())
-        return Response(serializer.data)
+        return Response({"success": True, "count": len(serializer.data), "results": serializer.data})
 
     def retrieve(self, request, *args, **kwargs):
         """Return detail for a single visible group."""
@@ -154,7 +154,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if not membership:
             return Response(
-                {"detail": "You are not a member."},
+                {"success": False, "message": "You are not a member."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -163,7 +163,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         membership.delete()
         return Response(
-            {"detail": "You left the group."},
+            {"success": True, "message": "Group left."},
             status=status.HTTP_200_OK,
         )
 
@@ -174,7 +174,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if group.owner != request.user:
             return Response(
-                {"detail": "Only the owner can invite users."},
+                {"success": False, "message": "Only the owner can invite users."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -187,14 +187,14 @@ class GroupViewSet(viewsets.ModelViewSet):
             user = User.objects.get(Q(username=identifier) | Q(email__iexact=identifier))
         except User.DoesNotExist:
             return Response(
-                {"detail": "User not found."},
+                {"success": False, "message": "User not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         if GroupMembership.objects.filter(group=group, user=user).exists():
             return Response(
-                {"detail": "User already in group."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"success": True, "message": "User already in group."},
+                status=status.HTTP_200_OK,
             )
 
         GroupMembership.objects.create(
@@ -203,7 +203,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             role="member",
         )
 
-        return Response({"detail": "User invited successfully."}, status=status.HTTP_200_OK)
+        return Response({"success": True, "message": "User invited successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
     def promote(self, request, pk=None):
@@ -212,7 +212,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if group.owner != request.user:
             return Response(
-                {"detail": "Only owner can promote members."},
+                {"success": False, "message": "Only owner can promote members."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -222,7 +222,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response(
-                {"detail": "User not found."},
+                {"success": False, "message": "User not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -233,7 +233,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if not membership:
             return Response(
-                {"detail": "User not in group."},
+                {"success": False, "message": "User not in group."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -243,7 +243,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         membership.role = "admin"
         membership.save()
 
-        return Response({"detail": "User promoted to admin."})
+        return Response({"success": True, "message": "User promoted to admin."})
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):
@@ -251,5 +251,9 @@ class GroupViewSet(viewsets.ModelViewSet):
         group = self.get_object()
         qs = GroupMembership.objects.filter(group=group).select_related("user").order_by("joined_at")
         return Response(
-            {"success": True, "results": GroupMembershipListSerializer(qs, many=True).data}
+            {
+                "success": True,
+                "count": qs.count(),
+                "results": GroupMembershipListSerializer(qs, many=True).data,
+            }
         )

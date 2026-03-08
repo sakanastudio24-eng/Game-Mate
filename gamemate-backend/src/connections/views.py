@@ -16,10 +16,10 @@ User = get_user_model()
 def send_request(request, user_id):
     receiver = User.objects.filter(id=user_id).first()
     if not receiver:
-        return Response({"detail": "User not found."}, status=404)
+        return Response({"success": False, "message": "User not found."}, status=404)
 
     if receiver.id == request.user.id:
-        return Response({"detail": "Cannot connect to yourself."}, status=400)
+        return Response({"success": False, "message": "Cannot connect to yourself."}, status=400)
 
     connection, created = Connection.objects.get_or_create(
         sender=request.user,
@@ -28,9 +28,9 @@ def send_request(request, user_id):
     )
 
     if not created:
-        return Response({"detail": "Request already exists."}, status=200)
+        return Response({"success": True, "message": "Request already exists."}, status=200)
 
-    return Response({"success": True}, status=201)
+    return Response({"success": True, "message": "Friend request sent."}, status=201)
 
 
 # Accept an incoming connection request.
@@ -39,18 +39,18 @@ def send_request(request, user_id):
 def accept_request(request, connection_id):
     connection = Connection.objects.filter(id=connection_id).first()
     if not connection:
-        return Response({"detail": "Connection request not found."}, status=404)
+        return Response({"success": False, "message": "Connection request not found."}, status=404)
 
     if connection.receiver != request.user:
-        return Response({"detail": "Not allowed"}, status=403)
+        return Response({"success": False, "message": "Not allowed."}, status=403)
 
     if connection.status == "accepted":
-        return Response({"success": True}, status=200)
+        return Response({"success": True, "message": "Already accepted."}, status=200)
 
     connection.status = "accepted"
     connection.save(update_fields=["status"])
 
-    return Response({"success": True}, status=200)
+    return Response({"success": True, "message": "Friend request accepted."}, status=200)
 
 
 # Return accepted friends list for the current user.
@@ -62,4 +62,10 @@ def friends_list(request):
         .filter(Q(sender=request.user) | Q(receiver=request.user))
         .order_by("-created_at")
     )
-    return Response({"count": connections.count(), "results": ConnectionSerializer(connections, many=True).data})
+    return Response(
+        {
+            "success": True,
+            "count": connections.count(),
+            "results": ConnectionSerializer(connections, many=True).data,
+        }
+    )

@@ -52,7 +52,10 @@ class PostViewSet(viewsets.ModelViewSet):
         """Restore a soft-deleted post by clearing deletion markers."""
         post = Post.objects.filter(id=post_id).first()
         if not post:
-            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"success": False, "message": "Post not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         post.is_deleted = False
         post.deleted_at = None
@@ -111,7 +114,10 @@ class PostInteractionViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         if serializer.validated_data["post"].is_deleted:
-            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"success": False, "message": "Post not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         interaction_type = serializer.validated_data["interaction_type"]
         post = serializer.validated_data["post"]
@@ -163,11 +169,11 @@ class FeedView(APIView):
 def share_post(request, post_id, user_id):
     post = Post.objects.filter(id=post_id, is_deleted=False).first()
     if not post:
-        return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"success": False, "message": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
 
     receiver = User.objects.filter(id=user_id).first()
     if not receiver:
-        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"success": False, "message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
     PostShare.objects.create(
         sender=request.user,
@@ -184,14 +190,9 @@ def share_post(request, post_id, user_id):
 def explain_feed_post(request, post_id):
     post = Post.objects.filter(id=post_id, is_deleted=False).first()
     if not post:
-        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"success": False, "message": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
 
     score, reasons, signals = score_post(post, request.user)
     return Response(
-        {
-            "post_id": post.id,
-            "score": score,
-            "reasons": reasons,
-            "signals": signals,
-        }
+        {"success": True, "data": {"post_id": post.id, "score": score, "reasons": reasons, "signals": signals}}
     )

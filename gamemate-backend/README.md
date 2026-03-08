@@ -3,6 +3,10 @@
 Production-style v1 backend for GameMate built on Django + DRF + PostgreSQL.
 
 ## Stack
+- Django
+- PostgreSQL
+- JWT auth
+- Sentry monitoring
 - Python 3.14
 - Django 6
 - Django REST Framework
@@ -10,6 +14,15 @@ Production-style v1 backend for GameMate built on Django + DRF + PostgreSQL.
 - PostgreSQL
 - Celery + Redis
 - Sentry
+
+## Core Systems
+- authentication
+- profile system
+- friend system
+- groups
+- feed ranking
+- explainable feed
+- notifications
 
 ## Setup
 ```bash
@@ -39,8 +52,12 @@ Design rule:
 - `views` handle HTTP
 - `services` hold business logic
 - `models` hold data constraints
+- service layer
+- event signals
+- soft delete system
+- rate limiting
 
-## Feed Scoring
+## Feed Algorithm
 Feed is assembled through `FeedService` and returns ranked items with metadata.
 
 Current scoring signals include:
@@ -49,6 +66,10 @@ Current scoring signals include:
 - user interest match (`profile.favorite_games`)
 - social graph boost (`friend_post`)
 - diversity controls (penalty for repeating recent games)
+- weighted scoring
+- recency bias
+- engagement signals
+- user interest matching
 
 Feed response includes explainability fields via `feed_meta`:
 - `source`
@@ -127,6 +148,9 @@ Posts/Feed:
 - `GET /api/feed/explain/{post_id}/`
 
 Connections:
+- `GET /api/friends/`
+- `POST /api/friends/request/{user_id}/`
+- `POST /api/friends/request/{connection_id}/accept/`
 - `POST /api/connections/add/{user_id}/`
 - `POST /api/connections/accept/{connection_id}/`
 - `GET /api/connections/friends/`

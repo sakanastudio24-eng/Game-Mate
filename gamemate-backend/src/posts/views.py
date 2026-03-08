@@ -1,13 +1,17 @@
+from django.contrib.auth import get_user_model
 from rest_framework import status, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Post, PostInteraction
+from .models import Post, PostInteraction, PostShare
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
 from posts.services.feed_service import FeedService
+
+User = get_user_model()
 
 
 # Post CRUD and post-action endpoints.
@@ -114,3 +118,24 @@ class FeedView(APIView):
                 "results": results,
             }
         )
+
+
+# Share a post directly from sender to receiver user.
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def share_post(request, post_id, user_id):
+    post = Post.objects.filter(id=post_id).first()
+    if not post:
+        return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    receiver = User.objects.filter(id=user_id).first()
+    if not receiver:
+        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    PostShare.objects.create(
+        sender=request.user,
+        receiver=receiver,
+        post=post,
+    )
+
+    return Response({"success": True}, status=status.HTTP_201_CREATED)

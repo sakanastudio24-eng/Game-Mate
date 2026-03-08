@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from .models import Post, PostInteraction
 from .serializers import PostSerializer
+from .serializers_interaction import PostInteractionSerializer
 from posts.services.feed_service import FeedService
 
 
@@ -30,6 +31,36 @@ class PostViewSet(viewsets.ModelViewSet):
             interaction_type="like",
         )
         return Response({"success": True}, status=status.HTTP_200_OK)
+
+
+class PostInteractionViewSet(viewsets.ModelViewSet):
+    """CRUD endpoints for recording post interaction signals."""
+
+    queryset = PostInteraction.objects.select_related("post", "user").all().order_by("-created_at")
+    serializer_class = PostInteractionSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self):
+        """Limit interaction visibility to the authenticated user's own events."""
+        return self.queryset.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        """Create or reuse an interaction for this user/post/type combination."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        interaction, created = PostInteraction.objects.get_or_create(
+            user=request.user,
+            post=serializer.validated_data["post"],
+            interaction_type=serializer.validated_data["interaction_type"],
+        )
+
+        data = self.get_serializer(interaction).data
+        return Response(
+            {"success": True, "created": created, "data": data},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class FeedView(APIView):

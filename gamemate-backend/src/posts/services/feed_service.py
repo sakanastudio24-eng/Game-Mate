@@ -56,7 +56,8 @@ class FeedService:
     def _collect_post_candidates():
         """Collect post candidates and attach source/type metadata."""
         posts = (
-            Post.objects.annotate(
+            Post.objects.filter(is_deleted=False)
+            .annotate(
                 like_count=Count(
                     "interactions",
                     filter=Q(interactions__interaction_type="like"),

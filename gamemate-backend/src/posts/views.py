@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.decorators import action
@@ -18,13 +19,25 @@ User = get_user_model()
 class PostViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for feed posts."""
 
-    queryset = Post.objects.select_related("creator").all().order_by("-created_at")
+    queryset = (
+        Post.objects.select_related("creator")
+        .filter(is_deleted=False)
+        .order_by("-created_at")
+    )
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         """Attach authenticated user as post creator on create."""
         serializer.save(creator=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        """Soft-delete post instead of physically removing database row."""
+        post = self.get_object()
+        post.is_deleted = True
+        post.deleted_at = timezone.now()
+        post.save(update_fields=["is_deleted", "deleted_at"])
+        return Response({"success": True}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
     def like(self, request, pk=None):
@@ -77,6 +90,8 @@ class PostInteractionViewSet(viewsets.ModelViewSet):
         """Create or reuse an interaction for this user/post/type combination."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        if serializer.validated_data["post"].is_deleted:
+            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
 
         interaction, created = PostInteraction.objects.get_or_create(
             user=request.user,
@@ -124,7 +139,7 @@ class FeedView(APIView):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def share_post(request, post_id, user_id):
-    post = Post.objects.filter(id=post_id).first()
+    post = Post.objects.filter(id=post_id, is_deleted=False).first()
     if not post:
         return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
 

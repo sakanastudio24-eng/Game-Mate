@@ -15,6 +15,8 @@ class Post(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     video_url = models.URLField(blank=True)
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

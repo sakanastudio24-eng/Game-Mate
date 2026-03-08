@@ -142,11 +142,8 @@ class GroupViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if membership.role == "owner":
-            return Response(
-                {"detail": "Owner cannot leave their own group."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if group.owner_id == request.user.id:
+            raise PermissionDenied("Owner cannot leave their own group.")
 
         membership.delete()
         return Response(
@@ -221,6 +218,9 @@ class GroupViewSet(viewsets.ModelViewSet):
                 {"detail": "User not in group."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        if membership.user_id == group.owner_id:
+            raise PermissionDenied("Owner role cannot be modified.")
 
         membership.role = "admin"
         membership.save()

@@ -88,6 +88,9 @@ Use this as the one high-level backend map (instead of per-folder markdown files
 - `src/config/`
   - Definition: project routing + pagination + settings package.
   - Main classes: `StandardPageNumberPagination`.
+- `src/core/services/`
+  - Definition: shared cross-domain controls for event processing.
+  - Main functions: `allow_event` (in-memory per-user event rate limiting).
 
 ## Local Check
 

@@ -24,15 +24,15 @@ class Post(models.Model):
         return f"{self.title} - {self.creator.username}"
 
 
-class Interaction(models.Model):
-    """User interaction event used for engagement analytics and feed ranking."""
+class PostInteraction(models.Model):
+    """Tracks user engagement signals that feed ranking and recommendation logic."""
 
-    INTERACTION_TYPES = [
+    INTERACTION_TYPES = (
         ("like", "Like"),
         ("comment", "Comment"),
-        ("view", "View"),
+        ("share", "Share"),
         ("skip", "Skip"),
-    ]
+    )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     post = models.ForeignKey(
@@ -40,5 +40,8 @@ class Interaction(models.Model):
         on_delete=models.CASCADE,
         related_name="interactions",
     )
-    type = models.CharField(max_length=10, choices=INTERACTION_TYPES)
+    interaction_type = models.CharField(max_length=10, choices=INTERACTION_TYPES)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "post", "interaction_type")

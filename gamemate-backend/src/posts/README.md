@@ -8,7 +8,7 @@ Purpose: Feed content foundation (posts + engagement signals).
 - Exposes admin access for post and interaction inspection.
 
 ## File map
-- `models.py`: `Post` and `Interaction` entities.
+- `models.py`: `Post` and `PostInteraction` entities.
 - `admin.py`: admin registrations.
 - `apps.py`: Django app config.
 - `views.py`: placeholder for upcoming post/feed endpoints.

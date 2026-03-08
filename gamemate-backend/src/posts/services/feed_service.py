@@ -36,14 +36,24 @@ class FeedService:
                 post.skip_count * 2
             )
 
-            ranked_posts.append((score, post))
+            feed_meta = {
+                "score": score,
+                "reasons": [],
+                "signals": {
+                    "likes": post.like_count,
+                    "shares": post.share_count,
+                    "comments": post.comment_count if hasattr(post, "comment_count") else 0,
+                },
+            }
+
+            ranked_posts.append((score, post, feed_meta))
 
         ranked_posts.sort(key=lambda x: x[0], reverse=True)
 
         selected = []
         games_seen = set()
 
-        for score, post in ranked_posts:
+        for score, post, feed_meta in ranked_posts:
             # Prevent a single game category from dominating top feed slots.
             if post.game in games_seen:
                 continue

@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
+from activity.services.activity_service import log_activity
 from notifications.services import create_notification
 
 from .models import Connection
@@ -27,6 +28,12 @@ def connection_event_notification(sender, instance, created, **kwargs):
             actor=instance.sender,
             type="friend_request",
         )
+        log_activity(
+            user=instance.sender,
+            type="friend_request_sent",
+            object_id=instance.id,
+            metadata={"receiver_id": instance.receiver_id},
+        )
         return
 
     previous_status = getattr(instance, "_previous_status", None)
@@ -35,4 +42,10 @@ def connection_event_notification(sender, instance, created, **kwargs):
             user=instance.sender,
             actor=instance.receiver,
             type="friend_accept",
+        )
+        log_activity(
+            user=instance.receiver,
+            type="friend_added",
+            object_id=instance.id,
+            metadata={"friend_id": instance.sender_id},
         )

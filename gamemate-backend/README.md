@@ -61,6 +61,10 @@ Use this as the one high-level backend map (instead of per-folder markdown files
   - Definition: auth identity + profile domain.
   - Main classes: `User`, `Profile`, `LoginView`, `AuthTokenRefreshView`, `AuthLogoutView`, `MeView`, `LoginThrottle`.
   - Main functions: `create_profile` signal.
+- `src/activity/`
+  - Definition: event stream for analytics/moderation/history/debugging.
+  - Main classes: `Activity`.
+  - Main functions: `log_activity`, `log_activity_task`.
 - `src/groups/`
   - Definition: groups, memberships, permissions, owner/member actions.
   - Main classes: `Group`, `GroupMembership`, `GroupViewSet`, `IsGroupMember`, `IsGroupOwner`.

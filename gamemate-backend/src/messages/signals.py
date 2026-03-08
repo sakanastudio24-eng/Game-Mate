@@ -1,6 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from activity.services.activity_service import log_activity
 from notifications.services import create_notification
 
 from .models import Message
@@ -19,3 +20,10 @@ def message_created(sender, instance, created, **kwargs):
             actor=instance.sender,
             type="message",
         )
+
+    log_activity(
+        user=instance.sender,
+        type="message_sent",
+        object_id=instance.id,
+        metadata={"thread_id": instance.thread_id},
+    )

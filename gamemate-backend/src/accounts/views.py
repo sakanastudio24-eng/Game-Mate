@@ -9,7 +9,8 @@ from rest_framework_simplejwt.serializers import (
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .serializers import MeSerializer
+from .models import Profile
+from .serializers import MeSerializer, ProfileSerializer
 from .throttles import LoginThrottle
 
 
@@ -65,3 +66,23 @@ class MeView(APIView):
     def get(self, request):
         """Serve current user identity and profile data."""
         return Response({"success": True, "data": MeSerializer(request.user).data})
+
+
+# Authenticated profile endpoint (`/api/profile/me`) with read/update support.
+class ProfileMeView(APIView):
+    """Read or update the authenticated user's profile preferences."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Return current profile data used by personalization and feed logic."""
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        return Response(ProfileSerializer(profile).data)
+
+    def patch(self, request):
+        """Apply partial profile updates for bio/avatar/favorite_games."""
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)

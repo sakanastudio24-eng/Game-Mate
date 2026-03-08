@@ -83,20 +83,44 @@ class FeedService:
         ranked_posts.sort(key=lambda x: x[0], reverse=True)
 
         selected = []
-        games_seen = set()
+        recent_games = []
+        remaining = [
+            {"score": score, "post": post, "meta": meta}
+            for score, post, meta in ranked_posts
+        ]
 
-        for score, post, meta in ranked_posts:
-            # Prevent a single game category from dominating top feed slots.
-            if post.game in games_seen:
-                continue
+        while remaining and len(selected) < limit:
+            best_index = 0
+            best_effective_score = None
 
-            selected.append({
-                "post": post,
-                "meta": meta,
-            })
-            games_seen.add(post.game)
+            # Greedy pick: apply a diversity penalty if this game was recently shown.
+            for idx, candidate in enumerate(remaining):
+                effective_score = candidate["score"]
+                if candidate["post"].game in recent_games:
+                    effective_score -= 2
 
-            if len(selected) >= limit:
-                break
+                if best_effective_score is None or effective_score > best_effective_score:
+                    best_effective_score = effective_score
+                    best_index = idx
+
+            chosen = remaining.pop(best_index)
+            chosen_meta = {
+                **chosen["meta"],
+                "score": best_effective_score,
+                "reasons": list(chosen["meta"].get("reasons", [])),
+            }
+
+            if chosen["post"].game in recent_games:
+                chosen_meta["reasons"].append("diversity_penalty")
+
+            selected.append(
+                {
+                    "post": chosen["post"],
+                    "meta": chosen_meta,
+                }
+            )
+
+            recent_games.append(chosen["post"].game)
+            recent_games = recent_games[-3:]
 
         return selected

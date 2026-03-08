@@ -11,7 +11,6 @@ from .feed import score_post
 from .models import Post, PostInteraction, PostShare
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
-from notifications.services import create_notification
 from posts.services.feed_service import FeedService
 
 User = get_user_model()
@@ -64,36 +63,22 @@ class PostViewSet(viewsets.ModelViewSet):
     def like(self, request, pk=None):
         """Store a like interaction for the current user and post."""
         post = self.get_object()
-        _, created = PostInteraction.objects.get_or_create(
+        PostInteraction.objects.get_or_create(
             user=request.user,
             post=post,
             interaction_type="like",
         )
-        if created:
-            create_notification(
-                user=post.creator,
-                actor=request.user,
-                type="like",
-                post_id=post.id,
-            )
         return Response({"success": True}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
     def share(self, request, pk=None):
         """Store a share interaction for the current user and post."""
         post = self.get_object()
-        _, created = PostInteraction.objects.get_or_create(
+        PostInteraction.objects.get_or_create(
             user=request.user,
             post=post,
             interaction_type="share",
         )
-        if created:
-            create_notification(
-                user=post.creator,
-                actor=request.user,
-                type="share",
-                post_id=post.id,
-            )
         return Response({"success": True}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
@@ -135,14 +120,6 @@ class PostInteractionViewSet(viewsets.ModelViewSet):
             post=post,
             interaction_type=interaction_type,
         )
-
-        if created and interaction_type in {"like", "comment", "share"}:
-            create_notification(
-                user=post.creator,
-                actor=request.user,
-                type=interaction_type,
-                post_id=post.id,
-            )
 
         data = self.get_serializer(interaction).data
         return Response(
@@ -196,12 +173,6 @@ def share_post(request, post_id, user_id):
         sender=request.user,
         receiver=receiver,
         post=post,
-    )
-    create_notification(
-        user=receiver,
-        actor=request.user,
-        type="share",
-        post_id=post.id,
     )
 
     return Response({"success": True}, status=status.HTTP_201_CREATED)

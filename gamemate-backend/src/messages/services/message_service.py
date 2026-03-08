@@ -1,5 +1,3 @@
-from notifications.services import create_notification
-
 from messages.models import Message
 from messages.services.errors import DomainPermissionError, DomainValidationError
 
@@ -18,14 +16,6 @@ def send_message(thread, sender, content):
         sender=sender,
         content=normalized_content,
     )
-
-    receivers = thread.participants.exclude(id=sender.id)
-    for receiver in receivers:
-        create_notification(
-            user=receiver,
-            actor=sender,
-            type="message",
-        )
 
     return message
 

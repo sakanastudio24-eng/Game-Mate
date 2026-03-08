@@ -6,7 +6,6 @@ from rest_framework.response import Response
 
 from .models import Connection
 from .serializers import ConnectionSerializer
-from notifications.services import create_notification
 
 User = get_user_model()
 
@@ -31,12 +30,6 @@ def send_request(request, user_id):
     if not created:
         return Response({"detail": "Request already exists."}, status=200)
 
-    create_notification(
-        user=receiver,
-        actor=request.user,
-        type="friend_request",
-    )
-
     return Response({"success": True}, status=201)
 
 
@@ -51,14 +44,11 @@ def accept_request(request, connection_id):
     if connection.receiver != request.user:
         return Response({"detail": "Not allowed"}, status=403)
 
+    if connection.status == "accepted":
+        return Response({"success": True}, status=200)
+
     connection.status = "accepted"
     connection.save(update_fields=["status"])
-
-    create_notification(
-        user=connection.sender,
-        actor=request.user,
-        type="friend_accept",
-    )
 
     return Response({"success": True}, status=200)
 

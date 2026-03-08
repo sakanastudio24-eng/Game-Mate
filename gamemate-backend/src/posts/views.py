@@ -8,7 +8,7 @@ from .serializers import PostSerializer
 class PostViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for feed posts."""
 
-    queryset = Post.objects.select_related("creator").all()
+    queryset = Post.objects.select_related("creator").all().order_by("-created_at")
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
 

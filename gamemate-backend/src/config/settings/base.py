@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     # Local
     "accounts",
+    "activity.apps.ActivityConfig",
     "groups",
     "posts.apps.PostsConfig",
     "connections.apps.ConnectionsConfig",

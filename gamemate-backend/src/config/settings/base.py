@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Local
     "accounts",
     "groups",
+    "posts",
 ]
 
 MIDDLEWARE = [

@@ -92,6 +92,32 @@ cd src
 python manage.py check
 ```
 
+## Background Jobs (Celery + Redis)
+
+Install dependencies:
+
+```bash
+pip install celery redis
+```
+
+Start Redis (macOS/Homebrew):
+
+```bash
+brew install redis
+redis-server
+```
+
+Start Celery worker (new terminal):
+
+```bash
+cd src
+../.venv/bin/celery -A config worker -l info
+```
+
+Notes:
+- Broker URL defaults to `redis://127.0.0.1:6379/0` (override with `CELERY_BROKER_URL`).
+- Notifications are queued asynchronously via Celery tasks with a sync fallback when broker is unavailable.
+
 ## Auth Model Ordering Rule (Critical)
 
 Define custom user model **before first migrate**:

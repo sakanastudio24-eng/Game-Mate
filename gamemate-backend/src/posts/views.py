@@ -31,11 +31,30 @@ class PostViewSet(viewsets.ModelViewSet):
         """Attach authenticated user as post creator on create."""
         serializer.save(creator=self.request.user)
 
+    def get_queryset(self):
+        """Hide deleted posts by default; include them for restore action lookup."""
+        base_qs = Post.objects.select_related("creator").order_by("-created_at")
+        if self.action == "restore":
+            return base_qs
+        return base_qs.filter(is_deleted=False)
+
     def destroy(self, request, *args, **kwargs):
         """Soft-delete post instead of physically removing database row."""
         post = self.get_object()
         post.is_deleted = True
         post.deleted_at = timezone.now()
+        post.save(update_fields=["is_deleted", "deleted_at"])
+        return Response({"success": True}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["post"], url_path=r"restore/(?P<post_id>[^/.]+)")
+    def restore(self, request, post_id=None):
+        """Restore a soft-deleted post by clearing deletion markers."""
+        post = Post.objects.filter(id=post_id).first()
+        if not post:
+            return Response({"detail": "Post not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        post.is_deleted = False
+        post.deleted_at = None
         post.save(update_fields=["is_deleted", "deleted_at"])
         return Response({"success": True}, status=status.HTTP_200_OK)
 

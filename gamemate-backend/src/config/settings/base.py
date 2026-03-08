@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "posts",
     "connections",
     "notifications",
+    "messages.apps.MessagesConfig",
 ]
 
 MIDDLEWARE = [

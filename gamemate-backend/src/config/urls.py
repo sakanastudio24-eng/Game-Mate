@@ -10,4 +10,5 @@ urlpatterns = [
     path("api/auth/logout/", AuthLogoutView.as_view(), name="token_blacklist"),
     path("api/accounts/", include("accounts.urls")),
     path("api/", include("groups.urls")),
+    path("api/", include("posts.urls")),
 ]

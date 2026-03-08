@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/profile/me", ProfileMeView.as_view(), name="profile_me"),
     path("api/profile/me/", ProfileMeView.as_view(), name="profile_me_slash"),
     path("api/accounts/", include("accounts.urls")),
+    path("api/connections/", include("connections.urls")),
     path("api/", include("groups.urls")),
     path("api/", include("posts.urls")),
 ]

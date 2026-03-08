@@ -11,9 +11,11 @@ from .permissions import IsGroupMember, IsGroupOwner
 from .serializers_invite import InviteSerializer
 from .serializers import GroupCreateSerializer, GroupMembershipListSerializer, GroupSerializer
 
+# User model alias for invite/promote target lookup.
 User = get_user_model()
 
 
+# Primary groups API viewset for CRUD and membership actions.
 class GroupViewSet(viewsets.ModelViewSet):
     """CRUD and member-management endpoints for groups."""
 

@@ -2,9 +2,11 @@ from django.db.models import Count, Q
 from posts.models import Post
 
 
+# Service object for feed ranking and metadata assembly.
 class FeedService:
     """Build ranked post lists from interaction signals for feed consumption."""
 
+    # Main feed builder used by FeedView.
     @staticmethod
     def get_feed(user, limit=20):
         """Return top posts ranked by engagement score with recency pre-filtering."""

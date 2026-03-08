@@ -13,6 +13,7 @@ from .serializers import MeSerializer
 from .throttles import LoginThrottle
 
 
+# JWT login endpoint with normalized response shape.
 class LoginView(TokenObtainPairView):
     """Issue JWT access/refresh tokens for valid email/password credentials."""
 
@@ -27,6 +28,7 @@ class LoginView(TokenObtainPairView):
         return Response({"success": True, "data": serializer.validated_data})
 
 
+# JWT refresh endpoint with normalized response shape.
 class AuthTokenRefreshView(TokenRefreshView):
     """Refresh an access token using a valid refresh token."""
 
@@ -40,6 +42,7 @@ class AuthTokenRefreshView(TokenRefreshView):
         return Response({"success": True, "data": serializer.validated_data})
 
 
+# JWT logout endpoint that blacklists refresh tokens.
 class AuthLogoutView(APIView):
     """Blacklist refresh token to invalidate future refresh attempts."""
 
@@ -53,6 +56,7 @@ class AuthLogoutView(APIView):
         return Response({"success": True, "message": "Logged out."}, status=status.HTTP_200_OK)
 
 
+# Authenticated profile endpoint for the current account.
 class MeView(APIView):
     """Return the authenticated account profile payload."""
 

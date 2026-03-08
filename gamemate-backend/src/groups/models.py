@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 
 
+# Group entity with owner and visibility metadata.
 class Group(models.Model):
     """Core group entity owned by a user with optional private visibility."""
 
@@ -22,6 +23,7 @@ class Group(models.Model):
         return self.name
 
 
+# Membership join model for group roles and membership timestamps.
 class GroupMembership(models.Model):
     """Join table storing membership and role metadata for each group user."""
 

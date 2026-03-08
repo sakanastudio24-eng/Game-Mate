@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import Post
 
 
+# Serializer for feed post API payloads.
 class PostSerializer(serializers.ModelSerializer):
     """Serialize feed post records for API responses."""
 

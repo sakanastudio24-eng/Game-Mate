@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
+# Custom auth user model that logs in with email.
 class User(AbstractUser):
     """Custom auth model that uses email as the login identifier."""
 
@@ -17,6 +18,7 @@ class User(AbstractUser):
         return self.email
 
 
+# Public profile extension linked 1:1 with user.
 class Profile(models.Model):
     """Public-facing profile data kept separate from auth identity fields."""
 
@@ -35,6 +37,7 @@ class Profile(models.Model):
 
 
 @receiver(post_save, sender=User)
+# Signal handler to guarantee profile row exists for new users.
 def create_profile(sender, instance, created, **kwargs):
     """Ensure every user has a profile row immediately after account creation."""
     if created:

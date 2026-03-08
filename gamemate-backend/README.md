@@ -53,6 +53,26 @@ Production runtime module:
 export DJANGO_SETTINGS_MODULE=config.settings.prod
 ```
 
+## Code Notes (Single Map)
+
+Use this as the one high-level backend map (instead of per-folder markdown files).
+
+- `src/accounts/`
+  - Definition: auth identity + profile domain.
+  - Main classes: `User`, `Profile`, `LoginView`, `AuthTokenRefreshView`, `AuthLogoutView`, `MeView`, `LoginThrottle`.
+  - Main functions: `create_profile` signal.
+- `src/groups/`
+  - Definition: groups, memberships, permissions, owner/member actions.
+  - Main classes: `Group`, `GroupMembership`, `GroupViewSet`, `IsGroupMember`, `IsGroupOwner`.
+  - Main functions: `_validate_group_name`, `_validate_group_description`, `add_owner_membership` signal.
+- `src/posts/`
+  - Definition: feed posts, interactions, and feed endpoint assembly.
+  - Main classes: `Post`, `PostInteraction`, `PostViewSet`, `PostInteractionViewSet`, `FeedView`.
+  - Services: `FeedService.get_feed(...)` (ranking + diversity + metadata).
+- `src/config/`
+  - Definition: project routing + pagination + settings package.
+  - Main classes: `StandardPageNumberPagination`.
+
 ## Local Check
 
 ```bash

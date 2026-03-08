@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import Profile, User
 
 
+# Serializer for profile fields returned in account APIs.
 class ProfileSerializer(serializers.ModelSerializer):
     """Serialize public profile fields for account/me responses."""
 
@@ -11,6 +12,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ["display_name", "bio", "created_at"]
 
 
+# Serializer for the authenticated user payload (`/api/accounts/me/`).
 class MeSerializer(serializers.ModelSerializer):
     """Serialize authenticated user identity plus nested profile."""
 

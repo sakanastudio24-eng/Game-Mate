@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 
+# Feed content model authored by users.
 class Post(models.Model):
     """Feed post entity containing creator metadata and optional video content."""
 
@@ -24,6 +25,7 @@ class Post(models.Model):
         return f"{self.title} - {self.creator.username}"
 
 
+# Interaction event model used for feed ranking signals.
 class PostInteraction(models.Model):
     """Tracks user engagement signals that feed ranking and recommendation logic."""
 

@@ -2,6 +2,7 @@ from rest_framework.permissions import BasePermission
 from .models import GroupMembership
 
 
+# Object-level permission: allow owner or member access.
 class IsGroupMember(BasePermission):
     """
     Allow if user is the owner OR has a membership row for this group.
@@ -13,6 +14,7 @@ class IsGroupMember(BasePermission):
         return GroupMembership.objects.filter(group=obj, user=request.user).exists()
 
 
+# Object-level permission: allow only group owner access.
 class IsGroupOwner(BasePermission):
     """
     Allow only if user is the owner.

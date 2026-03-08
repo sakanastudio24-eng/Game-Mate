@@ -10,6 +10,7 @@ from .serializers_interaction import PostInteractionSerializer
 from posts.services.feed_service import FeedService
 
 
+# Post CRUD and post-action endpoints.
 class PostViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for feed posts."""
 
@@ -55,6 +56,7 @@ class PostViewSet(viewsets.ModelViewSet):
         return Response({"success": True}, status=status.HTTP_200_OK)
 
 
+# Interaction create/list endpoints for authenticated user.
 class PostInteractionViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for recording post interaction signals."""
 
@@ -85,6 +87,7 @@ class PostInteractionViewSet(viewsets.ModelViewSet):
         )
 
 
+# Feed endpoint that returns ranked post results with metadata.
 class FeedView(APIView):
     """Feed endpoint that returns engagement-ranked posts."""
 

@@ -3,6 +3,7 @@ from rest_framework import serializers
 from .models import Group, GroupMembership
 
 
+# Shared validator for group names across create/update serializers.
 def _validate_group_name(value: str) -> str:
     """Normalize and validate group name bounds."""
     value = value.strip()
@@ -13,6 +14,7 @@ def _validate_group_name(value: str) -> str:
     return value
 
 
+# Shared validator for group descriptions across create/update serializers.
 def _validate_group_description(value: str) -> str:
     """Normalize and validate group description bounds."""
     value = value.strip()
@@ -21,6 +23,7 @@ def _validate_group_description(value: str) -> str:
     return value
 
 
+# Nested owner serializer used in group read payloads.
 class GroupOwnerSerializer(serializers.Serializer):
     """Compact owner payload embedded in group responses."""
 
@@ -28,6 +31,7 @@ class GroupOwnerSerializer(serializers.Serializer):
     username = serializers.CharField(read_only=True)
 
 
+# Group read serializer returned by list/detail endpoints.
 class GroupSerializer(serializers.ModelSerializer):
     """Read serializer for full group payloads used in API responses."""
 
@@ -56,6 +60,7 @@ class GroupSerializer(serializers.ModelSerializer):
         return _validate_group_description(value)
 
 
+# Group write serializer used by create/update/patch actions.
 class GroupCreateSerializer(serializers.ModelSerializer):
     """Write serializer for create/update/partial-update group actions."""
 
@@ -72,6 +77,7 @@ class GroupCreateSerializer(serializers.ModelSerializer):
         return _validate_group_description(value)
 
 
+# Serializer for single membership payloads.
 class MembershipSerializer(serializers.ModelSerializer):
     """Serializer for membership details in direct membership endpoints."""
 
@@ -83,6 +89,7 @@ class MembershipSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "user", "user_email", "role", "joined_at"]
 
 
+# Serializer for group members list endpoint payload.
 class GroupMembershipListSerializer(serializers.ModelSerializer):
     """Serializer for group membership details shown in group member listings."""
 

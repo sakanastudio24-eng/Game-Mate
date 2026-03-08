@@ -2,6 +2,7 @@ import random
 
 from django.db.models import Count, Q
 
+from connections.models import Connection
 from posts.models import Post
 
 
@@ -20,6 +21,7 @@ class FeedService:
             for game in favorite_games
             if isinstance(game, str) and game.strip()
         }
+        friend_ids = FeedService._get_friend_ids(user)
 
         # Candidate layer (v1): collect post candidates only.
         post_candidates = FeedService._collect_post_candidates()
@@ -28,7 +30,7 @@ class FeedService:
         ranked_candidates = []
         for candidate in candidates:
             post = candidate["post"]
-            score, reasons = FeedService._score_post_candidate(post, favorite_games)
+            score, reasons = FeedService._score_post_candidate(post, favorite_games, friend_ids)
             ranked_candidates.append(
                 {
                     "score": score,
@@ -86,7 +88,23 @@ class FeedService:
         ]
 
     @staticmethod
-    def _score_post_candidate(post, favorite_games):
+    def _get_friend_ids(user):
+        """Return accepted friend user IDs for the given user."""
+        accepted = Connection.objects.filter(status="accepted").filter(
+            Q(sender=user) | Q(receiver=user)
+        )
+
+        friend_ids = []
+        for connection in accepted:
+            if connection.sender_id == user.id:
+                friend_ids.append(connection.receiver_id)
+            elif connection.receiver_id == user.id:
+                friend_ids.append(connection.sender_id)
+
+        return set(friend_ids)
+
+    @staticmethod
+    def _score_post_candidate(post, favorite_games, friend_ids):
         """Compute base score and reasons for a post candidate."""
         score = 0
         reasons = []
@@ -114,6 +132,11 @@ class FeedService:
         if post_game_key in favorite_games:
             score += 3
             reasons.append("game_interest")
+
+        # friend post boost
+        if post.creator_id in friend_ids:
+            score += 3
+            reasons.append("friend_post")
 
         return score, reasons
 

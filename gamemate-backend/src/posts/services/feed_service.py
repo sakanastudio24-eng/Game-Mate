@@ -46,6 +46,20 @@ class FeedService:
                 },
             }
 
+            # popularity signal
+            if post.like_count >= 2:
+                feed_meta["reasons"].append("popular")
+
+            # share signal
+            if post.share_count >= 1:
+                feed_meta["reasons"].append("shared")
+
+            # recency signal
+            feed_meta["reasons"].append("recent")
+
+            # category / game interest
+            feed_meta["reasons"].append("game_interest")
+
             ranked_posts.append((score, post, feed_meta))
 
         ranked_posts.sort(key=lambda x: x[0], reverse=True)

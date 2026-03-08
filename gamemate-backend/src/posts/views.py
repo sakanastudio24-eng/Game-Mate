@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .feed import score_post
 from .models import Post, PostInteraction, PostShare
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
@@ -173,3 +174,22 @@ def share_post(request, post_id, user_id):
     )
 
     return Response({"success": True}, status=status.HTTP_201_CREATED)
+
+
+# Explain why a specific post appears in this user's feed.
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def explain_feed_post(request, post_id):
+    post = Post.objects.filter(id=post_id, is_deleted=False).first()
+    if not post:
+        return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+    score, reasons, signals = score_post(post, request.user)
+    return Response(
+        {
+            "post_id": post.id,
+            "score": score,
+            "reasons": reasons,
+            "signals": signals,
+        }
+    )

@@ -67,12 +67,15 @@ class FeedService:
         selected = []
         games_seen = set()
 
-        for score, post, feed_meta in ranked_posts:
+        for score, post, meta in ranked_posts:
             # Prevent a single game category from dominating top feed slots.
             if post.game in games_seen:
                 continue
 
-            selected.append(post)
+            selected.append({
+                "post": post,
+                "meta": meta,
+            })
             games_seen.add(post.game)
 
             if len(selected) >= limit:

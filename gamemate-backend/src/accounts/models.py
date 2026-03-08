@@ -1,7 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
 
 # Custom auth user model that logs in with email.
@@ -35,11 +33,3 @@ class Profile(models.Model):
     def __str__(self):
         """Return username for admin/debug output."""
         return self.user.username
-
-
-@receiver(post_save, sender=User)
-# Signal handler to guarantee profile row exists for new users.
-def create_profile(sender, instance, created, **kwargs):
-    """Ensure every user has a profile row immediately after account creation."""
-    if created:
-        Profile.objects.create(user=instance)

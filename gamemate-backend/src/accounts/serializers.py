@@ -9,7 +9,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ["bio", "avatar_url", "favorite_games", "created_at"]
+        fields = ["bio", "avatar_url", "favorite_games"]
 
 
 # Serializer for the authenticated user payload (`/api/accounts/me/`).

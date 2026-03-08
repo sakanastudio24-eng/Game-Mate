@@ -2,6 +2,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from activity.services.activity_service import log_activity
+from core.services.event_service import allow_event
 from notifications.services import create_notification
 
 from .models import Connection
@@ -23,6 +24,9 @@ def capture_previous_status(sender, instance, **kwargs):
 @receiver(post_save, sender=Connection)
 def connection_event_notification(sender, instance, created, **kwargs):
     if created and instance.status == "pending":
+        if not allow_event(instance.sender_id, "friend_request"):
+            return
+
         create_notification(
             user=instance.receiver,
             actor=instance.sender,

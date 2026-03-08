@@ -2,6 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from activity.services.activity_service import log_activity
+from core.services.event_service import allow_event
 from notifications.services import create_notification
 
 from .models import Post, PostInteraction, PostShare
@@ -11,6 +12,9 @@ from .models import Post, PostInteraction, PostShare
 @receiver(post_save, sender=Post)
 def post_created(sender, instance, created, **kwargs):
     if not created:
+        return
+
+    if not allow_event(instance.creator_id, "post_created"):
         return
 
     log_activity(
@@ -28,6 +32,9 @@ def post_interaction_created(sender, instance, created, **kwargs):
         return
 
     if instance.interaction_type not in {"like", "comment", "share"}:
+        return
+
+    if not allow_event(instance.user_id, instance.interaction_type):
         return
 
     create_notification(
@@ -54,6 +61,9 @@ def post_interaction_created(sender, instance, created, **kwargs):
 @receiver(post_save, sender=PostShare)
 def post_shared_direct(sender, instance, created, **kwargs):
     if not created:
+        return
+
+    if not allow_event(instance.sender_id, "share"):
         return
 
     create_notification(

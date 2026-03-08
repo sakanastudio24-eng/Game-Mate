@@ -2,6 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from activity.services.activity_service import log_activity
+from core.services.event_service import allow_event
 from notifications.services import create_notification
 
 from .models import Message
@@ -11,6 +12,9 @@ from .models import Message
 @receiver(post_save, sender=Message)
 def message_created(sender, instance, created, **kwargs):
     if not created:
+        return
+
+    if not allow_event(instance.sender_id, "message"):
         return
 
     receivers = instance.thread.participants.exclude(id=instance.sender_id)

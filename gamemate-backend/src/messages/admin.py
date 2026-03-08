@@ -11,6 +11,6 @@ class ThreadAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ("id", "thread", "sender", "created_at")
+    list_display = ("id", "thread", "sender", "is_read", "created_at")
     search_fields = ("sender__username", "content")
     ordering = ("-created_at",)

@@ -98,7 +98,10 @@ class FeedView(APIView):
         results = []
 
         for post_data, item in zip(serializer.data, feed_items):
-            post_data["feed_meta"] = item["meta"]
+            meta = dict(item["meta"])
+            # Keep score internal for ranking logic; do not expose in API yet.
+            meta.pop("score", None)
+            post_data["feed_meta"] = meta
             results.append(post_data)
 
         return Response(

@@ -40,4 +40,18 @@ class FeedService:
 
         ranked_posts.sort(key=lambda x: x[0], reverse=True)
 
-        return [p[1] for p in ranked_posts[:limit]]
+        selected = []
+        games_seen = set()
+
+        for score, post in ranked_posts:
+            # Prevent a single game category from dominating top feed slots.
+            if post.game in games_seen:
+                continue
+
+            selected.append(post)
+            games_seen.add(post.game)
+
+            if len(selected) >= limit:
+                break
+
+        return selected

@@ -32,6 +32,28 @@ class PostViewSet(viewsets.ModelViewSet):
         )
         return Response({"success": True}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["post"])
+    def share(self, request, pk=None):
+        """Store a share interaction for the current user and post."""
+        post = self.get_object()
+        PostInteraction.objects.get_or_create(
+            user=request.user,
+            post=post,
+            interaction_type="share",
+        )
+        return Response({"success": True}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def skip(self, request, pk=None):
+        """Store a skip interaction for the current user and post."""
+        post = self.get_object()
+        PostInteraction.objects.get_or_create(
+            user=request.user,
+            post=post,
+            interaction_type="skip",
+        )
+        return Response({"success": True}, status=status.HTTP_200_OK)
+
 
 class PostInteractionViewSet(viewsets.ModelViewSet):
     """CRUD endpoints for recording post interaction signals."""
@@ -70,34 +92,19 @@ class FeedView(APIView):
 
     def get(self, request):
         """Return scored feed results for the authenticated user."""
-        posts = FeedService.get_feed(request.user)
+        feed_items = FeedService.get_feed(request.user)
+        posts = [item["post"] for item in feed_items]
         serializer = PostSerializer(posts, many=True)
+        results = []
+
+        for post_data, item in zip(serializer.data, feed_items):
+            post_data["feed_meta"] = item["meta"]
+            results.append(post_data)
+
         return Response(
             {
                 "success": True,
-                "count": len(serializer.data),
-                "results": serializer.data,
+                "count": len(results),
+                "results": results,
             }
         )
-
-    @action(detail=True, methods=["post"])
-    def share(self, request, pk=None):
-        """Store a share interaction for the current user and post."""
-        post = self.get_object()
-        PostInteraction.objects.get_or_create(
-            user=request.user,
-            post=post,
-            interaction_type="share",
-        )
-        return Response({"success": True}, status=status.HTTP_200_OK)
-
-    @action(detail=True, methods=["post"])
-    def skip(self, request, pk=None):
-        """Store a skip interaction for the current user and post."""
-        post = self.get_object()
-        PostInteraction.objects.get_or_create(
-            user=request.user,
-            post=post,
-            interaction_type="skip",
-        )
-        return Response({"success": True}, status=status.HTTP_200_OK)

@@ -2,8 +2,8 @@ import random
 
 from django.db.models import Count, Q
 
-from connections.models import Connection
 from posts.models import Post
+from posts.services.scoring_service import build_scoring_context, calculate_post_score
 
 
 # Service object for feed ranking and metadata assembly.
@@ -14,14 +14,7 @@ class FeedService:
     @staticmethod
     def get_feed(user, limit=20):
         """Return top posts ranked by engagement score with recency pre-filtering."""
-        user_profile = getattr(user, "profile", None)
-        favorite_games = (user_profile.favorite_games or []) if user_profile else []
-        favorite_games = {
-            game.strip().lower()
-            for game in favorite_games
-            if isinstance(game, str) and game.strip()
-        }
-        friend_ids = FeedService._get_friend_ids(user)
+        context = build_scoring_context(user)
 
         # Candidate layer (v1): collect post candidates only.
         post_candidates = FeedService._collect_post_candidates()
@@ -30,7 +23,7 @@ class FeedService:
         ranked_candidates = []
         for candidate in candidates:
             post = candidate["post"]
-            score, reasons = FeedService._score_post_candidate(post, favorite_games, friend_ids)
+            score, reasons = calculate_post_score(post, context)
             ranked_candidates.append(
                 {
                     "score": score,
@@ -87,59 +80,6 @@ class FeedService:
             }
             for post in posts
         ]
-
-    @staticmethod
-    def _get_friend_ids(user):
-        """Return accepted friend user IDs for the given user."""
-        accepted = Connection.objects.filter(status="accepted").filter(
-            Q(sender=user) | Q(receiver=user)
-        )
-
-        friend_ids = []
-        for connection in accepted:
-            if connection.sender_id == user.id:
-                friend_ids.append(connection.receiver_id)
-            elif connection.receiver_id == user.id:
-                friend_ids.append(connection.sender_id)
-
-        return set(friend_ids)
-
-    @staticmethod
-    def _score_post_candidate(post, favorite_games, friend_ids):
-        """Compute base score and reasons for a post candidate."""
-        score = 0
-        reasons = []
-
-        # recency signal
-        score += 1
-        reasons.append("recent")
-
-        # like signal
-        if post.like_count >= 1:
-            score += 2
-            reasons.append("popular")
-
-        # share signal
-        if post.share_count >= 1:
-            score += 3
-            reasons.append("shared")
-
-        # skip signal
-        if post.skip_count >= 1:
-            score -= 2
-
-        # category / game interest
-        post_game_key = (post.game or "").strip().lower()
-        if post_game_key in favorite_games:
-            score += 3
-            reasons.append("game_interest")
-
-        # friend post boost
-        if post.creator_id in friend_ids:
-            score += 3
-            reasons.append("friend_post")
-
-        return score, reasons
 
     @staticmethod
     def _apply_diversity_penalty(ranked_candidates, limit):

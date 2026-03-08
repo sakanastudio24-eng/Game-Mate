@@ -1,7 +1,7 @@
 from django.db.models import Count, Q
 
 from posts.models import Post
-from posts.services.feed_service import FeedService
+from posts.services.scoring_service import build_scoring_context, calculate_post_score
 
 
 def score_post(post, user):
@@ -31,16 +31,8 @@ def score_post(post, user):
     if not annotated_post:
         return 0, [], {"likes": 0, "shares": 0, "comments": 0, "skips": 0}
 
-    user_profile = getattr(user, "profile", None)
-    favorite_games = (user_profile.favorite_games or []) if user_profile else []
-    favorite_games = {
-        game.strip().lower()
-        for game in favorite_games
-        if isinstance(game, str) and game.strip()
-    }
-
-    friend_ids = FeedService._get_friend_ids(user)
-    score, reasons = FeedService._score_post_candidate(annotated_post, favorite_games, friend_ids)
+    context = build_scoring_context(user)
+    score, reasons = calculate_post_score(annotated_post, context)
     signals = {
         "likes": annotated_post.like_count,
         "shares": annotated_post.share_count,

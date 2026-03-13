@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { listGroups } from "../../services/groups";
+import { joinGroup, leaveGroup, listGroups, type GroupItem } from "../../services/groups";
 import {
   AIGroupCandidate,
   AIRecommendationsResponse,
@@ -40,17 +40,6 @@ import { mockCurrentUser } from "../../src/lib/mockData";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
-
-type BackendGroup = {
-  id: number;
-  name: string;
-  description: string;
-  is_private: boolean;
-  owner: number;
-  owner_email: string;
-  member_count: number;
-  created_at: string;
-};
 
 type AISwipeItem = {
   group: SuggestedGroup;
@@ -293,6 +282,7 @@ export default function GroupsScreen() {
   } | null>(null);
   const [shareTarget, setShareTarget] = useState<{ title: string; message: string } | null>(null);
   const [apiGroups, setApiGroups] = useState<SuggestedGroup[]>([]);
+  const [membershipSubmittingIds, setMembershipSubmittingIds] = useState<Set<string>>(new Set());
   const [apiLoading, setApiLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
   const [aiSwipeVisible, setAiSwipeVisible] = useState(false);
@@ -314,7 +304,7 @@ export default function GroupsScreen() {
     setApiError(null);
 
     try {
-      const result = (await listGroups(accessToken)) as BackendGroup[];
+      const result = (await listGroups(accessToken)) as GroupItem[];
       const mapped: SuggestedGroup[] = result.map((group, index) => {
         const fallback = SUGGESTED_GROUPS[index % SUGGESTED_GROUPS.length];
         const members = Number(group.member_count ?? 0);
@@ -327,7 +317,7 @@ export default function GroupsScreen() {
           online: Math.max(0, Math.min(members, Math.round(members * 0.35))),
           thumbnail: fallback?.thumbnail ?? "https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?w=800&h=800&fit=crop",
           isPrivate: Boolean(group.is_private),
-          ownerEmail: group.owner_email ?? "",
+          ownerEmail: group.owner?.username ?? "",
         };
       });
       setApiGroups(mapped);
@@ -383,13 +373,64 @@ export default function GroupsScreen() {
 
   const totalOnline = apiGroups.reduce((total, group) => total + group.online, 0);
 
-  const toggleJoin = useCallback((id: string, groupName: string) => {
-    const wasJoined = joinedGroupIds.includes(id);
-    setJoinedGroupIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
-    );
+  const toggleJoin = useCallback(async (id: string, groupName: string) => {
+    if (!accessToken) {
+      showToast({ message: "Sign in to manage group membership." });
+      return;
+    }
+    if (membershipSubmittingIds.has(id)) {
+      return;
+    }
 
-    if (!wasJoined) {
+    setMembershipSubmittingIds((prev) => new Set(prev).add(id));
+    const wasJoined = joinedGroupIds.includes(id);
+    try {
+      const groupId = Number(id);
+      if (!Number.isFinite(groupId)) {
+        throw new Error("Invalid group id.");
+      }
+
+      if (wasJoined) {
+        await leaveGroup(accessToken, groupId);
+        setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
+        showToast({ message: `${groupName} left` });
+      } else {
+        await joinGroup(accessToken, groupId);
+        setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+        showToast({
+          message: `${groupName} joined`,
+          actionLabel: "Undo",
+          onAction: () => {
+            setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
+          },
+        });
+      }
+      await loadGroups();
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to update membership right now.",
+      });
+    } finally {
+      setMembershipSubmittingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  }, [accessToken, joinedGroupIds, loadGroups, membershipSubmittingIds, setJoinedGroupIds, showToast]);
+
+  const joinGroupFromSwipe = useCallback(async (id: string, groupName: string) => {
+    if (!accessToken) {
+      showToast({ message: "Sign in to join groups." });
+      return;
+    }
+    const wasJoined = joinedGroupIds.includes(id);
+    if (wasJoined) return;
+    try {
+      const groupId = Number(id);
+      if (!Number.isFinite(groupId)) return;
+      await joinGroup(accessToken, groupId);
+      setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
       showToast({
         message: `${groupName} joined`,
         actionLabel: "Undo",
@@ -397,22 +438,13 @@ export default function GroupsScreen() {
           setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
         },
       });
-    }
-  }, [joinedGroupIds, setJoinedGroupIds, showToast]);
-
-  const joinGroup = useCallback((id: string, groupName: string) => {
-    const wasJoined = joinedGroupIds.includes(id);
-    setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    if (!wasJoined) {
+      await loadGroups();
+    } catch (error) {
       showToast({
-        message: `${groupName} joined`,
-        actionLabel: "Undo",
-        onAction: () => {
-          setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
-        },
+        message: error instanceof Error ? error.message : "Unable to join group right now.",
       });
     }
-  }, [joinedGroupIds, setJoinedGroupIds, showToast]);
+  }, [accessToken, joinedGroupIds, loadGroups, setJoinedGroupIds, showToast]);
 
   const loadMoreGroups = useCallback(() => {
     setVisibleCount((prev) => Math.min(prev + GROUPS_PAGE_SIZE, discoverableGroups.length));
@@ -530,11 +562,11 @@ export default function GroupsScreen() {
       duration: 180,
       useNativeDriver: true,
     }).start(() => {
-      joinGroup(current.group.id, current.group.name);
+      void joinGroupFromSwipe(current.group.id, current.group.name);
       setAiSwipeItems((prev) => prev.slice(1));
       swipeX.setValue(0);
     });
-  }, [aiSwipeItems, joinGroup, responsive.width, swipeX]);
+  }, [aiSwipeItems, joinGroupFromSwipe, responsive.width, swipeX]);
 
   const listHeader = useMemo(
     () => (

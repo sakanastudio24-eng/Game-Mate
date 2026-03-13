@@ -1,398 +1,315 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useState } from "react";
-import { Alert, FlatList, Pressable, Share, StyleSheet, TextInput, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Alert, FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
-import { ActionSheet } from "../../src/components/ui/ActionSheet";
-import { Chip } from "../../src/components/ui/Chip";
+import {
+  getGroupDetail,
+  getGroupMembers,
+  joinGroup,
+  leaveGroup,
+  type GroupItem,
+  type GroupMember,
+} from "../../services/groups";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
-import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
-import { mockFriends, mockGroups } from "../../src/lib/mockData";
+import { useToast } from "../../src/components/ui/ToastProvider";
+import { useAuth } from "../../src/context/AuthContext";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-// GroupDetailScreen: Shows group details, home, events, chat, members
-// Backend integration: GET /api/groups/{id}, POST /api/groups/{id}/messages in Phase B
-// Tabs: home, events, chat, members
+type GroupDetailParams = {
+  groupId?: string | string[];
+};
+
+function parseGroupId(value?: string | string[]) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return null;
+  const normalized = raw.startsWith("s") ? raw.slice(1) : raw;
+  const id = Number(normalized);
+  return Number.isFinite(id) ? id : null;
+}
+
+type GroupTab = "overview" | "members";
 
 export default function GroupDetailScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
-  const normalizedGroupId = typeof groupId === "string" ? groupId : undefined;
-  const resolvedGroupId =
-    normalizedGroupId?.startsWith("s") ? normalizedGroupId.slice(1) : normalizedGroupId;
-  const group =
-    mockGroups.find((item) => item.id === normalizedGroupId || item.id === resolvedGroupId) ??
-    mockGroups[0];
-  const initialMembers = Array.isArray(group.members) ? group.members : [];
-  const [members] = useState<string[]>(initialMembers);
-  const [activeTab, setActiveTab] = useState<"home" | "events" | "chat" | "members">(
-    "home",
+  const params = useLocalSearchParams<GroupDetailParams>();
+  const { accessToken, user } = useAuth();
+  const { showToast } = useToast();
+  const [group, setGroup] = useState<GroupItem | null>(null);
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSubmittingMembership, setIsSubmittingMembership] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<GroupTab>("overview");
+  const groupId = useMemo(() => parseGroupId(params.groupId), [params.groupId]);
+
+  const isOwner = group?.owner?.username === user?.username;
+  const isMember = useMemo(() => {
+    const selfUsername = String(user?.username ?? "");
+    if (!selfUsername) return false;
+    return members.some((member) => member.username === selfUsername) || Boolean(isOwner);
+  }, [isOwner, members, user?.username]);
+
+  const loadGroup = useCallback(
+    async (refresh = false) => {
+      if (!accessToken) {
+        setIsLoading(false);
+        setLoadError("Sign in required.");
+        return;
+      }
+      if (!groupId) {
+        setIsLoading(false);
+        setLoadError("Invalid group.");
+        return;
+      }
+
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      setLoadError(null);
+      try {
+        const [groupDetail, memberRows] = await Promise.all([
+          getGroupDetail(accessToken, groupId),
+          getGroupMembers(accessToken, groupId),
+        ]);
+        setGroup(groupDetail);
+        setMembers(memberRows);
+      } catch (error) {
+        setGroup(null);
+        setMembers([]);
+        setLoadError(error instanceof Error ? error.message : "Unable to load group.");
+      } finally {
+        if (refresh) {
+          setIsRefreshing(false);
+        } else {
+          setIsLoading(false);
+        }
+      }
+    },
+    [accessToken, groupId],
   );
-  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
-  const [chatMessage, setChatMessage] = useState("");
-  const onlineCount = Math.max(1, Math.min(group.memberCount, Math.round(group.memberCount * 0.55)));
-  const groupEvents = [
-    {
-      id: "h-ev-1",
-      title: group.mode === "ranked" ? "Ranked Session" : "Casual Queue Night",
-      time: "Tonight · 8:00 PM",
-    },
-    {
-      id: "h-ev-2",
-      title: "Team Check-In",
-      time: "Tomorrow · 7:30 PM",
-    },
-  ];
-  const [messages, setMessages] = useState<
-    Array<{ id: string; user: string; text: string; timestamp: Date }>
-  >([
-    {
-      id: "1",
-      user: "ProPlayer_X",
-      text: "Who wants to ranked grind today?",
-      timestamp: new Date(Date.now() - 14 * 60000),
-    },
-    {
-      id: "2",
-      user: "You",
-      text: "I'm in! Let's go.",
-      timestamp: new Date(Date.now() - 12 * 60000),
-    },
-  ]);
 
-  const handleSendMessage = () => {
-    if (chatMessage.trim()) {
-      setMessages([
-        ...messages,
-        { id: Date.now().toString(), user: "You", text: chatMessage, timestamp: new Date() },
-      ]);
-      setChatMessage("");
-    }
-  };
+  useEffect(() => {
+    void loadGroup();
+  }, [loadGroup]);
 
-  const handleShareGroup = async () => {
+  const handleJoin = useCallback(async () => {
+    if (!accessToken || !groupId || !group || isSubmittingMembership) return;
+    setIsSubmittingMembership(true);
     try {
-      await Share.share({
-        message: `Join my group on GameMate: ${group.name} (${group.game})`,
+      const result = await joinGroup(accessToken, groupId);
+      showToast({ message: result.message ?? `${group.name} joined` });
+      await loadGroup(true);
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to join this group.",
       });
-    } catch {
-      // no-op
+    } finally {
+      setIsSubmittingMembership(false);
     }
-  };
+  }, [accessToken, group, groupId, isSubmittingMembership, loadGroup, showToast]);
 
-  const handleReportGroup = () => {
-    Alert.alert("Report Submitted", `Thanks. "${group.name}" was reported for review.`);
-  };
+  const handleLeave = useCallback(async () => {
+    if (!accessToken || !groupId || !group || isSubmittingMembership) return;
+    setIsSubmittingMembership(true);
+    try {
+      const result = await leaveGroup(accessToken, groupId);
+      showToast({ message: result.message ?? "Group left." });
+      await loadGroup(true);
+      router.replace("/(tabs)/groups");
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to leave this group.",
+      });
+    } finally {
+      setIsSubmittingMembership(false);
+    }
+  }, [accessToken, group, groupId, isSubmittingMembership, loadGroup, router, showToast]);
 
-  const handleLeaveGroup = () => {
+  const askLeaveGroup = useCallback(() => {
+    if (!group) return;
     Alert.alert("Leave Group", `Leave "${group.name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Leave",
         style: "destructive",
         onPress: () => {
-          router.replace("/(tabs)/groups");
+          void handleLeave();
         },
       },
     ]);
-  };
+  }, [group, handleLeave]);
 
-  const renderEventRow = (event: { id: string; title: string; time: string }) => (
-    <View key={event.id} style={styles.homeEventRow}>
-      <MaterialCommunityIcons name="calendar-clock" size={16} color={colors.primary} />
-      <View style={styles.homeEventTextWrap}>
-        <Text style={styles.homeEventTitle}>{event.title}</Text>
-        <Text style={styles.homeEventTime}>{event.time}</Text>
-      </View>
-    </View>
-  );
+  const tabButtons: Array<{ key: GroupTab; label: string }> = [
+    { key: "overview", label: "Overview" },
+    { key: "members", label: `Members (${members.length})` },
+  ];
 
   return (
     <Screen scrollable={false}>
-      <Header
-        title={group.name}
-        showBackButton
-        rightAction={{
-          icon: "cog-outline",
-          label: `${group.name} settings`,
-          onPress: () => setGroupSettingsOpen(true),
-        }}
-      />
+      <Header title={group?.name ?? "Group"} showBackButton />
 
-      {/* Tab selector */}
       <View style={styles.tabSelector}>
-        {["home", "events", "chat", "members"].map((tab) => (
+        {tabButtons.map((tab) => (
           <Pressable
-            key={tab}
-            onPress={() => setActiveTab(tab as any)}
-            accessibilityRole="button"
-            accessibilityLabel={`Show ${tab} tab`}
-            accessibilityState={{ selected: activeTab === tab }}
+            key={tab.key}
+            onPress={() => setActiveTab(tab.key)}
             style={({ pressed }) => [
               styles.tabButton,
-              { minHeight: responsive.buttonHeightSmall },
-              activeTab === tab && styles.tabButtonActive,
+              activeTab === tab.key && styles.tabButtonActive,
               pressed && styles.pressed,
             ]}
           >
-            <Text
-              style={[
-                styles.tabText,
-                { fontSize: responsive.captionSize },
-                activeTab === tab && styles.tabTextActive,
-              ]}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+              {tab.label}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      {/* Tab content */}
-      {activeTab === "home" && (
-        <View style={styles.homeWrap}>
-          <Text style={[styles.homeName, { fontSize: responsive.sectionTitleSize }]}>
-            {group.name}
-          </Text>
-          <Text style={[styles.homeSubtitle, { fontSize: responsive.bodySmallSize }]}>
-            {group.game} · {group.mode === "ranked" ? "Competitive Squad" : "Casual Squad"}
-          </Text>
-
-          <View style={styles.homeTagRow}>
-            {group.mode === "ranked" && (
-              <View style={styles.homeTag}>
-                <MaterialCommunityIcons name="star-outline" size={13} color={colors.primary} />
-                <Text style={styles.homeTagText}>Ranked</Text>
-              </View>
-            )}
-            {group.micRequired && (
-              <View style={styles.homeTag}>
-                <MaterialCommunityIcons name="microphone-outline" size={13} color={colors.primary} />
-                <Text style={styles.homeTagText}>Mic Required</Text>
-              </View>
-            )}
-            {group.minRank && (
-              <View style={styles.homeTag}>
-                <MaterialCommunityIcons name="signal-cellular-2" size={13} color={colors.primary} />
-                <Text style={styles.homeTagText}>{group.minRank}+</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.homeInlineStats}>
-            <View style={styles.homeInlineStat}>
-              <Text style={styles.homeInlineStatValue}>{onlineCount}</Text>
-              <Text style={styles.homeInlineStatLabel}>Online</Text>
-            </View>
-            <View style={styles.homeInlineStat}>
-              <Text style={styles.homeInlineStatValue}>{members.length}</Text>
-              <Text style={styles.homeInlineStatLabel}>Members</Text>
-            </View>
-          </View>
-
-          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Description</Text>
-          <Text style={[styles.homeBody, { fontSize: responsive.bodySmallSize }]}>
-            {group.description}
-          </Text>
-
-          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Overview</Text>
-          <Text style={[styles.homeBody, { fontSize: responsive.bodySmallSize }]}>
-            {group.mode === "ranked"
-              ? "Focused competitive play with coordinated sessions and clear comms."
-              : "Relaxed sessions for regular play, learning, and team chemistry."}
-          </Text>
-
-          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>Events</Text>
-          <View style={styles.homeEventsList}>
-            {groupEvents.map((event) => renderEventRow(event))}
-          </View>
+      {isLoading ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="progress-clock" size={44} color={colors.textSecondary} />
+          <Text style={styles.stateText}>Loading group...</Text>
         </View>
-      )}
+      ) : loadError ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={44} color={colors.destructive} />
+          <Text style={styles.stateText}>{loadError}</Text>
+          <Pressable onPress={() => void loadGroup()} style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : !group ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="account-group-outline" size={44} color={colors.textSecondary} />
+          <Text style={styles.stateText}>Group unavailable.</Text>
+        </View>
+      ) : activeTab === "overview" ? (
+        <View style={styles.contentWrap}>
+          <Text style={[styles.groupName, { fontSize: responsive.sectionTitleSize }]}>{group.name}</Text>
+          <Text style={[styles.groupSubtitle, { fontSize: responsive.bodySmallSize }]}>
+            {group.is_private ? "Private group" : "Public group"} · Owner: {group.owner.username}
+          </Text>
 
-      {activeTab === "members" && (
-        <FlatList
-          data={members}
-          keyExtractor={(_, idx) => `${idx}`}
-          renderItem={({ item, index }) => (
-            <Pressable
-              style={[styles.memberItem, { minHeight: responsive.touchTargetMin }]}
-              onPress={() => {
-                const matchedUser = mockFriends.find(
-                  (friend) => friend.username === item || friend.name === item,
-                );
-                if (matchedUser) {
-                  router.push(
-                    `/(tabs)/user-profile?userId=${matchedUser.id}` as any,
-                  );
-                }
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`${item} member profile`}
-            >
-              <Text style={styles.memberAvatar}>👤</Text>
-              <Text style={[styles.memberName, { fontSize: responsive.bodySize }]}>{item}</Text>
-              {index === 0 && (
-                <Chip label="Admin" size="small" style={styles.adminBadge} />
-              )}
-            </Pressable>
-          )}
-          scrollEnabled={true}
-          style={styles.tabList}
-          contentContainerStyle={styles.tabListContent}
-        />
-      )}
+          <View style={styles.statRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{members.length}</Text>
+              <Text style={styles.statLabel}>Members</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{group.member_count}</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
+          </View>
 
-      {activeTab === "chat" && (
-        <>
-          <FlatList
-            data={messages}
-            keyExtractor={(msg) => msg.id}
-            renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.messageItem,
-                  { borderRadius: responsive.cardRadius - 6 },
-                  item.user === "You" && styles.messageItemOwn,
+          <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>Description</Text>
+          <Text style={[styles.groupDescription, { fontSize: responsive.bodySmallSize }]}>
+            {group.description?.trim().length ? group.description : "No description provided yet."}
+          </Text>
+
+          <View style={styles.actionRow}>
+            {isOwner ? (
+              <View style={styles.ownerBadge}>
+                <MaterialCommunityIcons name="shield-account" size={16} color={colors.primary} />
+                <Text style={styles.ownerBadgeText}>You are owner</Text>
+              </View>
+            ) : isMember ? (
+              <Pressable
+                onPress={askLeaveGroup}
+                disabled={isSubmittingMembership}
+                style={({ pressed }) => [
+                  styles.leaveButton,
+                  isSubmittingMembership && styles.disabledButton,
+                  pressed && styles.pressed,
                 ]}
               >
-                <View style={styles.messageMetaRow}>
-                  <Text
-                    style={[
-                      styles.messageUser,
-                      { fontSize: responsive.captionSize },
-                      item.user === "You" && styles.messageUserOwn,
-                    ]}
-                  >
-                    {item.user}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.messageTime,
-                      { fontSize: responsive.captionSize },
-                      item.user === "You" && styles.messageTimeOwn,
-                    ]}
-                  >
-                    {formatChatTime(item.timestamp)}
-                  </Text>
-                </View>
-                <Text
-                  style={[
-                    styles.messageText,
-                    { fontSize: responsive.bodySize },
-                    item.user === "You" && styles.messageTextOwn,
-                  ]}
-                >
-                  {item.text}
-                </Text>
-              </View>
+                <Text style={styles.leaveButtonText}>{isSubmittingMembership ? "Leaving..." : "Leave Group"}</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={() => void handleJoin()}
+                disabled={isSubmittingMembership}
+                style={({ pressed }) => [
+                  styles.joinButton,
+                  isSubmittingMembership && styles.disabledButton,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text style={styles.joinButtonText}>{isSubmittingMembership ? "Joining..." : "Join Group"}</Text>
+              </Pressable>
             )}
-            scrollEnabled={true}
-            style={styles.chat}
-            contentContainerStyle={styles.tabListContent}
-          />
 
-          <View style={styles.composer}>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  borderRadius: responsive.cardRadius,
-                  fontSize: responsive.bodySize,
-                },
-              ]}
-              placeholder="Message group..."
-              placeholderTextColor={colors.textMuted}
-              value={chatMessage}
-              onChangeText={setChatMessage}
-              {...androidKeyboardCompatProps}
-              multiline
-              editable
-              accessibilityLabel="Group message"
-            />
             <Pressable
-              onPress={handleSendMessage}
-              accessibilityRole="button"
-              accessibilityLabel="Send message"
-              style={({ pressed }) => [
-                styles.sendButton,
-                {
-                  minWidth: responsive.touchTargetMin,
-                  minHeight: responsive.touchTargetMin,
-                  width: responsive.iconButtonSize,
-                  height: responsive.iconButtonSize,
-                  borderRadius: responsive.iconButtonSize / 2,
-                },
-                pressed && { opacity: 0.7 },
-              ]}
+              onPress={() => {
+                void loadGroup(true);
+              }}
+              style={({ pressed }) => [styles.refreshButton, pressed && styles.pressed]}
             >
-              <MaterialCommunityIcons
-                name="send"
-                size={20}
-                color={colors.background}
-              />
+              <MaterialCommunityIcons name="refresh" size={16} color={colors.text} />
+              <Text style={styles.refreshButtonText}>Refresh</Text>
             </Pressable>
           </View>
-        </>
-      )}
-
-      {activeTab === "events" && (
-        <View style={styles.eventsWrap}>
-          <Text style={[styles.homeSectionTitle, { fontSize: responsive.bodySmallSize }]}>
-            Events
-          </Text>
-          <View style={styles.homeEventsList}>
-            {groupEvents.map((event) => renderEventRow(event))}
-          </View>
         </View>
+      ) : (
+        <FlatList
+          data={members}
+          keyExtractor={(item) => `${item.user_id}`}
+          onRefresh={() => {
+            void loadGroup(true);
+          }}
+          refreshing={isRefreshing}
+          renderItem={({ item }) => (
+            <Pressable
+              style={styles.memberItem}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/user-profile",
+                  params: {
+                    userId: String(item.user_id),
+                    name: item.username,
+                  },
+                })
+              }
+            >
+              <View style={styles.memberAvatar}>
+                <MaterialCommunityIcons name="account" size={18} color={colors.primary} />
+              </View>
+              <View style={styles.memberInfo}>
+                <Text style={[styles.memberName, { fontSize: responsive.bodySize }]}>{item.username}</Text>
+                <Text style={[styles.memberMeta, { fontSize: responsive.captionSize }]}>
+                  {item.role.charAt(0).toUpperCase() + item.role.slice(1)}
+                </Text>
+              </View>
+              {item.role === "owner" ? (
+                <View style={styles.roleBadge}>
+                  <Text style={styles.roleBadgeText}>Owner</Text>
+                </View>
+              ) : item.role === "admin" ? (
+                <View style={styles.roleBadge}>
+                  <Text style={styles.roleBadgeText}>Admin</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          )}
+          ListEmptyComponent={
+            <View style={styles.stateContainer}>
+              <MaterialCommunityIcons name="account-group-outline" size={44} color={colors.textSecondary} />
+              <Text style={styles.stateText}>No members found.</Text>
+            </View>
+          }
+          contentContainerStyle={styles.membersContent}
+        />
       )}
-
-      <ActionSheet
-        visible={groupSettingsOpen}
-        title="Group Settings"
-        subtitle={group.name}
-        onClose={() => setGroupSettingsOpen(false)}
-        options={[
-          {
-            id: "notifications",
-            label: "Notifications",
-            icon: "bell-outline",
-            onPress: () => router.push("/(tabs)/notification-settings" as any),
-          },
-          {
-            id: "share",
-            label: "Share",
-            icon: "share-variant-outline",
-            onPress: () => {
-              void handleShareGroup();
-            },
-          },
-          {
-            id: "report",
-            label: "Report",
-            icon: "flag-outline",
-            onPress: handleReportGroup,
-          },
-          {
-            id: "leave",
-            label: "Leave Group",
-            icon: "exit-run",
-            destructive: true,
-            onPress: handleLeaveGroup,
-          },
-        ]}
-      />
     </Screen>
   );
-}
-
-function formatChatTime(date: Date): string {
-  return date.toLocaleTimeString([], {
-    hour: "numeric",
-    minute: "2-digit",
-  });
 }
 
 const styles = StyleSheet.create({
@@ -405,16 +322,10 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.border,
     marginBottom: spacing.md,
   },
-  tabList: {
-    flex: 1,
-  },
-  tabListContent: {
-    paddingBottom: spacing.md,
-  },
   tabButton: {
     flex: 1,
-    paddingVertical: spacing.md,
     alignItems: "center",
+    paddingVertical: spacing.sm,
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
@@ -423,206 +334,186 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: colors.textMuted,
-    fontSize: 12,
     fontWeight: "600",
   },
   tabTextActive: {
     color: colors.primary,
   },
+  stateContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  stateText: {
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
+  retryText: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  contentWrap: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  groupName: {
+    color: colors.text,
+    fontWeight: "800",
+  },
+  groupSubtitle: {
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  statRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  statItem: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+  },
+  statValue: {
+    color: colors.text,
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  statLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  sectionTitle: {
+    color: colors.textSecondary,
+    fontWeight: "700",
+    marginTop: spacing.md,
+  },
+  groupDescription: {
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    lineHeight: 20,
+  },
+  actionRow: {
+    marginTop: spacing.lg,
+    flexDirection: "row",
+    gap: spacing.sm,
+    alignItems: "center",
+  },
+  joinButton: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  joinButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+  },
+  leaveButton: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  leaveButtonText: {
+    color: colors.destructive,
+    fontWeight: "700",
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
+  ownerBadge: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  ownerBadgeText: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  refreshButton: {
+    minHeight: 42,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  refreshButtonText: {
+    color: colors.text,
+    fontWeight: "600",
+  },
+  membersContent: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    flexGrow: 1,
+  },
   memberItem: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-    gap: spacing.md,
   },
   memberAvatar: {
-    fontSize: 24,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+  },
+  memberInfo: {
+    flex: 1,
   },
   memberName: {
     color: colors.text,
-    flex: 1,
-    fontSize: 14,
-  },
-  adminBadge: {
-    height: 24,
-  },
-  chat: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-  },
-  homeWrap: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  eventsWrap: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  homeName: {
-    color: colors.text,
-    fontWeight: "800",
-    marginTop: spacing.xs,
-  },
-  homeSubtitle: {
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  homeTagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  homeTag: {
-    borderWidth: 1,
-    borderColor: "#5A5A5A",
-    backgroundColor: "#151515",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-  },
-  homeTagText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "capitalize",
-  },
-  homeInlineStats: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  homeInlineStat: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  homeInlineStatValue: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 15,
-  },
-  homeInlineStatLabel: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  homeSectionTitle: {
-    color: colors.textSecondary,
-    marginTop: spacing.md,
-    lineHeight: 19,
-    fontWeight: "700",
-  },
-  homeBody: {
-    color: colors.textSecondary,
-    lineHeight: 20,
-  },
-  homeEventsList: {
-    marginTop: spacing.sm,
-    gap: spacing.sm,
-  },
-  homeEventRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: "#1B1B1B",
-  },
-  homeEventTextWrap: {
-    marginLeft: spacing.sm,
-    flex: 1,
-  },
-  homeEventTitle: {
-    color: colors.text,
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  homeEventTime: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  messageItem: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    marginVertical: spacing.xs,
-    maxWidth: "80%",
-  },
-  messageItemOwn: {
-    backgroundColor: colors.primary,
-    alignSelf: "flex-end",
-  },
-  messageUser: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-    flexShrink: 1,
-  },
-  messageUserOwn: {
-    color: "#1A1A1A",
-  },
-  messageMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  messageTime: {
-    color: colors.textMuted,
     fontWeight: "600",
   },
-  messageTimeOwn: {
-    color: "#1A1A1A",
+  memberMeta: {
+    color: colors.textSecondary,
+    marginTop: 2,
   },
-  messageText: {
-    color: colors.text,
-    fontSize: 14,
+  roleBadge: {
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 999,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
   },
-  messageTextOwn: {
-    color: "#1A1A1A",
-  },
-  composer: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: colors.card,
-    color: colors.text,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 20,
-    minHeight: 40,
-  },
-  sendButton: {
-    backgroundColor: colors.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+  roleBadgeText: {
+    color: colors.primary,
+    fontWeight: "700",
+    fontSize: 11,
   },
 });

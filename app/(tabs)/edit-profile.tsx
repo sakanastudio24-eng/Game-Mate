@@ -1,19 +1,21 @@
-import React, { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Image as ExpoImage } from "expo-image";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { getMyProfile, updateMyProfile } from "../../services/profile";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
+import { useAuth } from "../../src/context/AuthContext";
 import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { Screen } from "../../src/components/ui/Screen";
-import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 // EditProfileScreen: Update user profile information
-// Backend integration: PATCH /api/me endpoint in Phase B
+// Backend integration: GET/PATCH /api/profile/me/
 // Fields: username, bio, avatar, games
 
 const availableGames = [
@@ -26,34 +28,103 @@ const availableGames = [
   "Dota 2",
   "PUBG",
 ];
-const avatars = ["🎮", "🎯", "🎪", "🧙", "⚔️", "🛡️", "🚀", "🔥"];
+const avatarOptions = [
+  "https://images.unsplash.com/photo-1579975979101-7a3c3909d659?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300&h=300&fit=crop",
+  "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=300&h=300&fit=crop",
+];
 
 export default function EditProfileScreen() {
   const safeBack = useSafeBackNavigation();
   const responsive = useResponsive();
-  const [username, setUsername] = useState(mockCurrentUser.username);
-  const [bio, setBio] = useState(mockCurrentUser.bio || "");
-  const [avatar, setAvatar] = useState(mockCurrentUser.avatar || "🎮");
-  const [selectedGames, setSelectedGames] = useState<string[]>(
-    mockCurrentUser.gamesPlayed,
-  );
+  const { accessToken, user } = useAuth();
+  const [username] = useState(user?.username ?? "Player");
+  const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string>(avatarOptions[0]);
+  const [selectedGames, setSelectedGames] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    const loadProfile = async () => {
+      if (!accessToken) {
+        if (active) {
+          setLoading(false);
+          setError("Sign in again to edit your profile.");
+        }
+        return;
+      }
+
+      try {
+        const profile = await getMyProfile(accessToken);
+        if (!active) return;
+        setBio(profile.bio || "");
+        setSelectedGames(profile.favorite_games || []);
+        setAvatarUrl(profile.avatar_url || avatarOptions[0]);
+        setError("");
+      } catch (fetchError) {
+        if (!active) return;
+        setError(fetchError instanceof Error ? fetchError.message : "Unable to load profile.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    loadProfile();
+    return () => {
+      active = false;
+    };
+  }, [accessToken]);
 
   const handleGameToggle = (game: string) => {
     setSelectedGames((prev) =>
       prev.includes(game)
         ? prev.filter((g) => g !== game)
-        : [...prev, game].slice(0, 5),
+        : [...prev, game].slice(0, 10),
     );
   };
 
-  const handleSave = () => {
-    // Mock: close screen until API wiring is added in a later phase.
-    safeBack();
+  const handleSave = async () => {
+    if (!accessToken) {
+      setError("Sign in again to edit your profile.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      await updateMyProfile(accessToken, {
+        bio: bio.trim(),
+        avatar_url: avatarUrl,
+        favorite_games: selectedGames,
+      });
+      safeBack();
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Unable to save profile.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Screen scrollable>
       <Header title="Edit Profile" showBackButton />
+
+      {loading ? (
+        <View style={styles.loadingWrap}>
+          <ActivityIndicator color={colors.primary} />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      ) : null}
+
+      {!loading && error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       {/* Avatar selector */}
       <Card style={styles.avatarCard}>
@@ -64,17 +135,17 @@ export default function EditProfileScreen() {
           Profile Picture
         </Text>
         <View style={styles.avatarDisplay}>
-          <Text style={[styles.avatarLarge, { fontSize: responsive.titleSize * 2 }]}>{avatar}</Text>
+          <ExpoImage source={{ uri: avatarUrl }} style={styles.avatarLargeImage} contentFit="cover" />
         </View>
 
         <View style={styles.avatarGrid}>
-          {avatars.map((ava) => (
+          {avatarOptions.map((avatar) => (
             <Pressable
-              key={ava}
-              onPress={() => setAvatar(ava)}
+              key={avatar}
+              onPress={() => setAvatarUrl(avatar)}
               accessibilityRole="button"
-              accessibilityLabel={`Select avatar ${ava}`}
-              accessibilityState={{ selected: avatar === ava }}
+              accessibilityLabel="Select avatar image"
+              accessibilityState={{ selected: avatarUrl === avatar }}
               style={[
                 styles.avatarOption,
                 {
@@ -82,10 +153,14 @@ export default function EditProfileScreen() {
                   height: responsive.iconButtonSize + 14,
                   borderRadius: (responsive.iconButtonSize + 14) / 2,
                 },
-                avatar === ava && styles.avatarOptionSelected,
+                avatarUrl === avatar && styles.avatarOptionSelected,
               ]}
             >
-              <Text style={[styles.avatarOptionText, { fontSize: responsive.titleSize - 2 }]}>{ava}</Text>
+              <ExpoImage
+                source={{ uri: avatar }}
+                style={styles.avatarOptionImage}
+                contentFit="cover"
+              />
             </Pressable>
           ))}
         </View>
@@ -96,7 +171,7 @@ export default function EditProfileScreen() {
         label="Username"
         accessibilityLabel="Username"
         value={username}
-        onChangeText={setUsername}
+        editable={false}
         placeholder="Your username"
         fullWidth
       />
@@ -119,7 +194,7 @@ export default function EditProfileScreen() {
           accessibilityRole="header"
           style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}
         >
-          Favorite Games (up to 5)
+          Favorite Games / Interests (up to 10)
         </Text>
         <View style={styles.gamesList}>
           {availableGames.map((game) => (
@@ -135,11 +210,11 @@ export default function EditProfileScreen() {
 
       {/* Action buttons */}
       <View style={styles.actions}>
-        <Button variant="primary" onPress={handleSave} fullWidth size="large">
+        <Button variant="primary" onPress={handleSave} fullWidth size="large" loading={saving} disabled={saving || loading}>
           Save Changes
         </Button>
 
-        <Button variant="secondary" fullWidth size="large" onPress={safeBack}>
+        <Button variant="secondary" fullWidth size="large" onPress={safeBack} disabled={saving}>
           Cancel
         </Button>
       </View>
@@ -161,8 +236,12 @@ const styles = StyleSheet.create({
   avatarDisplay: {
     marginBottom: spacing.lg,
   },
-  avatarLarge: {
-    fontSize: 80,
+  avatarLargeImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   avatarGrid: {
     flexDirection: "row",
@@ -187,6 +266,11 @@ const styles = StyleSheet.create({
   avatarOptionText: {
     fontSize: 32,
   },
+  avatarOptionImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 999,
+  },
   gameCard: {
     marginBottom: spacing.lg,
     marginTop: spacing.lg,
@@ -199,5 +283,20 @@ const styles = StyleSheet.create({
   actions: {
     gap: spacing.sm,
     marginBottom: spacing.xl,
+  },
+  loadingWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.lg,
+    gap: spacing.sm,
+  },
+  loadingText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  errorText: {
+    color: colors.destructive,
+    marginBottom: spacing.sm,
+    fontSize: 12,
   },
 });

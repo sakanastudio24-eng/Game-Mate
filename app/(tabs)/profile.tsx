@@ -1,12 +1,15 @@
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getMyProfile, type ProfileData } from "../../services/profile";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { useAuth } from "../../src/context/AuthContext";
 import { MY_GROUPS } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useResponsive } from "../../src/lib/responsive";
@@ -71,6 +74,7 @@ const games = [
     image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&q=80",
   },
 ] as const;
+const gameCatalogByName = new Map(games.map((game) => [game.name.toLowerCase(), game]));
 
 const videos = [
   {
@@ -138,14 +142,62 @@ export default function ProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const { accessToken, user } = useAuth();
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
 
   const [myGroups, setMyGroups] = useState(MY_GROUPS);
   const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
     "videos",
   );
+  const [profileData, setProfileData] = useState<ProfileData>({
+    bio: "",
+    avatar_url: "",
+    favorite_games: [],
+  });
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("online");
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      const loadProfile = async () => {
+        if (!accessToken) return;
+        try {
+          const profile = await getMyProfile(accessToken);
+          if (!active) return;
+          setProfileData(profile);
+        } catch {
+          // Keep existing screen state if profile request fails.
+        }
+      };
+
+      loadProfile();
+      return () => {
+        active = false;
+      };
+    }, [accessToken]),
+  );
+
+  const profileName = user?.username || "PlayerMaker34";
+  const profileAvatar = profileData.avatar_url || CURRENT_USER_AVATAR;
+  const profileBio =
+    profileData.bio?.trim() ||
+    "Competitive gamer · Tournament organizer · Always looking for new challenges";
+  const favoriteGames = profileData.favorite_games || [];
+  const gamesToRender = useMemo(() => {
+    if (!favoriteGames.length) return [...games];
+    return favoriteGames.map((gameName, index) => {
+      const matched = gameCatalogByName.get(gameName.toLowerCase());
+      if (matched) return matched;
+      return {
+        name: gameName,
+        hours: 0,
+        image:
+          games[index % games.length]?.image ||
+          "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80",
+      };
+    });
+  }, [favoriteGames]);
 
   const statCardWidth = responsive.isSmallPhone ? "48.5%" : "24%";
   const gameCardWidth = responsive.isSmallPhone ? "48.5%" : "31.5%";
@@ -266,7 +318,7 @@ export default function ProfileScreen() {
           >
             <View style={styles.avatarRing}>
               <ExpoImage
-                source={{ uri: CURRENT_USER_AVATAR }}
+                source={{ uri: profileAvatar }}
                 style={styles.avatar}
                 contentFit="cover"
                 cachePolicy="memory-disk"
@@ -285,7 +337,7 @@ export default function ProfileScreen() {
                   },
                 ]}
               >
-                PlayerMaker34
+                {profileName}
               </Text>
               <MaterialCommunityIcons name="check-decagram" size={18} color={colors.primary} />
             </View>
@@ -328,8 +380,18 @@ export default function ProfileScreen() {
                 },
               ]}
             >
-              Competitive gamer · Tournament organizer · Always looking for new challenges
+              {profileBio}
             </Text>
+
+            {favoriteGames.length ? (
+              <View style={styles.interestsRow}>
+                {favoriteGames.map((game) => (
+                  <View key={game} style={styles.interestChip}>
+                    <Text style={styles.interestChipText}>{game}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             <Pressable
               onPress={() => router.push("/(tabs)/edit-profile")}
@@ -507,7 +569,7 @@ export default function ProfileScreen() {
                   <Text style={styles.addCollectionSubtitle}>Track another game</Text>
                 </Pressable>
 
-                {games.map((game) => (
+                {gamesToRender.map((game) => (
                   <View
                     key={game.name}
                     accessible
@@ -722,6 +784,25 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.sm,
     lineHeight: 20,
+  },
+  interestsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  interestChip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#2A2A2A",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  interestChipText: {
+    color: colors.text,
+    fontSize: 11,
+    fontWeight: "700",
   },
   editButton: {
     marginTop: spacing.md,

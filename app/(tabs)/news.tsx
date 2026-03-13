@@ -31,6 +31,7 @@ import { colors, spacing } from "../../src/lib/theme";
 interface FeedSeed extends NewsFeedItem {
   caption?: string;
   source?: string;
+  whyReasons?: string[];
 }
 
 interface FeedEntry extends FeedSeed {
@@ -55,6 +56,17 @@ const COMMENT_AVATARS: Record<string, string> = {
 
 const THUMBNAIL_FALLBACK =
   "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80";
+
+const FEED_REASON_LABELS: Record<string, string> = {
+  popular: "Popular with players",
+  shared: "Shared by the community",
+  recent: "Recently posted",
+  game_interest: "Matches your game interests",
+  friend_post: "From people you follow",
+  creator_diversity: "Diversified creator mix",
+  content_diversity: "Diversified content mix",
+  freshness_boost: "Fresh content",
+};
 
 function getPostAuthor(post: PostItem): string {
   if (typeof post.creator === "string" && post.creator.trim()) {
@@ -97,6 +109,15 @@ function toCategory(post: PostItem): NewsFeedItem["category"] {
   return "fyp";
 }
 
+function toWhyReasons(post: PostItem): string[] {
+  const rawReasons = post.feed_meta?.reasons ?? [];
+  const mapped = rawReasons
+    .map((reason) => FEED_REASON_LABELS[reason] || "")
+    .filter(Boolean);
+  const unique = Array.from(new Set(mapped));
+  return unique.slice(0, 3);
+}
+
 function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
   const signals = post.feed_meta?.signals ?? {};
   const title = (post.title ?? "").trim() || "Untitled";
@@ -125,6 +146,7 @@ function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
     category: toCategory(post),
     caption: description,
     source: post.feed_meta?.source,
+    whyReasons: toWhyReasons(post),
   };
 }
 
@@ -690,6 +712,11 @@ export default function NewsScreen() {
                 <Text style={styles.description}>
                   {item.caption || `${item.game} · ${item.category.toUpperCase()} · #${item.hashtags[0] || "feed"}`}
                 </Text>
+                {item.whyReasons && item.whyReasons.length > 0 ? (
+                  <Text style={styles.whyReasonText}>
+                    Why you're seeing this: {item.whyReasons.join(" · ")}
+                  </Text>
+                ) : null}
               </View>
             </View>
           );
@@ -1051,6 +1078,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginTop: spacing.xs,
+  },
+  whyReasonText: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: spacing.xs,
+    fontWeight: "600",
   },
   drawerRoot: {
     flex: 1,

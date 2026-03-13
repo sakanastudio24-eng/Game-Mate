@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 
-from django.db.models import Q
-
-from connections.models import Connection
+from posts.services.cache_service import get_cached_friend_ids
 
 
 # Immutable scoring context reused across candidate scoring calls.
@@ -22,15 +20,7 @@ def build_scoring_context(user) -> FeedScoringContext:
         if isinstance(game, str) and game.strip()
     }
 
-    accepted = Connection.objects.filter(status="accepted").filter(
-        Q(sender=user) | Q(receiver=user)
-    )
-    friend_ids = set()
-    for connection in accepted:
-        if connection.sender_id == user.id:
-            friend_ids.add(connection.receiver_id)
-        elif connection.receiver_id == user.id:
-            friend_ids.add(connection.sender_id)
+    friend_ids = get_cached_friend_ids(user.id)
 
     return FeedScoringContext(
         favorite_games=normalized_games,

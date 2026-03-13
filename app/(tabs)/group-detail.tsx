@@ -1,13 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, FlatList, Pressable, StyleSheet, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
 import {
   getGroupDetail,
   getGroupMembers,
+  inviteGroupUser,
   joinGroup,
   leaveGroup,
+  promoteGroupUser,
   type GroupItem,
   type GroupMember,
 } from "../../services/groups";
@@ -15,6 +17,7 @@ import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { useAuth } from "../../src/context/AuthContext";
+import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -43,8 +46,11 @@ export default function GroupDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmittingMembership, setIsSubmittingMembership] = useState(false);
+  const [isSubmittingOwnerAction, setIsSubmittingOwnerAction] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<GroupTab>("overview");
+  const [inviteInput, setInviteInput] = useState("");
+  const [promoteInput, setPromoteInput] = useState("");
   const groupId = useMemo(() => parseGroupId(params.groupId), [params.groupId]);
 
   const isOwner = group?.owner?.username === user?.username;
@@ -147,6 +153,46 @@ export default function GroupDetailScreen() {
     ]);
   }, [group, handleLeave]);
 
+  const handleInvite = useCallback(async () => {
+    const normalized = inviteInput.trim();
+    if (!accessToken || !groupId || !isOwner || !normalized || isSubmittingOwnerAction) {
+      return;
+    }
+    setIsSubmittingOwnerAction(true);
+    try {
+      const result = await inviteGroupUser(accessToken, groupId, normalized);
+      showToast({ message: result.message ?? "User invited successfully." });
+      setInviteInput("");
+      await loadGroup(true);
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to invite user.",
+      });
+    } finally {
+      setIsSubmittingOwnerAction(false);
+    }
+  }, [accessToken, groupId, inviteInput, isOwner, isSubmittingOwnerAction, loadGroup, showToast]);
+
+  const handlePromote = useCallback(async () => {
+    const normalized = promoteInput.trim();
+    if (!accessToken || !groupId || !isOwner || !normalized || isSubmittingOwnerAction) {
+      return;
+    }
+    setIsSubmittingOwnerAction(true);
+    try {
+      const result = await promoteGroupUser(accessToken, groupId, normalized);
+      showToast({ message: result.message ?? "User promoted to admin." });
+      setPromoteInput("");
+      await loadGroup(true);
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to promote user.",
+      });
+    } finally {
+      setIsSubmittingOwnerAction(false);
+    }
+  }, [accessToken, groupId, isOwner, isSubmittingOwnerAction, loadGroup, promoteInput, showToast]);
+
   const tabButtons: Array<{ key: GroupTab; label: string }> = [
     { key: "overview", label: "Overview" },
     { key: "members", label: `Members (${members.length})` },
@@ -234,17 +280,24 @@ export default function GroupDetailScreen() {
                 <Text style={styles.leaveButtonText}>{isSubmittingMembership ? "Leaving..." : "Leave Group"}</Text>
               </Pressable>
             ) : (
-              <Pressable
-                onPress={() => void handleJoin()}
-                disabled={isSubmittingMembership}
-                style={({ pressed }) => [
-                  styles.joinButton,
-                  isSubmittingMembership && styles.disabledButton,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={styles.joinButtonText}>{isSubmittingMembership ? "Joining..." : "Join Group"}</Text>
-              </Pressable>
+              group.is_private ? (
+                <View style={styles.privateBadge}>
+                  <MaterialCommunityIcons name="lock-outline" size={16} color={colors.textSecondary} />
+                  <Text style={styles.privateBadgeText}>Invite required</Text>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => void handleJoin()}
+                  disabled={isSubmittingMembership}
+                  style={({ pressed }) => [
+                    styles.joinButton,
+                    isSubmittingMembership && styles.disabledButton,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={styles.joinButtonText}>{isSubmittingMembership ? "Joining..." : "Join Group"}</Text>
+                </Pressable>
+              )
             )}
 
             <Pressable
@@ -266,6 +319,62 @@ export default function GroupDetailScreen() {
             void loadGroup(true);
           }}
           refreshing={isRefreshing}
+          ListHeaderComponent={
+            isOwner ? (
+              <View style={styles.ownerTools}>
+                <Text style={[styles.sectionTitle, { fontSize: responsive.bodySize }]}>Owner Tools</Text>
+                <View style={styles.ownerFormRow}>
+                  <TextInput
+                    style={[styles.ownerInput, { fontSize: responsive.bodySmallSize }]}
+                    placeholder="Invite by username or email"
+                    placeholderTextColor={colors.textMuted}
+                    value={inviteInput}
+                    onChangeText={setInviteInput}
+                    {...androidKeyboardCompatProps}
+                    autoCapitalize="none"
+                  />
+                  <Pressable
+                    onPress={() => {
+                      void handleInvite();
+                    }}
+                    disabled={isSubmittingOwnerAction || inviteInput.trim().length === 0}
+                    style={({ pressed }) => [
+                      styles.ownerActionButton,
+                      (isSubmittingOwnerAction || inviteInput.trim().length === 0) && styles.disabledButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.ownerActionButtonText}>Invite</Text>
+                  </Pressable>
+                </View>
+
+                <View style={styles.ownerFormRow}>
+                  <TextInput
+                    style={[styles.ownerInput, { fontSize: responsive.bodySmallSize }]}
+                    placeholder="Promote username to admin"
+                    placeholderTextColor={colors.textMuted}
+                    value={promoteInput}
+                    onChangeText={setPromoteInput}
+                    {...androidKeyboardCompatProps}
+                    autoCapitalize="none"
+                  />
+                  <Pressable
+                    onPress={() => {
+                      void handlePromote();
+                    }}
+                    disabled={isSubmittingOwnerAction || promoteInput.trim().length === 0}
+                    style={({ pressed }) => [
+                      styles.ownerActionButton,
+                      (isSubmittingOwnerAction || promoteInput.trim().length === 0) && styles.disabledButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Text style={styles.ownerActionButtonText}>Promote</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => (
             <Pressable
               style={styles.memberItem}
@@ -442,6 +551,21 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.5,
   },
+  privateBadge: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  privateBadgeText: {
+    color: colors.textSecondary,
+    fontWeight: "700",
+  },
   ownerBadge: {
     flex: 1,
     minHeight: 42,
@@ -471,6 +595,41 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     color: colors.text,
     fontWeight: "600",
+  },
+  ownerTools: {
+    paddingBottom: spacing.md,
+  },
+  ownerFormRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    alignItems: "center",
+  },
+  ownerInput: {
+    flex: 1,
+    minHeight: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    color: colors.text,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  ownerActionButton: {
+    minWidth: 92,
+    minHeight: 40,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+  },
+  ownerActionButtonText: {
+    color: "#1A1A1A",
+    fontWeight: "800",
+    fontSize: 12,
+    textTransform: "uppercase",
   },
   membersContent: {
     paddingHorizontal: spacing.md,

@@ -13,10 +13,11 @@ import { colors, spacing } from "../src/lib/theme";
 export default function LoginScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken, loading, loginUser } = useAuth();
+  const { accessToken, loading, authError, authSuccess, loginUser, clearAuthMessages } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -30,12 +31,14 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!canSubmit || submitting) return;
 
+    clearAuthMessages();
     setErrorMessage(null);
+    setSuccessMessage(null);
     setSubmitting(true);
 
     try {
       await loginUser(email.trim(), password);
-      router.replace("/(tabs)/news" as any);
+      setSuccessMessage("Sign in successful. Redirecting...");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to sign in.");
     } finally {
@@ -47,6 +50,7 @@ export default function LoginScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator color={colors.primary} size="large" />
+        <Text style={styles.loadingText}>Restoring session...</Text>
       </View>
     );
   }
@@ -86,7 +90,13 @@ export default function LoginScreen() {
             accessibilityLabel="Password"
           />
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {errorMessage || authError ? (
+            <Text style={styles.errorText}>{errorMessage || authError}</Text>
+          ) : null}
+          {successMessage || authSuccess ? (
+            <Text style={styles.successText}>{successMessage || authSuccess}</Text>
+          ) : null}
+          {submitting ? <Text style={styles.pendingText}>Signing in...</Text> : null}
 
           <Button
             variant="primary"
@@ -110,6 +120,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.background,
+    gap: spacing.sm,
+  },
+  loadingText: {
+    color: colors.textSecondary,
+    fontSize: 13,
   },
   container: {
     flex: 1,
@@ -129,6 +144,16 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.destructive,
     fontSize: 13,
+    marginBottom: spacing.sm,
+  },
+  successText: {
+    color: colors.primary,
+    fontSize: 13,
+    marginBottom: spacing.sm,
+  },
+  pendingText: {
+    color: colors.textSecondary,
+    fontSize: 12,
     marginBottom: spacing.sm,
   },
 });

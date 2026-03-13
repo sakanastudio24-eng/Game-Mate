@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { getMe, login } from "../../services/auth";
-import { clearTokens, getAccessToken, saveTokens } from "../../services/storage";
+import { getMe, login, refreshToken } from "../../services/auth";
+import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "../../services/storage";
 
 type AuthState = {
   user: any | null;
   accessToken: string | null;
   loading: boolean;
+  authError: string | null;
+  authSuccess: string | null;
   loginUser: (email: string, password: string) => Promise<void>;
   logoutUser: () => Promise<void>;
+  clearAuthMessages: () => void;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -16,15 +19,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+
+  const clearAuthMessages = () => {
+    setAuthError(null);
+    setAuthSuccess(null);
+  };
 
   useEffect(() => {
     let mounted = true;
 
     const hydrate = async () => {
       setLoading(true);
-      const token = await getAccessToken();
+      setAuthError(null);
+      const [storedAccessToken, storedRefreshToken] = await Promise.all([
+        getAccessToken(),
+        getRefreshToken(),
+      ]);
 
-      if (!token) {
+      if (!storedAccessToken && !storedRefreshToken) {
         if (!mounted) return;
         setAccessToken(null);
         setUser(null);
@@ -33,18 +47,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const me = await getMe(token);
-        if (!mounted) return;
-        setAccessToken(token);
-        setUser(me);
+        if (storedAccessToken) {
+          const me = await getMe(storedAccessToken);
+          if (!mounted) return;
+          setAccessToken(storedAccessToken);
+          setUser(me);
+          setAuthSuccess("Session restored.");
+          setLoading(false);
+          return;
+        }
       } catch {
+        // Access token may be expired. Continue to refresh token fallback.
+      }
+
+      if (storedRefreshToken) {
+        try {
+          const refreshedTokens = await refreshToken(storedRefreshToken);
+          const nextAccessToken = refreshedTokens.access;
+          const nextRefreshToken = refreshedTokens.refresh || storedRefreshToken;
+          await saveTokens(nextAccessToken, nextRefreshToken);
+          const me = await getMe(nextAccessToken);
+          if (!mounted) return;
+          setAccessToken(nextAccessToken);
+          setUser(me);
+          setAuthSuccess("Session restored.");
+          setLoading(false);
+          return;
+        } catch {
+          // Refresh failed. Clear and require login.
+        }
+      }
+
+      try {
         await clearTokens();
+      } catch {
+        // Ignore clear failures in restore flow.
+      } finally {
         if (!mounted) return;
         setAccessToken(null);
         setUser(null);
-      } finally {
-        if (mounted) setLoading(false);
+        setAuthError("Session expired. Please sign in again.");
+        setLoading(false);
       }
+
+      if (mounted) setLoading(false);
     };
 
     hydrate();
@@ -56,12 +102,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loginUser = async (email: string, password: string) => {
     setLoading(true);
+    clearAuthMessages();
     try {
       const tokens = await login(email, password);
       await saveTokens(tokens.access, tokens.refresh);
       const me = await getMe(tokens.access);
       setAccessToken(tokens.access);
       setUser(me);
+      setAuthSuccess("Sign in successful.");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Unable to sign in.");
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -69,10 +120,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logoutUser = async () => {
     setLoading(true);
+    clearAuthMessages();
     try {
       await clearTokens();
       setAccessToken(null);
       setUser(null);
+      setAuthSuccess("Signed out.");
     } finally {
       setLoading(false);
     }
@@ -83,10 +136,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       accessToken,
       loading,
+      authError,
+      authSuccess,
       loginUser,
       logoutUser,
+      clearAuthMessages,
     }),
-    [accessToken, loading, user],
+    [accessToken, authError, authSuccess, loading, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

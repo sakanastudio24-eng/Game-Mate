@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
 import { useAuth } from "../src/context/AuthContext";
 import { colors } from "../src/lib/theme";
 
@@ -27,6 +28,7 @@ export default function EntryScreen() {
   return (
     <View style={styles.container}>
       <ActivityIndicator color={colors.primary} size="large" />
+      <Text style={styles.loadingText}>Checking saved session...</Text>
     </View>
   );
 }
@@ -37,5 +39,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.background,
+    gap: 12,
+  },
+  loadingText: {
+    color: colors.textSecondary,
+    fontSize: 13,
   },
 });

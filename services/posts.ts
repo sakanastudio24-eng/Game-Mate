@@ -21,6 +21,13 @@ export type PostItem = {
 };
 
 export type InteractionType = "like" | "comment" | "share" | "skip" | "view";
+export type FeedPage = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: PostItem[];
+  paginationEnabled: boolean;
+};
 
 function unwrapList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload as T[];
@@ -40,6 +47,65 @@ function unwrapData<T>(payload: unknown): T {
     return (payload as Envelope<T>).data as T;
   }
   return payload as T;
+}
+
+function toCurrentApiEndpoint(urlOrEndpoint: string): string {
+  if (!urlOrEndpoint.startsWith("http://") && !urlOrEndpoint.startsWith("https://")) {
+    return urlOrEndpoint;
+  }
+  try {
+    const parsed = new URL(urlOrEndpoint);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return urlOrEndpoint;
+  }
+}
+
+function unwrapFeedPage(payload: unknown): FeedPage {
+  if (Array.isArray(payload)) {
+    return {
+      count: payload.length,
+      next: null,
+      previous: null,
+      results: payload as PostItem[],
+      paginationEnabled: false,
+    };
+  }
+
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "results" in payload &&
+    Array.isArray((payload as Paginated<PostItem>).results)
+  ) {
+    const paginated = payload as Paginated<PostItem>;
+    return {
+      count: typeof paginated.count === "number" ? paginated.count : paginated.results.length,
+      next: typeof paginated.next === "string" ? paginated.next : null,
+      previous: typeof paginated.previous === "string" ? paginated.previous : null,
+      results: paginated.results,
+      paginationEnabled: true,
+    };
+  }
+
+  if (payload && typeof payload === "object" && "results" in payload) {
+    const envelopeResults = (payload as Envelope<PostItem>).results ?? [];
+    return {
+      count: envelopeResults.length,
+      next: null,
+      previous: null,
+      results: envelopeResults,
+      paginationEnabled: false,
+    };
+  }
+
+  return {
+    count: 0,
+    next: null,
+    previous: null,
+    results: [],
+    paginationEnabled: false,
+  };
 }
 
 export async function listPosts(token: string) {
@@ -97,8 +163,17 @@ export async function trackInteraction(
 }
 
 export async function listFeed(token: string) {
-  const payload = await apiRequest("/api/feed/", { method: "GET" }, token);
-  return unwrapList<PostItem>(payload);
+  const page = await listFeedPage(token);
+  return page.results;
+}
+
+export async function listFeedPage(token: string, endpointOrUrl = "/api/feed/") {
+  const payload = await apiRequest(
+    toCurrentApiEndpoint(endpointOrUrl),
+    { method: "GET" },
+    token,
+  );
+  return unwrapFeedPage(payload);
 }
 
 export async function explainFeedPost(token: string, postId: number) {

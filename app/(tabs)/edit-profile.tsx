@@ -45,7 +45,7 @@ export default function EditProfileScreen() {
   const { accessToken, user } = useAuth();
   const [username] = useState(user?.username ?? "Player");
   const [bio, setBio] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string>(avatarOptions[0]);
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [selectedGames, setSelectedGames] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -67,7 +67,7 @@ export default function EditProfileScreen() {
         if (!active) return;
         setBio(profile.bio || "");
         setSelectedGames(profile.favorite_games || []);
-        setAvatarUrl(profile.avatar_url || avatarOptions[0]);
+        setAvatarUrl(profile.avatar_url || "");
         setError("");
       } catch (fetchError) {
         if (!active) return;
@@ -102,7 +102,7 @@ export default function EditProfileScreen() {
     try {
       await updateMyProfile(accessToken, {
         bio: bio.trim(),
-        avatar_url: avatarUrl,
+        avatar_url: avatarUrl.trim(),
         favorite_games: selectedGames,
       });
       safeBack();
@@ -135,7 +135,11 @@ export default function EditProfileScreen() {
           Profile Picture
         </Text>
         <View style={styles.avatarDisplay}>
-          <ExpoImage source={{ uri: avatarUrl }} style={styles.avatarLargeImage} contentFit="cover" />
+          <ExpoImage
+            source={{ uri: avatarUrl || avatarOptions[0] }}
+            style={styles.avatarLargeImage}
+            contentFit="cover"
+          />
         </View>
 
         <View style={styles.avatarGrid}>
@@ -165,6 +169,19 @@ export default function EditProfileScreen() {
           ))}
         </View>
       </Card>
+
+      <Input
+        label="Avatar URL (optional)"
+        accessibilityLabel="Avatar URL"
+        value={avatarUrl}
+        onChangeText={setAvatarUrl}
+        placeholder="https://example.com/avatar.png"
+        autoCapitalize="none"
+        autoCorrect={false}
+        autoComplete="off"
+        keyboardType="url"
+        fullWidth
+      />
 
       {/* Username */}
       <Input

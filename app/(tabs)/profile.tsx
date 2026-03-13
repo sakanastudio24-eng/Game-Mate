@@ -183,6 +183,7 @@ export default function ProfileScreen() {
   const profileBio =
     profileData.bio?.trim() ||
     "Competitive gamer · Tournament organizer · Always looking for new challenges";
+  const profileAvatarUrl = profileData.avatar_url?.trim() || "";
   const favoriteGames = profileData.favorite_games || [];
   const gamesToRender = useMemo(() => {
     if (!favoriteGames.length) return [...games];
@@ -205,14 +206,24 @@ export default function ProfileScreen() {
 
   const statRows = [
     {
+      label: "Posts",
+      value: String(profileData.stats?.posts ?? videos.length),
+      icon: "play-box-multiple-outline",
+      color: "#66BAFF",
+    },
+    {
+      label: "Friends",
+      value: String(profileData.stats?.friends ?? 0),
+      icon: "account-multiple-outline",
+      color: "#FFD700",
+    },
+    {
       label: "Groups",
-      value: String(myGroups.length),
+      value: String(profileData.stats?.groups ?? myGroups.length),
       icon: "account-group-outline",
       color: colors.primary,
     },
-    { label: "Events", value: "34", icon: "calendar-month-outline", color: "#66BAFF" },
-    { label: "Wins", value: "156", icon: "trophy-outline", color: "#FFD700" },
-    { label: "Hours", value: "2.4K", icon: "controller-classic-outline", color: "#4ADE80" },
+    { label: "Events", value: "34", icon: "calendar-month-outline", color: "#4ADE80" },
   ] as const;
 
   const leaveGroup = (groupId: string) => {
@@ -382,6 +393,12 @@ export default function ProfileScreen() {
             >
               {profileBio}
             </Text>
+
+            {profileAvatarUrl ? (
+              <Text style={styles.avatarUrlText} numberOfLines={1}>
+                avatar_url: {profileAvatarUrl}
+              </Text>
+            ) : null}
 
             {favoriteGames.length ? (
               <View style={styles.interestsRow}>
@@ -784,6 +801,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.sm,
     lineHeight: 20,
+  },
+  avatarUrlText: {
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+    fontSize: 11,
+    opacity: 0.9,
   },
   interestsRow: {
     flexDirection: "row",

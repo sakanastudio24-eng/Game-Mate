@@ -7,6 +7,11 @@ export type ProfileData = {
   avatar_url: string;
   favorite_games: string[];
   visibility?: ProfileVisibility;
+  stats?: {
+    posts?: number;
+    friends?: number;
+    groups?: number;
+  };
 };
 
 type Envelope<T> = { success?: boolean; data?: T };

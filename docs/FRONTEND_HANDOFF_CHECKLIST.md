@@ -123,3 +123,7 @@ Roadmap reference:
   - [ ] render real feed results
   - [ ] loading state visible when feed has no cached items
   - [ ] empty state visible when backend returns zero results
+  - [ ] error banner visible on fetch failure while cached feed remains visible
+  - [ ] pull-to-refresh reloads first feed page successfully
+  - [ ] pagination loads next page when backend returns `next` URL
+  - [ ] feed card fields map correctly (title, author, date, game, caption, engagement counts)

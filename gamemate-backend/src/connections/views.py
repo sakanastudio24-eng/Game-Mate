@@ -77,3 +77,30 @@ def friends_list(request):
             "results": ConnectionSerializer(connections, many=True).data,
         }
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def pending_requests(request):
+    """Return pending connection requests for requester with incoming/outgoing direction."""
+
+    pending = (
+        Connection.objects.filter(status="pending")
+        .filter(Q(sender=request.user) | Q(receiver=request.user))
+        .order_by("-created_at")
+    )
+    results = []
+    for connection in pending:
+        direction = "incoming" if connection.receiver_id == request.user.id else "outgoing"
+        results.append(
+            {
+                "id": connection.id,
+                "sender": connection.sender.username,
+                "receiver": connection.receiver.username,
+                "status": connection.status,
+                "created_at": connection.created_at,
+                "direction": direction,
+            }
+        )
+
+    return Response({"success": True, "count": len(results), "results": results})

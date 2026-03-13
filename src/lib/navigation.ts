@@ -39,6 +39,20 @@ function getHistoryBackTarget(currentPathname?: string | null): string | null {
   return null;
 }
 
+function consumeHistoryBackTarget(currentPathname?: string | null): string | null {
+  const target = getHistoryBackTarget(currentPathname);
+  if (!target) return null;
+
+  while (routeHistory.length > 0) {
+    const popped = routeHistory.pop();
+    if (popped === target) {
+      break;
+    }
+  }
+
+  return target;
+}
+
 function resolveRouteFallback(pathname?: string | null): Href {
   if (!pathname) return "/(tabs)/news";
 
@@ -123,13 +137,17 @@ export function useSafeBackNavigation(fallback?: Href) {
       return;
     }
 
-    const historyTarget = getHistoryBackTarget(pathname);
+    const historyTarget = consumeHistoryBackTarget(pathname);
     if (historyTarget) {
-      router.push(historyTarget as Href);
+      router.replace(historyTarget as Href);
       return;
     }
 
-    router.push(fallback ?? resolveRouteFallback(pathname));
+    if (pathname && ROOT_EXIT_ROUTES.has(pathname) && !fallback) {
+      return;
+    }
+
+    router.replace(fallback ?? resolveRouteFallback(pathname));
   }, [fallback, navigation, pathname, router]);
 }
 
@@ -143,12 +161,6 @@ export function useAndroidHardwareBackNavigation(fallback?: Href) {
 
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       if (canNavigateBack(navigation)) {
-        safeBack();
-        return true;
-      }
-
-      const historyTarget = getHistoryBackTarget(pathname);
-      if (historyTarget && historyTarget !== pathname) {
         safeBack();
         return true;
       }

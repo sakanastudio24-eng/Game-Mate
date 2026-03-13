@@ -1,8 +1,11 @@
 # Frontend Handoff Checklist
 
-Last updated: 2026-03-01
+Last updated: 2026-03-13
 
 Use this as the release/handoff checklist for frontend scope before backend integration and QA passes.
+
+Roadmap reference:
+- `docs/GAMEMATE_INTEGRATION_ROADMAP.md`
 
 ## 1) App Foundation
 
@@ -108,3 +111,15 @@ Use this as the release/handoff checklist for frontend scope before backend inte
 - [x] `docs/MOBILE_WORKFLOW_NOTES.md` updated
 - [x] `docs/FRONTEND_CHECKLIST_STATUS.md` updated
 - [x] `docs/BUILD_STATUS.md` updated
+
+## 14) Pending Manual Tests (Not Completed Yet)
+
+- [ ] Profile persistence after login/reopen:
+  - [ ] open profile
+  - [ ] edit + save profile
+  - [ ] relaunch/login later and confirm same profile data
+- [ ] Feed integration:
+  - [ ] call real `GET /api/feed/`
+  - [ ] render real feed results
+  - [ ] loading state visible when feed has no cached items
+  - [ ] empty state visible when backend returns zero results

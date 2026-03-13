@@ -4,6 +4,7 @@ export type ProfilePayload = {
   bio?: string;
   avatar_url?: string;
   favorite_games?: string[];
+  visibility?: "public" | "friends_only";
 };
 
 export async function getMyProfile(token: string) {
@@ -19,4 +20,12 @@ export async function updateMyProfile(token: string, payload: ProfilePayload) {
     },
     token,
   );
+}
+
+export async function getProfileByUsername(token: string, username: string) {
+  return apiRequest(`/api/profile/${encodeURIComponent(username)}/`, { method: "GET" }, token);
+}
+
+export async function getProfilePostsByUsername(token: string, username: string) {
+  return apiRequest(`/api/profile/${encodeURIComponent(username)}/posts/`, { method: "GET" }, token);
 }

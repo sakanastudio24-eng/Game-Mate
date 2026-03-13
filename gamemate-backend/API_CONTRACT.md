@@ -71,7 +71,8 @@ Response:
     "profile": {
       "bio": "",
       "avatar_url": "",
-      "favorite_games": []
+      "favorite_games": [],
+      "visibility": "public"
     }
   }
 }
@@ -85,7 +86,8 @@ Response:
   "data": {
     "bio": "",
     "avatar_url": "",
-    "favorite_games": []
+    "favorite_games": [],
+    "visibility": "public"
   }
 }
 ```
@@ -95,10 +97,58 @@ Request:
 ```json
 {
   "bio": "Competitive Apex player",
-  "favorite_games": ["Apex Legends", "Valorant"]
+  "favorite_games": ["Apex Legends", "Valorant"],
+  "visibility": "friends_only"
 }
 ```
 Response shape matches GET `/api/profile/me/`.
+
+### GET `/api/profile/{username}/`
+Returns profile identity, preferences, and computed stats.
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "username": "dan",
+    "bio": "FPS player",
+    "avatar_url": "https://...",
+    "favorite_games": ["Valorant", "Apex Legends"],
+    "visibility": "public",
+    "stats": {
+      "posts": 12,
+      "friends": 8,
+      "groups": 3
+    }
+  }
+}
+```
+
+### GET `/api/profile/{username}/posts/`
+Returns a paginated profile timeline for the target user.
+```json
+{
+  "success": true,
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "creator": "dan",
+      "game": "Apex Legends",
+      "title": "Ranked clutch",
+      "description": "1v3 final circle",
+      "video_url": "",
+      "created_at": "..."
+    }
+  ]
+}
+```
+
+Visibility rules:
+- `public`: any authenticated user can view
+- `friends_only`: owner and accepted friends only
 
 ---
 

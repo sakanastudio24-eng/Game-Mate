@@ -119,6 +119,8 @@ Accounts/Profile:
 - `GET /api/accounts/me/`
 - `GET /api/profile/me/`
 - `PATCH /api/profile/me/`
+- `GET /api/profile/{username}/`
+- `GET /api/profile/{username}/posts/`
 
 Groups:
 - `GET /api/groups/` (paginated)

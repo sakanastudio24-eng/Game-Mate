@@ -20,6 +20,13 @@ class User(AbstractUser):
 class Profile(models.Model):
     """Public-facing profile data kept separate from auth identity fields."""
 
+    VISIBILITY_PUBLIC = "public"
+    VISIBILITY_FRIENDS_ONLY = "friends_only"
+    VISIBILITY_CHOICES = [
+        (VISIBILITY_PUBLIC, "Public"),
+        (VISIBILITY_FRIENDS_ONLY, "Friends only"),
+    ]
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -28,6 +35,11 @@ class Profile(models.Model):
     bio = models.TextField(blank=True)
     avatar_url = models.URLField(blank=True)
     favorite_games = models.JSONField(default=list, blank=True)
+    visibility = models.CharField(
+        max_length=20,
+        choices=VISIBILITY_CHOICES,
+        default=VISIBILITY_PUBLIC,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

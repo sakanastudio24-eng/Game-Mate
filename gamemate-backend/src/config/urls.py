@@ -2,7 +2,14 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
-from accounts.views import AuthLogoutView, AuthTokenRefreshView, LoginView, ProfileMeView
+from accounts.views import (
+    AuthLogoutView,
+    AuthTokenRefreshView,
+    LoginView,
+    ProfileMeView,
+    PublicProfilePostsView,
+    PublicProfileView,
+)
 
 
 def trigger_error(_request):
@@ -22,6 +29,10 @@ urlpatterns = [
     path("api/auth/logout/", AuthLogoutView.as_view(), name="token_blacklist"),
     path("api/profile/me", ProfileMeView.as_view(), name="profile_me"),
     path("api/profile/me/", ProfileMeView.as_view(), name="profile_me_slash"),
+    path("api/profile/<str:username>/posts", PublicProfilePostsView.as_view(), name="profile_posts"),
+    path("api/profile/<str:username>/posts/", PublicProfilePostsView.as_view(), name="profile_posts_slash"),
+    path("api/profile/<str:username>", PublicProfileView.as_view(), name="profile_public"),
+    path("api/profile/<str:username>/", PublicProfileView.as_view(), name="profile_public_slash"),
     path("api/accounts/", include("accounts.urls")),
     path("api/connections/", include("connections.urls")),
     path("api/friends/", include("connections.urls")),

@@ -48,6 +48,7 @@ favorite_games: ["Apex Legends", "Valorant"]
 | username   | string   | display identity           |
 | bio        | text     | optional description       |
 | avatar_url | string   | profile image              |
+| visibility | string   | `public` or `friends_only` |
 | created_at | datetime | profile creation timestamp |
 
 ---
@@ -92,20 +93,20 @@ Feed reason returned:
 ## Get Current Profile
 
 ```
-GET /api/profile/me
+GET /api/profile/me/
 ```
 
 Response:
 
 ```
 {
- "username": "dan",
- "bio": "FPS player",
- "avatar_url": "",
- "favorite_games": [
-   "Apex Legends",
-   "Valorant"
- ]
+  "success": true,
+  "data": {
+    "bio": "FPS player",
+    "avatar_url": "",
+    "favorite_games": ["Apex Legends", "Valorant"],
+    "visibility": "public"
+  }
 }
 ```
 
@@ -114,18 +115,16 @@ Response:
 ## Update Profile
 
 ```
-PATCH /api/profile/me
+PATCH /api/profile/me/
 ```
 
 Body example:
 
 ```
 {
- "bio": "Competitive Apex player",
- "favorite_games": [
-   "Apex Legends",
-   "Valorant"
- ]
+  "bio": "Competitive Apex player",
+  "favorite_games": ["Apex Legends", "Valorant"],
+  "visibility": "friends_only"
 }
 ```
 
@@ -134,6 +133,45 @@ Allowed updates:
 * bio
 * avatar_url
 * favorite_games
+* visibility (`public` | `friends_only`)
+
+---
+
+## Public Profile Detail
+
+```
+GET /api/profile/{username}/
+```
+
+Response:
+
+```
+{
+  "success": true,
+  "data": {
+    "username": "dan",
+    "bio": "FPS player",
+    "avatar_url": "",
+    "favorite_games": ["Apex Legends", "Valorant"],
+    "visibility": "public",
+    "stats": {
+      "posts": 12,
+      "friends": 8,
+      "groups": 3
+    }
+  }
+}
+```
+
+---
+
+## Profile Posts Timeline
+
+```
+GET /api/profile/{username}/posts/
+```
+
+Returns paginated post results for the target user timeline.
 
 ---
 
@@ -188,9 +226,9 @@ Required:
 
 * JWT authentication
 * users can only modify their own profile
-* public read allowed (optional)
-
-Future privacy settings may restrict public access.
+* profile visibility enforced:
+  * `public`: readable by authenticated users
+  * `friends_only`: readable only by owner + accepted friends
 
 ---
 

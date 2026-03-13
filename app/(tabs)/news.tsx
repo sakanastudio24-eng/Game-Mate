@@ -236,7 +236,12 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 export default function NewsScreen() {
   const router = useRouter();
   const { accessToken } = useAuth();
-  const params = useLocalSearchParams<{ focusVideoId?: string; focusFrom?: string; refresh?: string }>();
+  const params = useLocalSearchParams<{
+    focusVideoId?: string;
+    focusFrom?: string;
+    refresh?: string;
+    createdTitle?: string;
+  }>();
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -297,6 +302,7 @@ export default function NewsScreen() {
   const appendLockRef = useRef(false);
   const handledFocusVideoIdRef = useRef<string | null>(null);
   const handledRefreshKeyRef = useRef<string | null>(null);
+  const handledCreateSuccessKeyRef = useRef<string | null>(null);
   const feedListRef = useRef<FlatList<FeedEntry> | null>(null);
   const commentsListRef = useRef<FlatList<CommentItem> | null>(null);
 
@@ -308,6 +314,8 @@ export default function NewsScreen() {
   const actionRailRight = Math.max(8, Math.round(horizontalPadding * 0.4));
   const bottomMetaOffset = bottomSafeInset + 10;
   const focusVideoId = typeof params.focusVideoId === "string" ? params.focusVideoId : "";
+  const focusFrom = typeof params.focusFrom === "string" ? params.focusFrom : "";
+  const createdTitle = typeof params.createdTitle === "string" ? params.createdTitle : "";
   const refreshParam = typeof params.refresh === "string" ? params.refresh : "";
 
   const activeComments = useMemo(() => {
@@ -485,6 +493,16 @@ export default function NewsScreen() {
     handledRefreshKeyRef.current = refreshKey;
     void fetchBackendFeed("refresh");
   }, [fetchBackendFeed, focusVideoId, refreshParam]);
+
+  useEffect(() => {
+    if (focusFrom !== "create") return;
+    const key = `${focusFrom}:${focusVideoId || "none"}:${createdTitle || "untitled"}`;
+    if (handledCreateSuccessKeyRef.current === key) return;
+    handledCreateSuccessKeyRef.current = key;
+    showToast({
+      message: createdTitle ? `Published: ${createdTitle}` : "Post published",
+    });
+  }, [createdTitle, focusFrom, focusVideoId, showToast]);
 
   const openChat = (item: FeedEntry) => {
     setCommentDraft("");

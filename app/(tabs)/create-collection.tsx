@@ -91,6 +91,7 @@ export default function CreateCollectionScreen() {
   const normalizedPlatform = platform.trim();
 
   const handleHeaderBack = () => {
+    if (isSubmitting) return;
     if (step === 2) {
       setStep(1);
       return;
@@ -149,13 +150,13 @@ export default function CreateCollectionScreen() {
           video_url: "",
         });
 
-        setSubmitSuccess("Video published.");
         router.replace({
           pathname: "/(tabs)/news",
           params: {
             refresh: "1",
             focusVideoId: String(created.id),
             focusFrom: "create",
+            createdTitle: normalizedTitle,
           },
         });
       } catch (error) {
@@ -279,7 +280,7 @@ export default function CreateCollectionScreen() {
           <Button variant="primary" fullWidth size="large" onPress={handleContinue}>
             Continue
           </Button>
-          <Button variant="secondary" fullWidth size="large" onPress={safeBack}>
+          <Button variant="secondary" fullWidth size="large" onPress={safeBack} disabled={isSubmitting}>
             Cancel
           </Button>
         </>
@@ -307,7 +308,13 @@ export default function CreateCollectionScreen() {
           </Card>
 
           <View style={styles.actionRow}>
-            <Button variant="secondary" size="large" style={styles.halfButton} onPress={() => setStep(1)}>
+            <Button
+              variant="secondary"
+              size="large"
+              style={styles.halfButton}
+              onPress={() => setStep(1)}
+              disabled={isSubmitting}
+            >
               Back
             </Button>
             <Button

@@ -3,7 +3,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useMemo, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getMyProfile, type ProfileData } from "../../services/profile";
@@ -161,26 +161,37 @@ export default function ProfileScreen() {
   );
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("online");
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  const hasCachedProfileData =
+    Boolean(profileData.bio?.trim()) ||
+    Boolean(profileData.avatar_url?.trim()) ||
+    Boolean(profileData.favorite_games?.length);
+
+  const loadProfile = useCallback(async () => {
+    if (!accessToken) {
+      setProfileError("Sign in required.");
+      return;
+    }
+
+    setIsProfileLoading(true);
+    setProfileError(null);
+    try {
+      const profile = await getMyProfile(accessToken);
+      setProfileData(profile);
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : "Unable to load profile.");
+    } finally {
+      setIsProfileLoading(false);
+    }
+  }, [accessToken, setProfileData]);
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-      const loadProfile = async () => {
-        if (!accessToken) return;
-        try {
-          const profile = await getMyProfile(accessToken);
-          if (!active) return;
-          setProfileData(profile);
-        } catch {
-          // Keep existing screen state if profile request fails.
-        }
-      };
-
-      loadProfile();
-      return () => {
-        active = false;
-      };
-    }, [accessToken]),
+      void loadProfile();
+      return undefined;
+    }, [loadProfile]),
   );
 
   const profileName = user?.username || "PlayerMaker34";
@@ -319,6 +330,30 @@ export default function ProfileScreen() {
             </View>
           </View>
         </AnimatedEntrance>
+
+        {isProfileLoading && !hasCachedProfileData ? (
+          <View style={styles.profileStateCard}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.profileStateText}>Loading profile...</Text>
+          </View>
+        ) : null}
+
+        {profileError ? (
+          <View style={styles.profileErrorCard}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={16} color={colors.destructive} />
+            <Text style={styles.profileErrorText}>{profileError}</Text>
+            <Pressable
+              onPress={() => {
+                void loadProfile();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading profile"
+              style={({ pressed }) => [styles.profileRetryButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.profileRetryText}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : null}
 
         <AnimatedEntrance preset="section" delay={60}>
           <View
@@ -713,6 +748,52 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: spacing.xs,
+  },
+  profileStateCard: {
+    marginTop: spacing.md,
+    marginHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+  },
+  profileStateText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  profileErrorCard: {
+    marginTop: spacing.md,
+    marginHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: `${colors.destructive}66`,
+    borderRadius: 12,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: `${colors.destructive}11`,
+  },
+  profileErrorText: {
+    flex: 1,
+    color: colors.destructive,
+    fontSize: 12,
+  },
+  profileRetryButton: {
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  profileRetryText: {
+    color: colors.destructive,
+    fontWeight: "700",
+    fontSize: 11,
   },
   cover: {
     height: 160,

@@ -1,5 +1,5 @@
 import { Image as ExpoImage } from "expo-image";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { getMyProfile, updateMyProfile } from "../../services/profile";
@@ -62,6 +62,28 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const loadProfile = useCallback(async () => {
+    if (!accessToken) {
+      setLoading(false);
+      setError("Sign in again to edit your profile.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const profile = await getMyProfile(accessToken);
+      setBio(profile.bio || "");
+      setSelectedGames(profile.favorite_games || []);
+      setAvatarUrl(profile.avatar_url || "");
+      setCachedProfile(profile);
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : "Unable to load profile.");
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, setCachedProfile]);
+
   useEffect(() => {
     if (!profileCacheHydrated) return;
     setBio(cachedProfile.bio || "");
@@ -77,37 +99,8 @@ export default function EditProfileScreen() {
   }, [profileCacheHydrated, cachedProfile.bio, cachedProfile.avatar_url, cachedProfile.favorite_games]);
 
   useEffect(() => {
-    let active = true;
-    const loadProfile = async () => {
-      if (!accessToken) {
-        if (active) {
-          setLoading(false);
-          setError("Sign in again to edit your profile.");
-        }
-        return;
-      }
-
-      try {
-        const profile = await getMyProfile(accessToken);
-        if (!active) return;
-        setBio(profile.bio || "");
-        setSelectedGames(profile.favorite_games || []);
-        setAvatarUrl(profile.avatar_url || "");
-        setCachedProfile(profile);
-        setError("");
-      } catch (fetchError) {
-        if (!active) return;
-        setError(fetchError instanceof Error ? fetchError.message : "Unable to load profile.");
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    loadProfile();
-    return () => {
-      active = false;
-    };
-  }, [accessToken, profileCacheKey, setCachedProfile]);
+    void loadProfile();
+  }, [loadProfile, profileCacheKey]);
 
   const handleGameToggle = (game: string) => {
     setSelectedGames((prev) =>
@@ -151,7 +144,21 @@ export default function EditProfileScreen() {
         </View>
       ) : null}
 
-      {!loading && error ? <Text style={styles.errorText}>{error}</Text> : null}
+      {!loading && error ? (
+        <View style={styles.errorRow}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable
+            onPress={() => {
+              void loadProfile();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading profile"
+            style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Avatar selector */}
       <Card style={styles.avatarCard}>
@@ -338,9 +345,28 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
   },
+  errorRow: {
+    marginBottom: spacing.sm,
+  },
   errorText: {
     color: colors.destructive,
-    marginBottom: spacing.sm,
     fontSize: 12,
+  },
+  retryButton: {
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    alignSelf: "flex-start",
+    marginTop: spacing.xs,
+  },
+  retryText: {
+    color: colors.destructive,
+    fontWeight: "700",
+    fontSize: 11,
+  },
+  pressed: {
+    opacity: 0.8,
   },
 });

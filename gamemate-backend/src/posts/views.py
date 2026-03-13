@@ -11,6 +11,10 @@ from .feed import score_post
 from .models import Post, PostInteraction, PostShare
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
+from posts.services.cache_service import (
+    invalidate_like_count_cache,
+    invalidate_trending_post_ids_cache,
+)
 from posts.services.feed_service import FeedService
 
 User = get_user_model()
@@ -45,6 +49,8 @@ class PostViewSet(viewsets.ModelViewSet):
         post.is_deleted = True
         post.deleted_at = timezone.now()
         post.save(update_fields=["is_deleted", "deleted_at"])
+        invalidate_like_count_cache(post.id)
+        invalidate_trending_post_ids_cache()
         return Response({"success": True}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["post"], url_path=r"restore/(?P<post_id>[^/.]+)")
@@ -60,6 +66,8 @@ class PostViewSet(viewsets.ModelViewSet):
         post.is_deleted = False
         post.deleted_at = None
         post.save(update_fields=["is_deleted", "deleted_at"])
+        invalidate_like_count_cache(post.id)
+        invalidate_trending_post_ids_cache()
         return Response({"success": True}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])

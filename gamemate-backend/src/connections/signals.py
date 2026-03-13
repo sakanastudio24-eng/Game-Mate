@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from activity.services.activity_service import log_activity
 from core.services.event_service import allow_event
 from notifications.services import create_notification
+from posts.services.cache_service import invalidate_friend_ids_cache
 
 from .models import Connection
 
@@ -42,6 +43,9 @@ def connection_event_notification(sender, instance, created, **kwargs):
 
     previous_status = getattr(instance, "_previous_status", None)
     if previous_status != "accepted" and instance.status == "accepted":
+        invalidate_friend_ids_cache(instance.sender_id)
+        invalidate_friend_ids_cache(instance.receiver_id)
+
         create_notification(
             user=instance.sender,
             actor=instance.receiver,

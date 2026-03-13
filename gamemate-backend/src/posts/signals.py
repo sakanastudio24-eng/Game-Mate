@@ -1,3 +1,5 @@
+"""Post-domain signals for feed invalidation, notifications, and activity."""
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -15,6 +17,8 @@ from .models import Post, PostInteraction, PostShare
 # Emit activity log row when a new post is created.
 @receiver(post_save, sender=Post)
 def post_created(sender, instance, created, **kwargs):
+    """Handle post-created side effects (cache invalidation + activity logging)."""
+
     if not created:
         return
 
@@ -34,6 +38,8 @@ def post_created(sender, instance, created, **kwargs):
 # Emit notifications for social interactions on posts.
 @receiver(post_save, sender=PostInteraction)
 def post_interaction_created(sender, instance, created, **kwargs):
+    """Handle interaction-created side effects for ranking and notifications."""
+
     if not created:
         return
 
@@ -71,6 +77,8 @@ def post_interaction_created(sender, instance, created, **kwargs):
 # Emit notification for direct post share records.
 @receiver(post_save, sender=PostShare)
 def post_shared_direct(sender, instance, created, **kwargs):
+    """Handle direct-share side effects for notifications and activity."""
+
     if not created:
         return
 

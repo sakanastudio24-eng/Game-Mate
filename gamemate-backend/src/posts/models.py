@@ -53,6 +53,8 @@ class PostInteraction(models.Model):
 
 # Share record used for post-to-friend delivery history.
 class PostShare(models.Model):
+    """Audit trail of direct post-share actions between users."""
+
     sender = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

@@ -1,3 +1,5 @@
+"""Thread-domain business logic for direct messages."""
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
@@ -9,6 +11,8 @@ User = get_user_model()
 
 # Get or create a 1:1 thread for requester and target user.
 def get_or_create_thread(user, other_user_id):
+    """Return existing 1:1 thread or create a new one for two distinct users."""
+
     other = User.objects.filter(id=other_user_id).first()
     if not other:
         raise DomainNotFoundError("User not found.")
@@ -28,6 +32,8 @@ def get_or_create_thread(user, other_user_id):
 
 # Fetch thread and ensure requester is a participant.
 def get_participant_thread(thread_id, user):
+    """Fetch a thread and verify that the requester is a participant."""
+
     thread = Thread.objects.filter(id=thread_id).first()
     if not thread:
         raise DomainNotFoundError("Thread not found.")
@@ -40,6 +46,8 @@ def get_participant_thread(thread_id, user):
 
 # Return DM thread previews for the requester.
 def build_thread_list(user):
+    """Build DM inbox preview rows with participants, last message, and unread count."""
+
     threads = (
         Thread.objects.filter(participants=user)
         .prefetch_related("participants", "messages")

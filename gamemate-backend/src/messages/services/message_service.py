@@ -1,9 +1,13 @@
+"""Message-domain business logic helpers."""
+
 from messages.models import Message
 from messages.services.errors import DomainPermissionError, DomainValidationError
 
 
 # Send a message in a thread and emit notifications to other participants.
 def send_message(thread, sender, content):
+    """Validate participant access and persist one message in a thread."""
+
     if not thread.participants.filter(id=sender.id).exists():
         raise DomainPermissionError("Not allowed.")
 
@@ -22,6 +26,8 @@ def send_message(thread, sender, content):
 
 # Return thread history and mark unread incoming messages as read.
 def get_thread_messages(thread, viewer):
+    """Return ordered thread history and mark inbound unread messages as read."""
+
     Message.objects.filter(
         thread=thread,
         is_read=False,

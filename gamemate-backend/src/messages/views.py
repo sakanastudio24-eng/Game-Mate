@@ -1,3 +1,5 @@
+"""Message API endpoints backed by service-layer domain logic."""
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -15,6 +17,8 @@ from messages.services.thread_service import (
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def create_thread(request, user_id):
+    """Create or resolve an existing direct-message thread with another user."""
+
     try:
         thread, created = get_or_create_thread(request.user, user_id)
     except DomainNotFoundError as exc:
@@ -32,6 +36,8 @@ def create_thread(request, user_id):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def send_message(request, thread_id):
+    """Send one message to a participant thread."""
+
     try:
         thread = get_participant_thread(thread_id, request.user)
         message = send_thread_message(thread, request.user, request.data.get("content"))
@@ -49,6 +55,8 @@ def send_message(request, thread_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_messages(request, thread_id):
+    """Return full ordered message history for one accessible thread."""
+
     try:
         thread = get_participant_thread(thread_id, request.user)
         payload = get_thread_messages(thread, request.user)
@@ -64,5 +72,7 @@ def get_messages(request, thread_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_threads(request):
+    """Return inbox preview list for the authenticated user."""
+
     data = build_thread_list(request.user)
     return Response({"success": True, "count": len(data), "results": data}, status=200)

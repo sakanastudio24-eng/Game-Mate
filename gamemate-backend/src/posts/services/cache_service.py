@@ -1,3 +1,5 @@
+"""Partial caching helpers used by feed ranking and social lookups."""
+
 from collections.abc import Iterable
 
 from django.core.cache import cache
@@ -14,14 +16,20 @@ TRENDING_POST_IDS_CACHE_KEY = "feed:trending:post_ids"
 
 
 def friend_ids_cache_key(user_id: int) -> str:
+    """Build cache key for one user's accepted friend id set."""
+
     return f"feed:user:{user_id}:friend_ids"
 
 
 def like_count_cache_key(post_id: int) -> str:
+    """Build cache key for one post's like counter."""
+
     return f"feed:post:{post_id}:like_count"
 
 
 def get_cached_friend_ids(user_id: int) -> set[int]:
+    """Return cached friend ids or compute and cache them from connection graph."""
+
     cache_key = friend_ids_cache_key(user_id)
     cached_ids = cache.get(cache_key)
     if isinstance(cached_ids, list):
@@ -43,10 +51,14 @@ def get_cached_friend_ids(user_id: int) -> set[int]:
 
 
 def invalidate_friend_ids_cache(user_id: int) -> None:
+    """Drop cached friend-id set for one user."""
+
     cache.delete(friend_ids_cache_key(user_id))
 
 
 def get_cached_like_counts(post_ids: Iterable[int]) -> dict[int, int]:
+    """Resolve like counts via cache-first lookup with DB backfill."""
+
     unique_ids = list(dict.fromkeys(int(post_id) for post_id in post_ids))
     if not unique_ids:
         return {}
@@ -87,10 +99,14 @@ def get_cached_like_counts(post_ids: Iterable[int]) -> dict[int, int]:
 
 
 def invalidate_like_count_cache(post_id: int) -> None:
+    """Drop cached like count for one post."""
+
     cache.delete(like_count_cache_key(post_id))
 
 
 def get_cached_trending_post_ids(limit: int = 80) -> list[int]:
+    """Return cached trending post ids or recompute from recent engagement signals."""
+
     cached_ids = cache.get(TRENDING_POST_IDS_CACHE_KEY)
     if isinstance(cached_ids, list) and cached_ids:
         return [int(value) for value in cached_ids[:limit]]
@@ -131,4 +147,6 @@ def get_cached_trending_post_ids(limit: int = 80) -> list[int]:
 
 
 def invalidate_trending_post_ids_cache() -> None:
+    """Drop cached trending post-id list."""
+
     cache.delete(TRENDING_POST_IDS_CACHE_KEY)

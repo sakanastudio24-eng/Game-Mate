@@ -1,3 +1,5 @@
+"""Connection-domain signals for notifications, activity, and cache invalidation."""
+
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
@@ -12,6 +14,8 @@ from .models import Connection
 # Cache status before save so post_save can detect transitions.
 @receiver(pre_save, sender=Connection)
 def capture_previous_status(sender, instance, **kwargs):
+    """Capture previous status to detect pending->accepted transitions on save."""
+
     if not instance.pk:
         instance._previous_status = None
         return
@@ -24,6 +28,8 @@ def capture_previous_status(sender, instance, **kwargs):
 # Emit notifications for friend request and accept events.
 @receiver(post_save, sender=Connection)
 def connection_event_notification(sender, instance, created, **kwargs):
+    """Handle friend request and acceptance side effects after connection writes."""
+
     if created and instance.status == "pending":
         if not allow_event(instance.sender_id, "friend_request"):
             return

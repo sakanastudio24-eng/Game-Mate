@@ -1,3 +1,5 @@
+"""Root URL configuration for API and admin routes."""
+
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
@@ -13,11 +15,15 @@ from accounts.views import (
 
 
 def trigger_error(_request):
+    """Intentional crash route for Sentry verification in development."""
+
     # Intentional crash route for Sentry verification in development.
     return 1 / 0
 
 
 def crash(_request):
+    """Temporary crash endpoint used during Sentry setup/testing."""
+
     # Temporary test error endpoint for Sentry verification.
     raise Exception("Sentry test error")
 

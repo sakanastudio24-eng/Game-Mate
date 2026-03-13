@@ -1,3 +1,5 @@
+"""Message-domain signals for notifications and activity logging."""
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -11,6 +13,8 @@ from .models import Message
 # Emit message notification when a new message is created.
 @receiver(post_save, sender=Message)
 def message_created(sender, instance, created, **kwargs):
+    """Emit notifications/activity whenever a new message is created."""
+
     if not created:
         return
 

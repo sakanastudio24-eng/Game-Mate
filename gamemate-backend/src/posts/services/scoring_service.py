@@ -1,3 +1,5 @@
+"""Feed scoring utilities shared by feed and explain endpoints."""
+
 from dataclasses import dataclass
 
 from posts.services.cache_service import get_cached_friend_ids
@@ -6,12 +8,16 @@ from posts.services.cache_service import get_cached_friend_ids
 # Immutable scoring context reused across candidate scoring calls.
 @dataclass(frozen=True)
 class FeedScoringContext:
+    """Immutable user-scoring context (interests + social graph ids)."""
+
     favorite_games: set[str]
     friend_ids: set[int]
 
 
 # Build user-specific scoring context for feed ranking.
 def build_scoring_context(user) -> FeedScoringContext:
+    """Build normalized scoring context for a specific user."""
+
     user_profile = getattr(user, "profile", None)
     favorite_games = (user_profile.favorite_games or []) if user_profile else []
     normalized_games = {
@@ -30,6 +36,8 @@ def build_scoring_context(user) -> FeedScoringContext:
 
 # Calculate rank score and reason tags for a single post candidate.
 def calculate_post_score(post, context: FeedScoringContext) -> tuple[int, list[str]]:
+    """Compute score and human-readable reason tags for one candidate post."""
+
     score = 0
     reasons: list[str] = []
 

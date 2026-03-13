@@ -1,3 +1,5 @@
+"""In-memory event throttling utilities used by signal handlers."""
+
 import logging
 import threading
 import time
@@ -20,6 +22,8 @@ event_cache_lock = threading.Lock()
 
 # Decide whether an event should be processed under configured per-user limits.
 def allow_event(user_id, event_type):
+    """Return True when user/event is under configured rate threshold."""
+
     limit, window = EVENT_LIMITS.get(event_type, (50, 60))
     key = f"{user_id}:{event_type}"
     now = time.time()

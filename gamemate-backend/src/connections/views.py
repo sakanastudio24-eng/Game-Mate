@@ -1,3 +1,5 @@
+"""Connection endpoints for requests, acceptance, and friend list retrieval."""
+
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes
@@ -14,6 +16,8 @@ User = get_user_model()
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def send_request(request, user_id):
+    """Create a pending friend request from the requester to the target user."""
+
     receiver = User.objects.filter(id=user_id).first()
     if not receiver:
         return Response({"success": False, "message": "User not found."}, status=404)
@@ -37,6 +41,8 @@ def send_request(request, user_id):
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def accept_request(request, connection_id):
+    """Accept a pending request when requester is the intended receiver."""
+
     connection = Connection.objects.filter(id=connection_id).first()
     if not connection:
         return Response({"success": False, "message": "Connection request not found."}, status=404)
@@ -57,6 +63,8 @@ def accept_request(request, connection_id):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def friends_list(request):
+    """Return accepted bidirectional connections for the requester."""
+
     connections = (
         Connection.objects.filter(status="accepted")
         .filter(Q(sender=request.user) | Q(receiver=request.user))

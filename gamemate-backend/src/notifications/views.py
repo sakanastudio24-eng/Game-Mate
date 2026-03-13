@@ -1,3 +1,5 @@
+"""Notification read endpoints for authenticated users."""
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -9,6 +11,8 @@ from .models import Notification
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_notifications(request):
+    """Return latest notification rows for the requester."""
+
     notifications = (
         Notification.objects.filter(user=request.user)
         .select_related("actor")

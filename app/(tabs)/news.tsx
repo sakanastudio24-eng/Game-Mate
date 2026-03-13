@@ -1047,6 +1047,62 @@ export default function NewsScreen() {
         />
       ) : null}
 
+      {whyTarget ? (
+        <Modal visible transparent animationType="slide" onRequestClose={closeWhyThis}>
+          <View style={styles.whyRoot}>
+            <Pressable
+              style={styles.whyScrim}
+              onPress={closeWhyThis}
+              accessibilityRole="button"
+              accessibilityLabel="Close why this appeared"
+            />
+            <View style={styles.whySheet}>
+              <View style={styles.whyHandle} />
+              <Text style={styles.whyTitle}>Why this appeared</Text>
+              <Text style={styles.whySubtitle}>{whyTarget.title}</Text>
+
+              {whyLoading ? (
+                <View style={styles.whyLoadingWrap}>
+                  <ActivityIndicator color={colors.primary} />
+                  <Text style={styles.whyLoadingText}>Loading reasons...</Text>
+                </View>
+              ) : null}
+
+              {!whyLoading && whyError ? <Text style={styles.whyErrorText}>{whyError}</Text> : null}
+
+              {!whyLoading ? (
+                <View style={styles.whyReasonsWrap}>
+                  {whyReasons.map((reason, reasonIndex) => (
+                    <View key={`${reason}-${reasonIndex}`} style={styles.whyReasonRow}>
+                      <MaterialCommunityIcons
+                        name="check-circle-outline"
+                        size={16}
+                        color={colors.primary}
+                      />
+                      <Text style={styles.whyReasonLabel}>{reason}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {!whyLoading &&
+              (Number(whySignals.likes ?? 0) > 0 ||
+                Number(whySignals.comments ?? 0) > 0 ||
+                Number(whySignals.shares ?? 0) > 0) ? (
+                <View style={styles.whySignalsWrap}>
+                  <Text style={styles.whySignalsTitle}>Community activity</Text>
+                  <Text style={styles.whySignalsText}>
+                    {compactNumber(Number(whySignals.likes ?? 0))} likes ·{" "}
+                    {compactNumber(Number(whySignals.comments ?? 0))} comments ·{" "}
+                    {compactNumber(Number(whySignals.shares ?? 0))} shares
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+        </Modal>
+      ) : null}
+
     </View>
   );
 }
@@ -1272,6 +1328,90 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     marginTop: 2,
+  },
+  whyRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  whyScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.42)",
+  },
+  whySheet: {
+    backgroundColor: "#1F1F1F",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    minHeight: "46%",
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+  },
+  whyHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#5A5A5A",
+    alignSelf: "center",
+    marginBottom: spacing.sm,
+  },
+  whyTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  whySubtitle: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+    marginBottom: spacing.md,
+  },
+  whyLoadingWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  whyLoadingText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  whyErrorText: {
+    color: colors.destructive,
+    fontSize: 12,
+    marginBottom: spacing.sm,
+  },
+  whyReasonsWrap: {
+    gap: spacing.xs,
+  },
+  whyReasonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingVertical: 2,
+  },
+  whyReasonLabel: {
+    color: colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
+  },
+  whySignalsWrap: {
+    marginTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.1)",
+    paddingTop: spacing.sm,
+  },
+  whySignalsTitle: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  whySignalsText: {
+    color: colors.textSecondary,
+    fontSize: 12,
   },
   drawerRoot: {
     flex: 1,

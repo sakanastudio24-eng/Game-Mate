@@ -1,11 +1,13 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { Alert, StyleSheet, View } from "react-native";
 import { SegmentedButtons, Text } from "react-native-paper";
+import { createPost } from "../../services/posts";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
+import { useAuth } from "../../src/context/AuthContext";
 import { Screen } from "../../src/components/ui/Screen";
 import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { useResponsive } from "../../src/lib/responsive";
@@ -63,9 +65,11 @@ function resolveType(rawType?: string | string[]): CreateType {
 }
 
 export default function CreateCollectionScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ type?: string | string[] }>();
   const safeBack = useSafeBackNavigation("/(tabs)/profile");
   const responsive = useResponsive();
+  const { accessToken } = useAuth();
 
   const type = useMemo(() => resolveType(params.type), [params.type]);
   const copy = flowCopy[type];
@@ -78,6 +82,9 @@ export default function CreateCollectionScreen() {
   const [mediaSource, setMediaSource] = useState("Upload");
   const [visibility, setVisibility] = useState<"public" | "friends" | "private">("public");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   const handleHeaderBack = () => {
     if (step === 2) {
@@ -105,9 +112,53 @@ export default function CreateCollectionScreen() {
   const handleContinue = () => {
     if (!validateStepOne()) return;
     setStep(2);
+    setSubmitError(null);
+    setSubmitSuccess(null);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (isSubmitting) return;
+    if (!validateStepOne()) {
+      setSubmitError("Fix the required fields before publishing.");
+      return;
+    }
+
+    setSubmitError(null);
+    setSubmitSuccess(null);
+
+    if (type === "video") {
+      if (!accessToken) {
+        setSubmitError("Sign in again to publish.");
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        const created = await createPost(accessToken, {
+          game: platform.trim() || "General",
+          title: title.trim(),
+          description: description.trim(),
+          video_url: "",
+        });
+
+        setSubmitSuccess("Video published.");
+        router.replace({
+          pathname: "/(tabs)/news",
+          params: {
+            refresh: "1",
+            focusVideoId: String(created.id),
+            focusFrom: "create",
+          },
+        });
+      } catch (error) {
+        setSubmitError(error instanceof Error ? error.message : "Unable to publish right now.");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    setSubmitSuccess(`${copy.itemLabel} created.`);
     Alert.alert(`${copy.itemLabel} Created`, `${title.trim()} is now in your profile.`);
     safeBack();
   };
@@ -250,10 +301,21 @@ export default function CreateCollectionScreen() {
             <Button variant="secondary" size="large" style={styles.halfButton} onPress={() => setStep(1)}>
               Back
             </Button>
-            <Button variant="primary" size="large" style={styles.halfButton} onPress={handlePublish}>
-              {copy.primaryButton}
+            <Button
+              variant="primary"
+              size="large"
+              style={styles.halfButton}
+              onPress={() => {
+                void handlePublish();
+              }}
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Publishing..." : copy.primaryButton}
             </Button>
           </View>
+          {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
+          {submitSuccess ? <Text style={styles.submitSuccess}>{submitSuccess}</Text> : null}
         </>
       )}
     </Screen>
@@ -301,5 +363,17 @@ const styles = StyleSheet.create({
   },
   halfButton: {
     flex: 1,
+  },
+  submitError: {
+    color: colors.destructive,
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: spacing.md,
+  },
+  submitSuccess: {
+    color: colors.success,
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: spacing.md,
   },
 });

@@ -824,6 +824,17 @@ export default function SocialScreen() {
       {socialError ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{socialError}</Text>
+          <Pressable
+            onPress={() => {
+              void loadFriends();
+              void loadPendingRequests();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading social data"
+            style={({ pressed }) => [styles.errorRetryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.errorRetryText}>Retry</Text>
+          </Pressable>
         </View>
       ) : null}
     </View>
@@ -1192,9 +1203,23 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.destructive,
-    textAlign: "center",
     fontWeight: "600",
     fontSize: 12,
+    textAlign: "center",
+  },
+  errorRetryButton: {
+    alignSelf: "center",
+    marginTop: spacing.xs,
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  errorRetryText: {
+    color: colors.destructive,
+    fontWeight: "700",
+    fontSize: 11,
   },
   pressed: {
     opacity: 0.85,

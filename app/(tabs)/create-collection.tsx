@@ -86,6 +86,10 @@ export default function CreateCollectionScreen() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
+  const normalizedTitle = title.trim();
+  const normalizedDescription = description.trim();
+  const normalizedPlatform = platform.trim();
+
   const handleHeaderBack = () => {
     if (step === 2) {
       setStep(1);
@@ -97,12 +101,16 @@ export default function CreateCollectionScreen() {
   const validateStepOne = () => {
     const nextErrors: Record<string, string> = {};
 
-    if (!title.trim()) {
+    if (!normalizedTitle) {
       nextErrors.title = `Enter a ${copy.itemLabel.toLowerCase()} title.`;
     }
 
-    if (!description.trim()) {
+    if (!normalizedDescription) {
       nextErrors.description = "Add a short description.";
+    }
+
+    if (type === "video" && !normalizedPlatform) {
+      nextErrors.platform = "Pick a platform for this post.";
     }
 
     setErrors(nextErrors);
@@ -135,9 +143,9 @@ export default function CreateCollectionScreen() {
       setIsSubmitting(true);
       try {
         const created = await createPost(accessToken, {
-          game: platform.trim() || "General",
-          title: title.trim(),
-          description: description.trim(),
+          game: normalizedPlatform || "General",
+          title: normalizedTitle,
+          description: normalizedDescription,
           video_url: "",
         });
 
@@ -216,6 +224,7 @@ export default function CreateCollectionScreen() {
                 </Button>
               ))}
             </View>
+            {errors.platform ? <Text style={styles.fieldError}>{errors.platform}</Text> : null}
           </Card>
 
           <Card style={styles.card}>
@@ -363,6 +372,12 @@ const styles = StyleSheet.create({
   },
   halfButton: {
     flex: 1,
+  },
+  fieldError: {
+    color: colors.destructive,
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: spacing.sm,
   },
   submitError: {
     color: colors.destructive,

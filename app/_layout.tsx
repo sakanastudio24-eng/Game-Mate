@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { PaperProvider } from 'react-native-paper';
 import { ToastProvider } from '../src/components/ui/ToastProvider';
 import { AuthProvider } from '../src/context/AuthContext';
+import { useAndroidHardwareBackNavigation, useTrackRouteHistory } from '../src/lib/navigation';
 import * as Sentry from '@sentry/react-native';
 
 Sentry.init({
@@ -30,6 +31,8 @@ export const unstable_settings = {
 export default Sentry.wrap(function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? DarkTheme : DefaultTheme;
+  useTrackRouteHistory();
+  useAndroidHardwareBackNavigation();
 
   return (
     <GestureHandlerRootView style={styles.root}>

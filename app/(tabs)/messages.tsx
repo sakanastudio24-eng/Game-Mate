@@ -1,88 +1,107 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { FAB, Searchbar, Text } from "react-native-paper";
+import { listThreads, type ThreadItem } from "../../services/messages";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
-import { mockFriends } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-// MessagesScreen: Conversation list
-// Backend integration: GET /api/messages/conversations endpoint in Phase B
-
 interface Conversation {
-  id: string;
+  id: number;
   participantName: string;
-  participantImage?: string;
+  participantUsername: string;
   lastMessage: string;
-  timestamp: string;
+  timestamp: string | null;
   unreadCount: number;
-  onlineStatus: boolean;
 }
 
 export default function MessagesScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const { accessToken, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [threads, setThreads] = useState<ThreadItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const conversations: Conversation[] = [
-    {
-      id: "1",
-      participantName: "ProGamer92",
-      lastMessage: "Let's queue up later",
-      timestamp: "2 min ago",
-      unreadCount: 3,
-      onlineStatus: true,
+  const loadThreads = useCallback(
+    async (refresh = false) => {
+      if (!accessToken) {
+        setThreads([]);
+        setIsLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      setError(null);
+      try {
+        const data = await listThreads(accessToken);
+        setThreads(data);
+      } catch (nextError) {
+        setError(nextError instanceof Error ? nextError.message : "Unable to load conversations.");
+        setThreads([]);
+      } finally {
+        if (refresh) {
+          setIsRefreshing(false);
+        } else {
+          setIsLoading(false);
+        }
+      }
     },
-    {
-      id: "2",
-      participantName: "SkyWalker",
-      lastMessage: "Sounds good, see you tomorrow",
-      timestamp: "1 hour ago",
-      unreadCount: 0,
-      onlineStatus: false,
-    },
-    {
-      id: "3",
-      participantName: "EchoPlayer",
-      lastMessage: "Group match is starting in 5 mins",
-      timestamp: "5 min ago",
-      unreadCount: 1,
-      onlineStatus: true,
-    },
-    {
-      id: "4",
-      participantName: "NovaStrike",
-      lastMessage: "Thanks for the invite!",
-      timestamp: "3 hours ago",
-      unreadCount: 0,
-      onlineStatus: true,
-    },
-  ];
+    [accessToken],
+  );
+
+  useEffect(() => {
+    void loadThreads();
+  }, [loadThreads]);
+
+  const conversations = useMemo<Conversation[]>(() => {
+    const selfUsername = String(user?.username ?? "");
+    return threads.map((thread) => {
+      const peers = (thread.participants ?? []).filter((name) => name && name !== selfUsername);
+      const participantUsername = peers[0] ?? "Player";
+      return {
+        id: thread.thread_id,
+        participantName: participantUsername,
+        participantUsername,
+        lastMessage: thread.last_message || "No messages yet",
+        timestamp: null,
+        unreadCount: Math.max(0, Number(thread.unread ?? 0)),
+      };
+    });
+  }, [threads, user?.username]);
 
   const filteredConversations = conversations.filter((conv) =>
-    conv.participantName.toLowerCase().includes(searchQuery.toLowerCase()),
+    [conv.participantName, conv.lastMessage]
+      .join(" ")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase()),
   );
 
   const renderConversation = (conversation: Conversation) => (
     <Card
       style={styles.conversationCard}
-      key={conversation.id}
       onPress={() => {
-        const matchedFriend = mockFriends.find(
-          (friend) =>
-            friend.name === conversation.participantName ||
-            friend.username === conversation.participantName,
-        );
-        if (matchedFriend) {
-          router.push(`/(tabs)/chat?userId=${matchedFriend.id}` as any);
-        } else {
-          router.push("/(tabs)/chat" as any);
-        }
+        router.push({
+          pathname: "/(tabs)/chat",
+          params: {
+            threadId: String(conversation.id),
+            title: conversation.participantName,
+          },
+        });
       }}
     >
       <View style={styles.conversationContent}>
@@ -94,11 +113,6 @@ export default function MessagesScreen() {
               color={colors.primary}
             />
           </View>
-          {conversation.onlineStatus && (
-            <View
-              style={[styles.onlineBadge, { backgroundColor: colors.online }]}
-            />
-          )}
         </View>
 
         <View style={styles.messageInfo}>
@@ -116,7 +130,7 @@ export default function MessagesScreen() {
 
         <View style={styles.timestampContainer}>
           <Text style={[styles.timestamp, { fontSize: responsive.captionSize }]}>
-            {conversation.timestamp}
+            {conversation.timestamp ?? ""}
           </Text>
           {conversation.unreadCount > 0 && (
             <View style={styles.unreadBadge}>
@@ -144,13 +158,35 @@ export default function MessagesScreen() {
         placeholderTextColor={colors.textSecondary}
       />
 
-      {filteredConversations.length > 0 ? (
+      {isLoading ? (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons
+            name="progress-clock"
+            size={48}
+            color={colors.textSecondary}
+          />
+          <Text style={styles.emptyText}>Loading conversations...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={48}
+            color={colors.destructive}
+          />
+          <Text style={styles.emptyText}>{error}</Text>
+        </View>
+      ) : filteredConversations.length > 0 ? (
         <FlatList
           data={filteredConversations}
           renderItem={({ item }) => renderConversation(item)}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           scrollEnabled={true}
           contentContainerStyle={styles.conversationsList}
+          refreshing={isRefreshing}
+          onRefresh={() => {
+            void loadThreads(true);
+          }}
         />
       ) : (
         <View style={styles.emptyState}>
@@ -162,6 +198,16 @@ export default function MessagesScreen() {
           <Text style={styles.emptyText}>
             {searchQuery ? "No conversations found" : "No messages yet"}
           </Text>
+          {searchQuery ? null : (
+            <Pressable
+              onPress={() => {
+                void loadThreads(true);
+              }}
+              style={styles.retryButton}
+            >
+              <Text style={styles.retryText}>Refresh</Text>
+            </Pressable>
+          )}
         </View>
       )}
 
@@ -265,5 +311,17 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 14,
     marginTop: spacing.md,
+  },
+  retryButton: {
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
+  retryText: {
+    color: colors.primary,
+    fontWeight: "700",
   },
 });

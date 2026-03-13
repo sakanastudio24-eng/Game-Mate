@@ -15,11 +15,14 @@ import {
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { listFeed, type PostItem } from "../../services/posts";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { useToast } from "../../src/components/ui/ToastProvider";
+import { Button } from "../../src/components/ui/Button";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
+import { useAuth } from "../../src/context/AuthContext";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { useOptimisticToggle } from "../../src/lib/hooks/useOptimisticToggle";
 import { useResponsive } from "../../src/lib/responsive";
@@ -45,17 +48,90 @@ const COMMENT_AVATARS: Record<string, string> = {
   You: CURRENT_USER_AVATAR,
 };
 
-function createLoop(loopIndex: number): FeedEntry[] {
-  return NEWS_FEED.map((item, index) => ({
+const THUMBNAIL_FALLBACK =
+  "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&q=80";
+
+function getPostAuthor(post: PostItem): string {
+  if (typeof post.creator === "string" && post.creator.trim()) {
+    return post.creator.trim();
+  }
+  if (
+    post.creator &&
+    typeof post.creator === "object" &&
+    "username" in post.creator &&
+    typeof post.creator.username === "string" &&
+    post.creator.username.trim()
+  ) {
+    return post.creator.username.trim();
+  }
+  return "GameMate";
+}
+
+function toDisplayDate(isoDate: string): string {
+  const value = new Date(isoDate);
+  if (Number.isNaN(value.getTime())) return "Recently";
+  return value.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function toThumbnail(post: PostItem, index: number): string {
+  const candidate = (post.video_url ?? "").trim();
+  const isImageUrl = /\.(png|jpe?g|webp|gif|bmp|avif)(\?.*)?$/i.test(candidate);
+  if (candidate.startsWith("http") && isImageUrl) return candidate;
+  return NEWS_FEED[index % NEWS_FEED.length]?.thumbnail ?? THUMBNAIL_FALLBACK;
+}
+
+function toCategory(post: PostItem): NewsFeedItem["category"] {
+  const source = post.feed_meta?.source ?? "";
+  if (source.includes("tournament")) return "esports";
+  if (source.includes("stream")) return "streams";
+  if (source.includes("patch") || source.includes("update")) return "patches";
+  return "fyp";
+}
+
+function mapPostToNewsItem(post: PostItem, index: number): NewsFeedItem {
+  const signals = post.feed_meta?.signals ?? {};
+  const title = (post.title ?? "").trim() || "Untitled";
+  const description = post.description ?? "";
+  const hashtags = Array.from(
+    new Set(
+      (description.match(/#([\w-]+)/g) ?? [])
+        .map((value) => value.replace("#", "").trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+
+  return {
+    id: String(post.id),
+    type: "video",
+    title,
+    author: getPostAuthor(post),
+    date: toDisplayDate(post.created_at),
+    game: post.game?.trim() || "General",
+    hashtags: hashtags.length ? hashtags.slice(0, 3) : ["feed"],
+    duration: NEWS_FEED[index % NEWS_FEED.length]?.duration,
+    thumbnail: toThumbnail(post, index),
+    likes: Number(signals.likes ?? 0),
+    comments: Number(signals.comments ?? 0),
+    shares: Number(signals.shares ?? 0),
+    category: toCategory(post),
+  };
+}
+
+function createLoop(seed: NewsFeedItem[], loopIndex: number): FeedEntry[] {
+  return seed.map((item, index) => ({
     ...item,
     feedId: `${item.id}-${loopIndex}-${index}`,
   }));
 }
 
-function createInitialFeed(): FeedEntry[] {
+function createInitialFeed(seed: NewsFeedItem[]): FeedEntry[] {
   const items: FeedEntry[] = [];
   for (let loop = 0; loop < INITIAL_LOOP_COUNT; loop += 1) {
-    items.push(...createLoop(loop));
+    items.push(...createLoop(seed, loop));
   }
   return items;
 }
@@ -98,11 +174,14 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 
 export default function NewsScreen() {
   const router = useRouter();
+  const { accessToken } = useAuth();
   const params = useLocalSearchParams<{ focusVideoId?: string; focusFrom?: string }>();
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
-  const initialFeed = useMemo(() => createInitialFeed(), []);
+  const initialFeed = useMemo(() => createInitialFeed(NEWS_FEED), []);
+  const [isFeedLoading, setIsFeedLoading] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
 
   const { value: feedItems, setValue: setFeedItems } = useLocalCache<FeedEntry[]>(
     "news:cached-feed-items",
@@ -139,6 +218,7 @@ export default function NewsScreen() {
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
+  const feedSeedRef = useRef<NewsFeedItem[]>(NEWS_FEED);
   const appendLockRef = useRef(false);
   const handledFocusVideoIdRef = useRef<string | null>(null);
   const feedListRef = useRef<FlatList<FeedEntry> | null>(null);
@@ -214,17 +294,52 @@ export default function NewsScreen() {
   };
 
   const appendFeedItems = useCallback(() => {
+    if (feedSeedRef.current.length === 0) return;
     if (appendLockRef.current) return;
 
     appendLockRef.current = true;
     const loop = nextLoopRef.current;
-    setFeedItems((prev) => [...prev, ...createLoop(loop)]);
+    setFeedItems((prev) => [...prev, ...createLoop(feedSeedRef.current, loop)]);
     nextLoopRef.current = loop + 1;
 
     requestAnimationFrame(() => {
       appendLockRef.current = false;
     });
   }, []);
+
+  const fetchBackendFeed = useCallback(async () => {
+    if (!accessToken) {
+      setIsFeedLoading(false);
+      setFeedError("Sign in to load your feed.");
+      return;
+    }
+
+    setIsFeedLoading(true);
+    setFeedError(null);
+
+    try {
+      const posts = await listFeed(accessToken);
+      const mapped = posts.map(mapPostToNewsItem);
+      feedSeedRef.current = mapped;
+
+      if (!mapped.length) {
+        nextLoopRef.current = 0;
+        setFeedItems([]);
+        return;
+      }
+
+      nextLoopRef.current = INITIAL_LOOP_COUNT;
+      setFeedItems(createInitialFeed(mapped));
+    } catch (error) {
+      setFeedError(error instanceof Error ? error.message : "Unable to load feed.");
+    } finally {
+      setIsFeedLoading(false);
+    }
+  }, [accessToken, setFeedItems]);
+
+  useEffect(() => {
+    void fetchBackendFeed();
+  }, [fetchBackendFeed]);
 
   const openChat = (item: FeedEntry) => {
     setCommentDraft("");
@@ -308,6 +423,25 @@ export default function NewsScreen() {
         }
       }}
     >
+      {isFeedLoading && feedItems.length === 0 ? (
+        <View style={styles.centerState}>
+          <Text style={styles.stateTitle}>Loading feed...</Text>
+          <Text style={styles.stateText}>Fetching your latest posts and recommendations.</Text>
+        </View>
+      ) : null}
+
+      {!isFeedLoading && feedItems.length === 0 ? (
+        <View style={styles.centerState}>
+          <Text style={styles.stateTitle}>No feed posts yet</Text>
+          <Text style={styles.stateText}>
+            {feedError || "Your feed is empty right now. Pull in content by creating posts first."}
+          </Text>
+          <Button variant="primary" onPress={() => void fetchBackendFeed()} size="medium">
+            Retry
+          </Button>
+        </View>
+      ) : null}
+
       <FlatList
         ref={feedListRef}
         data={feedItems}
@@ -451,7 +585,7 @@ export default function NewsScreen() {
               >
                 <View style={styles.authorRow}>
                   <ExpoImage
-                    source={{ uri: AUTHOR_AVATARS[item.author] }}
+                    source={{ uri: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR }}
                     style={styles.avatar}
                     contentFit="cover"
                     cachePolicy="memory-disk"
@@ -464,7 +598,7 @@ export default function NewsScreen() {
                 </View>
                 <Text style={styles.title}>{truncateFeedTitle(item.title)}</Text>
                 <Text style={styles.description}>
-                  {item.game} · {item.category.toUpperCase()} · #{item.hashtags[0]}
+                  {item.game} · {item.category.toUpperCase()} · #{item.hashtags[0] || "feed"}
                 </Text>
               </View>
             </View>
@@ -633,6 +767,28 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  centerState: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+    backgroundColor: colors.background,
+  },
+  stateTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  stateText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+    maxWidth: 320,
   },
   feedItem: {
     width: "100%",

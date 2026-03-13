@@ -9,6 +9,7 @@ import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { useAuth } from "../../src/context/AuthContext";
+import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { Screen } from "../../src/components/ui/Screen";
 import { useResponsive } from "../../src/lib/responsive";
@@ -43,6 +44,16 @@ export default function EditProfileScreen() {
   const safeBack = useSafeBackNavigation();
   const responsive = useResponsive();
   const { accessToken, user } = useAuth();
+  const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;
+  const {
+    value: cachedProfile,
+    setValue: setCachedProfile,
+    hydrated: profileCacheHydrated,
+  } = useLocalCache(profileCacheKey, {
+    bio: "",
+    avatar_url: "",
+    favorite_games: [] as string[],
+  });
   const [username] = useState(user?.username ?? "Player");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
@@ -50,6 +61,20 @@ export default function EditProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!profileCacheHydrated) return;
+    setBio(cachedProfile.bio || "");
+    setSelectedGames(cachedProfile.favorite_games || []);
+    setAvatarUrl(cachedProfile.avatar_url || "");
+    if (
+      cachedProfile.bio ||
+      cachedProfile.avatar_url ||
+      (cachedProfile.favorite_games && cachedProfile.favorite_games.length > 0)
+    ) {
+      setLoading(false);
+    }
+  }, [profileCacheHydrated, cachedProfile.bio, cachedProfile.avatar_url, cachedProfile.favorite_games]);
 
   useEffect(() => {
     let active = true;
@@ -68,6 +93,7 @@ export default function EditProfileScreen() {
         setBio(profile.bio || "");
         setSelectedGames(profile.favorite_games || []);
         setAvatarUrl(profile.avatar_url || "");
+        setCachedProfile(profile);
         setError("");
       } catch (fetchError) {
         if (!active) return;
@@ -81,7 +107,7 @@ export default function EditProfileScreen() {
     return () => {
       active = false;
     };
-  }, [accessToken]);
+  }, [accessToken, profileCacheKey, setCachedProfile]);
 
   const handleGameToggle = (game: string) => {
     setSelectedGames((prev) =>
@@ -100,11 +126,12 @@ export default function EditProfileScreen() {
     setSaving(true);
     setError("");
     try {
-      await updateMyProfile(accessToken, {
+      const updatedProfile = await updateMyProfile(accessToken, {
         bio: bio.trim(),
         avatar_url: avatarUrl.trim(),
         favorite_games: selectedGames,
       });
+      setCachedProfile(updatedProfile);
       safeBack();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save profile.");

@@ -65,6 +65,8 @@ export function useLocalCache<T>(key: string, initialValue: T) {
 
   useEffect(() => {
     let active = true;
+    setHydrated(false);
+    setValue(initialValue);
 
     const loadCachedValue = async () => {
       try {

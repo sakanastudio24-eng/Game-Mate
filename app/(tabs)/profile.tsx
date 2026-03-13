@@ -10,6 +10,7 @@ import { getMyProfile, type ProfileData } from "../../services/profile";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { useAuth } from "../../src/context/AuthContext";
+import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { MY_GROUPS } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useResponsive } from "../../src/lib/responsive";
@@ -149,11 +150,15 @@ export default function ProfileScreen() {
   const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
     "videos",
   );
-  const [profileData, setProfileData] = useState<ProfileData>({
-    bio: "",
-    avatar_url: "",
-    favorite_games: [],
-  });
+  const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;
+  const { value: profileData, setValue: setProfileData } = useLocalCache<ProfileData>(
+    profileCacheKey,
+    {
+      bio: "",
+      avatar_url: "",
+      favorite_games: [],
+    },
+  );
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("online");
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
 

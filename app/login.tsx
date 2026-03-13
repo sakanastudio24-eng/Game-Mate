@@ -13,11 +13,10 @@ import { colors, spacing } from "../src/lib/theme";
 export default function LoginScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken, loading, authError, authSuccess, loginUser, clearAuthMessages } = useAuth();
+  const { accessToken, loading, loginUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -31,14 +30,11 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!canSubmit || submitting) return;
 
-    clearAuthMessages();
     setErrorMessage(null);
-    setSuccessMessage(null);
     setSubmitting(true);
 
     try {
       await loginUser(email.trim(), password);
-      setSuccessMessage("Sign in successful. Redirecting...");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Unable to sign in.");
     } finally {
@@ -61,7 +57,7 @@ export default function LoginScreen() {
         <Card style={styles.card}>
           <Text style={[styles.title, { fontSize: responsive.titleSize }]}>Welcome Back</Text>
           <Text style={[styles.subtitle, { fontSize: responsive.bodySmallSize }]}>
-            Sign in with your GameMate account to continue.
+            Sign in with email and password.
           </Text>
 
           <Input
@@ -90,12 +86,7 @@ export default function LoginScreen() {
             accessibilityLabel="Password"
           />
 
-          {errorMessage || authError ? (
-            <Text style={styles.errorText}>{errorMessage || authError}</Text>
-          ) : null}
-          {successMessage || authSuccess ? (
-            <Text style={styles.successText}>{successMessage || authSuccess}</Text>
-          ) : null}
+          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
           {submitting ? <Text style={styles.pendingText}>Signing in...</Text> : null}
 
           <Button
@@ -143,11 +134,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.destructive,
-    fontSize: 13,
-    marginBottom: spacing.sm,
-  },
-  successText: {
-    color: colors.primary,
     fontSize: 13,
     marginBottom: spacing.sm,
   },

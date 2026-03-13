@@ -63,14 +63,20 @@ export async function apiRequest(
     : await response.text();
 
   if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error("Session expired. Please sign in again.");
-    }
-    throw new Error(
+    const resolvedErrorMessage =
       typeof data === "string"
         ? data
-        : data?.message || data?.detail || "Request failed",
-    );
+        : data?.message || data?.detail || "Request failed";
+
+    if (response.status === 401) {
+      // Login requests should surface credential errors, token-authenticated requests should
+      // show a session-expired message.
+      if (token) {
+        throw new Error("Session expired. Please sign in again.");
+      }
+      throw new Error(resolvedErrorMessage || "Invalid email or password.");
+    }
+    throw new Error(resolvedErrorMessage);
   }
 
   return data;

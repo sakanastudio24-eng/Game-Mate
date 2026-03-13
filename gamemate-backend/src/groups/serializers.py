@@ -9,8 +9,8 @@ def _validate_group_name(value: str) -> str:
     value = value.strip()
     if len(value) < 3:
         raise serializers.ValidationError("Group name must be at least 3 characters.")
-    if len(value) > 80:
-        raise serializers.ValidationError("Group name must be under 80 characters.")
+    if len(value) > 255:
+        raise serializers.ValidationError("Group name cannot exceed 255 characters.")
     return value
 
 
@@ -18,8 +18,8 @@ def _validate_group_name(value: str) -> str:
 def _validate_group_description(value: str) -> str:
     """Normalize and validate group description bounds."""
     value = value.strip()
-    if len(value) > 500:
-        raise serializers.ValidationError("Description must be under 500 characters.")
+    if len(value) > 1000:
+        raise serializers.ValidationError("Description cannot exceed 1000 characters.")
     return value
 
 

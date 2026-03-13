@@ -115,7 +115,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         """Delete a group and return a stable success message payload."""
         instance = self.get_object()
         self.perform_destroy(instance)
-        return Response({"success": True, "message": "Group deleted."}, status=status.HTTP_200_OK)
+        return Response({"message": "Group deleted."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="join")
     def join(self, request, pk=None):
@@ -124,7 +124,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if group.is_private:
             return Response(
-                {"success": False, "message": "This group is private. Invite required."},
+                {"message": "This group is private. Invite required."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -136,11 +136,11 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if not created:
             return Response(
-                {"success": True, "message": "Already a member."},
+                {"message": "Already a member."},
                 status=status.HTTP_200_OK,
             )
 
-        return Response({"success": True, "message": "Joined."}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Joined."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
     def leave(self, request, pk=None):
@@ -154,7 +154,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if not membership:
             return Response(
-                {"success": False, "message": "You are not a member."},
+                {"message": "You are not a member."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -163,7 +163,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         membership.delete()
         return Response(
-            {"success": True, "message": "Group left."},
+            {"message": "Group left."},
             status=status.HTTP_200_OK,
         )
 
@@ -174,7 +174,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if group.owner != request.user:
             return Response(
-                {"success": False, "message": "Only the owner can invite users."},
+                {"message": "Only the owner can invite users."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -187,13 +187,13 @@ class GroupViewSet(viewsets.ModelViewSet):
             user = User.objects.get(Q(username=identifier) | Q(email__iexact=identifier))
         except User.DoesNotExist:
             return Response(
-                {"success": False, "message": "User not found."},
+                {"message": "User not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         if GroupMembership.objects.filter(group=group, user=user).exists():
             return Response(
-                {"success": True, "message": "User already in group."},
+                {"message": "User already in group."},
                 status=status.HTTP_200_OK,
             )
 
@@ -203,7 +203,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             role="member",
         )
 
-        return Response({"success": True, "message": "User invited successfully."}, status=status.HTTP_200_OK)
+        return Response({"message": "User invited successfully."}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])
     def promote(self, request, pk=None):
@@ -212,7 +212,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if group.owner != request.user:
             return Response(
-                {"success": False, "message": "Only owner can promote members."},
+                {"message": "Only owner can promote members."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -222,7 +222,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response(
-                {"success": False, "message": "User not found."},
+                {"message": "User not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -233,7 +233,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
         if not membership:
             return Response(
-                {"success": False, "message": "User not in group."},
+                {"message": "User not in group."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -243,7 +243,7 @@ class GroupViewSet(viewsets.ModelViewSet):
         membership.role = "admin"
         membership.save()
 
-        return Response({"success": True, "message": "User promoted to admin."})
+        return Response({"message": "User promoted to admin."})
 
     @action(detail=True, methods=["get"], url_path="members")
     def members(self, request, pk=None):

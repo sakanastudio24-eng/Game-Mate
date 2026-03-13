@@ -236,7 +236,7 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 export default function NewsScreen() {
   const router = useRouter();
   const { accessToken } = useAuth();
-  const params = useLocalSearchParams<{ focusVideoId?: string; focusFrom?: string }>();
+  const params = useLocalSearchParams<{ focusVideoId?: string; focusFrom?: string; refresh?: string }>();
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -296,6 +296,7 @@ export default function NewsScreen() {
   const feedSeedRef = useRef<FeedSeed[]>(initialFeedSeed);
   const appendLockRef = useRef(false);
   const handledFocusVideoIdRef = useRef<string | null>(null);
+  const handledRefreshKeyRef = useRef<string | null>(null);
   const feedListRef = useRef<FlatList<FeedEntry> | null>(null);
   const commentsListRef = useRef<FlatList<CommentItem> | null>(null);
 
@@ -307,6 +308,7 @@ export default function NewsScreen() {
   const actionRailRight = Math.max(8, Math.round(horizontalPadding * 0.4));
   const bottomMetaOffset = bottomSafeInset + 10;
   const focusVideoId = typeof params.focusVideoId === "string" ? params.focusVideoId : "";
+  const refreshParam = typeof params.refresh === "string" ? params.refresh : "";
 
   const activeComments = useMemo(() => {
     if (!commentsTarget) return [];
@@ -475,6 +477,14 @@ export default function NewsScreen() {
   useEffect(() => {
     void fetchBackendFeed();
   }, [fetchBackendFeed]);
+
+  useEffect(() => {
+    if (refreshParam !== "1") return;
+    const refreshKey = `${refreshParam}:${focusVideoId || "none"}`;
+    if (handledRefreshKeyRef.current === refreshKey) return;
+    handledRefreshKeyRef.current = refreshKey;
+    void fetchBackendFeed("refresh");
+  }, [fetchBackendFeed, focusVideoId, refreshParam]);
 
   const openChat = (item: FeedEntry) => {
     setCommentDraft("");

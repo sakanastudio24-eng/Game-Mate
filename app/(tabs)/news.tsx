@@ -3,6 +3,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   KeyboardAvoidingView,
@@ -16,6 +17,7 @@ import {
 import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
+  explainFeedPost,
   likePost,
   listFeedPage,
   sharePost,
@@ -56,6 +58,11 @@ interface CommentItem {
   message: string;
 }
 
+interface ExplainPayload {
+  reasons?: string[];
+  signals?: Record<string, number>;
+}
+
 const INITIAL_LOOP_COUNT = 3;
 const COMMENT_AVATARS: Record<string, string> = {
   Nova: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
@@ -78,6 +85,15 @@ const FEED_REASON_LABELS: Record<string, string> = {
   content_diversity: "Diversified content mix",
   freshness_boost: "Fresh content",
 };
+
+function formatReasonLabel(reason: string): string {
+  if (FEED_REASON_LABELS[reason]) return FEED_REASON_LABELS[reason];
+  return reason
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 function getPostAuthor(post: PostItem): string {
   if (typeof post.creator === "string" && post.creator.trim()) {
@@ -258,6 +274,11 @@ export default function NewsScreen() {
   } = useOptimisticToggle([]);
   const [activePostMenu, setActivePostMenu] = useState<FeedEntry | null>(null);
   const [commentsTarget, setCommentsTarget] = useState<FeedEntry | null>(null);
+  const [whyTarget, setWhyTarget] = useState<FeedEntry | null>(null);
+  const [whyLoading, setWhyLoading] = useState(false);
+  const [whyError, setWhyError] = useState<string | null>(null);
+  const [whyReasons, setWhyReasons] = useState<string[]>([]);
+  const [whySignals, setWhySignals] = useState<Record<string, number>>({});
   const [commentThreads, setCommentThreads] = useState<Record<string, CommentItem[]>>({});
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [commentDraft, setCommentDraft] = useState("");
@@ -555,6 +576,42 @@ export default function NewsScreen() {
 
   const handleReportPost = (item: FeedEntry) => {
     Alert.alert("Report Submitted", `Thanks. "${item.title}" was reported.`);
+  };
+
+  const openWhyThis = async (item: FeedEntry) => {
+    setWhyTarget(item);
+    setWhyLoading(true);
+    setWhyError(null);
+    setWhySignals({});
+
+    if (!accessToken || !item.backendPostId) {
+      setWhyReasons(item.whyReasons && item.whyReasons.length ? item.whyReasons : ["Recently posted"]);
+      setWhyLoading(false);
+      return;
+    }
+
+    try {
+      const payload = await explainFeedPost(accessToken, item.backendPostId);
+      const data =
+        payload && typeof payload === "object" && "data" in payload
+          ? ((payload as { data?: ExplainPayload }).data ?? {})
+          : (payload as ExplainPayload);
+      const reasons = (data.reasons ?? []).map(formatReasonLabel);
+      setWhyReasons(reasons.length ? reasons : ["Recently posted"]);
+      setWhySignals(data.signals ?? {});
+    } catch (error) {
+      setWhyError(error instanceof Error ? error.message : "Unable to load explain details.");
+      setWhyReasons(item.whyReasons && item.whyReasons.length ? item.whyReasons : ["Recently posted"]);
+    } finally {
+      setWhyLoading(false);
+    }
+  };
+
+  const closeWhyThis = () => {
+    setWhyTarget(null);
+    setWhyError(null);
+    setWhyReasons([]);
+    setWhySignals({});
   };
 
   return (
@@ -971,6 +1028,7 @@ export default function NewsScreen() {
           ]}
         />
       ) : null}
+
     </View>
   );
 }

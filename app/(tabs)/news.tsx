@@ -865,7 +865,23 @@ export default function NewsScreen() {
                   },
                 ]}
               >
-                <View style={styles.authorRow}>
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/user-profile",
+                      params: {
+                        userId: String(item.id),
+                        name: item.author,
+                        avatar: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR,
+                        status: "online",
+                        currentGame: item.game,
+                      },
+                    })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open profile for ${item.author}`}
+                  style={({ pressed }) => [styles.authorRow, pressed && styles.pressed]}
+                >
                   <ExpoImage
                     source={{ uri: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR }}
                     style={styles.avatar}
@@ -877,7 +893,7 @@ export default function NewsScreen() {
                     <Text style={styles.author}>{item.author}</Text>
                     <Text style={styles.date}>{item.date}</Text>
                   </View>
-                </View>
+                </Pressable>
                 <Text style={styles.title}>{truncateFeedTitle(item.title)}</Text>
                 <Text style={styles.description}>
                   {item.caption || `${item.game} · ${item.category.toUpperCase()} · #${item.hashtags[0] || "feed"}`}

@@ -103,7 +103,7 @@ interface GroupDiscoverCardProps {
   touchTargetMin: number;
   buttonHeightSmall: number;
   onOpenGroupDetail: (groupId: string, groupName: string) => void;
-  onToggleJoin: (groupId: string, groupName: string) => void;
+  onToggleJoin: (groupId: string, groupName: string, isPrivate: boolean) => void;
   onOpenGroupOptions: (groupId: string, groupName: string, game: string) => void;
 }
 
@@ -129,9 +129,9 @@ const GroupDiscoverCard = memo(function GroupDiscoverCard({
   const handleJoinToggle = useCallback(
     (event: any) => {
       event.stopPropagation();
-      onToggleJoin(group.id, group.name);
+      onToggleJoin(group.id, group.name, group.isPrivate);
     },
-    [group.id, group.name, onToggleJoin],
+    [group.id, group.isPrivate, group.name, onToggleJoin],
   );
 
   const handleOpenOptions = useCallback(
@@ -373,7 +373,7 @@ export default function GroupsScreen() {
 
   const totalOnline = apiGroups.reduce((total, group) => total + group.online, 0);
 
-  const toggleJoin = useCallback(async (id: string, groupName: string) => {
+  const toggleJoin = useCallback(async (id: string, groupName: string, isPrivate: boolean) => {
     if (!accessToken) {
       showToast({ message: "Sign in to manage group membership." });
       return;
@@ -395,6 +395,10 @@ export default function GroupsScreen() {
         setJoinedGroupIds((prev) => prev.filter((item) => item !== id));
         showToast({ message: `${groupName} left` });
       } else {
+        if (isPrivate) {
+          showToast({ message: "This group is private. Invite required." });
+          return;
+        }
         await joinGroup(accessToken, groupId);
         setJoinedGroupIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
         showToast({

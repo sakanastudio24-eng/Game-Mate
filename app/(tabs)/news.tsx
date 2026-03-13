@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { listFeed, type PostItem } from "../../services/posts";
+import { listFeedPage, type PostItem } from "../../services/posts";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { Button } from "../../src/components/ui/Button";
@@ -28,7 +28,12 @@ import { useOptimisticToggle } from "../../src/lib/hooks/useOptimisticToggle";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-interface FeedEntry extends NewsFeedItem {
+interface FeedSeed extends NewsFeedItem {
+  caption?: string;
+  source?: string;
+}
+
+interface FeedEntry extends FeedSeed {
   feedId: string;
 }
 
@@ -92,10 +97,10 @@ function toCategory(post: PostItem): NewsFeedItem["category"] {
   return "fyp";
 }
 
-function mapPostToNewsItem(post: PostItem, index: number): NewsFeedItem {
+function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
   const signals = post.feed_meta?.signals ?? {};
   const title = (post.title ?? "").trim() || "Untitled";
-  const description = post.description ?? "";
+  const description = (post.description ?? "").trim();
   const hashtags = Array.from(
     new Set(
       (description.match(/#([\w-]+)/g) ?? [])
@@ -118,20 +123,22 @@ function mapPostToNewsItem(post: PostItem, index: number): NewsFeedItem {
     comments: Number(signals.comments ?? 0),
     shares: Number(signals.shares ?? 0),
     category: toCategory(post),
+    caption: description,
+    source: post.feed_meta?.source,
   };
 }
 
-function createLoop(seed: NewsFeedItem[], loopIndex: number): FeedEntry[] {
+function createLoop(seed: FeedSeed[], loopIndex: number, loopLabel = "loop"): FeedEntry[] {
   return seed.map((item, index) => ({
     ...item,
-    feedId: `${item.id}-${loopIndex}-${index}`,
+    feedId: `${item.id}-${loopLabel}-${loopIndex}-${index}`,
   }));
 }
 
-function createInitialFeed(seed: NewsFeedItem[]): FeedEntry[] {
+function createInitialFeed(seed: FeedSeed[]): FeedEntry[] {
   const items: FeedEntry[] = [];
   for (let loop = 0; loop < INITIAL_LOOP_COUNT; loop += 1) {
-    items.push(...createLoop(seed, loop));
+    items.push(...createLoop(seed, loop, "loop"));
   }
   return items;
 }
@@ -179,8 +186,14 @@ export default function NewsScreen() {
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
-  const initialFeed = useMemo(() => createInitialFeed(NEWS_FEED), []);
+  const initialFeedSeed = useMemo(
+    () => NEWS_FEED.map((item) => ({ ...item, caption: "", source: "seed" })),
+    [],
+  );
+  const initialFeed = useMemo(() => createInitialFeed(initialFeedSeed), [initialFeedSeed]);
   const [isFeedLoading, setIsFeedLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPaginating, setIsPaginating] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
 
   const { value: feedItems, setValue: setFeedItems } = useLocalCache<FeedEntry[]>(
@@ -218,7 +231,10 @@ export default function NewsScreen() {
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
-  const feedSeedRef = useRef<NewsFeedItem[]>(NEWS_FEED);
+  const nextPageUrlRef = useRef<string | null>(null);
+  const pageIndexRef = useRef(1);
+  const paginationEnabledRef = useRef(false);
+  const feedSeedRef = useRef<FeedSeed[]>(initialFeedSeed);
   const appendLockRef = useRef(false);
   const handledFocusVideoIdRef = useRef<string | null>(null);
   const feedListRef = useRef<FlatList<FeedEntry> | null>(null);
@@ -294,35 +310,78 @@ export default function NewsScreen() {
   };
 
   const appendFeedItems = useCallback(() => {
-    if (feedSeedRef.current.length === 0) return;
     if (appendLockRef.current) return;
 
+    // If backend pagination is available, use it first.
+    if (paginationEnabledRef.current && nextPageUrlRef.current && accessToken) {
+      appendLockRef.current = true;
+      setIsPaginating(true);
+      setFeedError(null);
+
+      void listFeedPage(accessToken, nextPageUrlRef.current)
+        .then((page) => {
+          const mapped = page.results.map(mapPostToNewsItem);
+          nextPageUrlRef.current = page.next;
+          paginationEnabledRef.current = page.paginationEnabled;
+          const pageKey = pageIndexRef.current;
+          pageIndexRef.current += 1;
+          setFeedItems((prev) => [...prev, ...createLoop(mapped, pageKey, "page")]);
+        })
+        .catch((error) => {
+          setFeedError(error instanceof Error ? error.message : "Unable to load more posts.");
+        })
+        .finally(() => {
+          appendLockRef.current = false;
+          setIsPaginating(false);
+        });
+      return;
+    }
+
+    // Fallback: repeat current seed in loop mode for infinite preview.
+    if (feedSeedRef.current.length === 0) return;
     appendLockRef.current = true;
     const loop = nextLoopRef.current;
-    setFeedItems((prev) => [...prev, ...createLoop(feedSeedRef.current, loop)]);
+    setFeedItems((prev) => [...prev, ...createLoop(feedSeedRef.current, loop, "loop")]);
     nextLoopRef.current = loop + 1;
 
     requestAnimationFrame(() => {
       appendLockRef.current = false;
     });
-  }, []);
+  }, [accessToken, setFeedItems]);
 
-  const fetchBackendFeed = useCallback(async () => {
+  const fetchBackendFeed = useCallback(async (mode: "initial" | "refresh" = "initial") => {
     if (!accessToken) {
       setIsFeedLoading(false);
       setFeedError("Sign in to load your feed.");
       return;
     }
 
-    setIsFeedLoading(true);
+    if (mode === "refresh") {
+      setIsRefreshing(true);
+    } else {
+      setIsFeedLoading(true);
+    }
     setFeedError(null);
 
     try {
-      const posts = await listFeed(accessToken);
+      const page = await listFeedPage(accessToken);
+      const posts = page.results;
       const mapped = posts.map(mapPostToNewsItem);
-      feedSeedRef.current = mapped;
 
-      if (!mapped.length) {
+      paginationEnabledRef.current = page.paginationEnabled;
+      nextPageUrlRef.current = page.next;
+      pageIndexRef.current = 1;
+
+      if (page.paginationEnabled) {
+        // Backend controls list size/order via pages.
+        feedSeedRef.current = mapped;
+        nextLoopRef.current = 1;
+        setFeedItems(createLoop(mapped, 0, "page"));
+        return;
+      }
+
+      feedSeedRef.current = mapped;
+      if (mapped.length === 0) {
         nextLoopRef.current = 0;
         setFeedItems([]);
         return;
@@ -333,7 +392,11 @@ export default function NewsScreen() {
     } catch (error) {
       setFeedError(error instanceof Error ? error.message : "Unable to load feed.");
     } finally {
-      setIsFeedLoading(false);
+      if (mode === "refresh") {
+        setIsRefreshing(false);
+      } else {
+        setIsFeedLoading(false);
+      }
     }
   }, [accessToken, setFeedItems]);
 
@@ -442,6 +505,22 @@ export default function NewsScreen() {
         </View>
       ) : null}
 
+      {!isFeedLoading && feedItems.length > 0 && feedError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText} numberOfLines={2}>
+            {feedError}
+          </Text>
+          <Pressable
+            onPress={() => void fetchBackendFeed("refresh")}
+            accessibilityRole="button"
+            accessibilityLabel="Retry feed refresh"
+            style={({ pressed }) => [styles.errorRetryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.errorRetryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       <FlatList
         ref={feedListRef}
         data={feedItems}
@@ -453,11 +532,22 @@ export default function NewsScreen() {
         showsVerticalScrollIndicator={false}
         onEndReachedThreshold={0.35}
         onEndReached={appendFeedItems}
+        refreshing={isRefreshing}
+        onRefresh={() => {
+          void fetchBackendFeed("refresh");
+        }}
         initialNumToRender={3}
         maxToRenderPerBatch={3}
         windowSize={4}
         updateCellsBatchingPeriod={50}
         removeClippedSubviews
+        ListFooterComponent={
+          isPaginating ? (
+            <View style={styles.paginationFooter}>
+              <Text style={styles.paginationFooterText}>Loading more...</Text>
+            </View>
+          ) : null
+        }
         getItemLayout={(_, index) => ({
           length: itemHeight,
           offset: itemHeight * index,
@@ -598,7 +688,7 @@ export default function NewsScreen() {
                 </View>
                 <Text style={styles.title}>{truncateFeedTitle(item.title)}</Text>
                 <Text style={styles.description}>
-                  {item.game} · {item.category.toUpperCase()} · #{item.hashtags[0] || "feed"}
+                  {item.caption || `${item.game} · ${item.category.toUpperCase()} · #${item.hashtags[0] || "feed"}`}
                 </Text>
               </View>
             </View>
@@ -789,6 +879,51 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: "center",
     maxWidth: 320,
+  },
+  errorBanner: {
+    position: "absolute",
+    top: 58,
+    left: spacing.md,
+    right: spacing.md,
+    zIndex: 30,
+    backgroundColor: "rgba(195,45,45,0.92)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+  },
+  errorBannerText: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  errorRetryButton: {
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderRadius: 999,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 6,
+  },
+  errorRetryText: {
+    color: "#1A1A1A",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  paginationFooter: {
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15,15,15,0.72)",
+  },
+  paginationFooterText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
   },
   feedItem: {
     width: "100%",

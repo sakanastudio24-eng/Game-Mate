@@ -12,6 +12,11 @@ export type ConnectionItem = {
   created_at: string;
 };
 
+export type PendingConnectionDirection = "incoming" | "outgoing";
+export type PendingConnectionItem = ConnectionItem & {
+  direction: PendingConnectionDirection;
+};
+
 function unwrapList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload as T[];
   if (payload && typeof payload === "object" && "results" in payload) {
@@ -31,4 +36,18 @@ export async function acceptConnectionRequest(token: string, connectionId: numbe
 export async function listConnections(token: string) {
   const payload = await apiRequest("/api/connections/friends/", { method: "GET" }, token);
   return unwrapList<ConnectionItem>(payload);
+}
+
+export async function listPendingConnectionRequests(token: string) {
+  try {
+    const payload = await apiRequest("/api/connections/requests/", { method: "GET" }, token);
+    return unwrapList<PendingConnectionItem>(payload);
+  } catch (error) {
+    // Keep UI functional against older backend builds without pending-requests endpoint.
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("404") || message.toLowerCase().includes("not found")) {
+      return [];
+    }
+    throw error;
+  }
 }

@@ -1,10 +1,19 @@
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useMemo, useState } from "react";
-import { FlatList, Image, Pressable, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  acceptConnectionRequest,
+  listConnections,
+  listPendingConnectionRequests,
+  type ConnectionItem,
+  type PendingConnectionItem,
+} from "../../services/connections";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
+import { useToast } from "../../src/components/ui/ToastProvider";
+import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -35,6 +44,8 @@ interface MessageItem {
 interface RequestItem {
   id: string;
   userId: string;
+  connectionId: number;
+  direction: "incoming" | "outgoing";
   name: string;
   mutualFriends: number;
   games: string[];
@@ -182,6 +193,8 @@ const initialRequests: RequestItem[] = [
   {
     id: "r1",
     userId: "4",
+    connectionId: -1,
+    direction: "incoming",
     name: "NovaStrike",
     mutualFriends: 5,
     games: ["Overwatch 2", "CS2"],
@@ -191,6 +204,8 @@ const initialRequests: RequestItem[] = [
   {
     id: "r2",
     userId: "1",
+    connectionId: -2,
+    direction: "incoming",
     name: "ProGamer92",
     mutualFriends: 3,
     games: ["Valorant"],
@@ -202,26 +217,123 @@ const initialRequests: RequestItem[] = [
 export default function SocialScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const { accessToken, user } = useAuth();
+  const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const [activeTab, setActiveTab] = useState<SocialTab>("friends");
   const [search, setSearch] = useState("");
-  const [requests, setRequests] = useState<RequestItem[]>(initialRequests);
+  const [friends, setFriends] = useState<FriendItem[]>([]);
+  const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [isFriendsLoading, setIsFriendsLoading] = useState(false);
+  const [isRequestsLoading, setIsRequestsLoading] = useState(false);
+  const [acceptingRequestIds, setAcceptingRequestIds] = useState<Set<number>>(new Set());
+  const [socialError, setSocialError] = useState<string | null>(null);
   const profileAvatarSize = responsive.isSmallPhone ? 48 : responsive.isLargePhone ? 58 : 54;
   const actionCircleSize = Math.max(responsive.touchTargetMin, 42);
 
+  const createAvatarUrl = useCallback((name: string) => {
+    const encodedName = encodeURIComponent(name || "Player");
+    return `https://ui-avatars.com/api/?name=${encodedName}&background=1f2937&color=ffffff&size=128`;
+  }, []);
+
+  const toFriendItem = useCallback(
+    (connection: ConnectionItem): FriendItem => {
+      const selfUsername = String(user?.username ?? "");
+      const peerName =
+        connection.sender === selfUsername ? connection.receiver : connection.sender;
+      return {
+        id: `friend-${connection.id}`,
+        name: peerName,
+        statusText: "Connected",
+        level: 1,
+        online: false,
+        avatar: createAvatarUrl(peerName),
+      };
+    },
+    [createAvatarUrl, user?.username],
+  );
+
+  const toRequestItem = useCallback(
+    (item: PendingConnectionItem): RequestItem => {
+      const selfUsername = String(user?.username ?? "");
+      const direction =
+        item.direction ||
+        (item.receiver === selfUsername ? "incoming" : "outgoing");
+      const name = direction === "incoming" ? item.sender : item.receiver;
+      return {
+        id: `request-${item.id}`,
+        userId: name,
+        connectionId: item.id,
+        direction,
+        name,
+        mutualFriends: 0,
+        games: [direction === "incoming" ? "Incoming request" : "Pending approval"],
+        avatar: createAvatarUrl(name),
+      };
+    },
+    [createAvatarUrl, user?.username],
+  );
+
+  const loadFriends = useCallback(async () => {
+    if (!accessToken) {
+      setFriends([]);
+      setIsFriendsLoading(false);
+      return;
+    }
+    setIsFriendsLoading(true);
+    try {
+      const rows = await listConnections(accessToken);
+      setFriends(rows.map(toFriendItem));
+      setSocialError(null);
+    } catch (error) {
+      setFriends([]);
+      setSocialError(error instanceof Error ? error.message : "Unable to load friends.");
+    } finally {
+      setIsFriendsLoading(false);
+    }
+  }, [accessToken, toFriendItem]);
+
+  const loadPendingRequests = useCallback(async () => {
+    if (!accessToken) {
+      setRequests([]);
+      setIsRequestsLoading(false);
+      return;
+    }
+    setIsRequestsLoading(true);
+    try {
+      const rows = await listPendingConnectionRequests(accessToken);
+      setRequests(rows.map(toRequestItem));
+      setSocialError(null);
+    } catch (error) {
+      setRequests(initialRequests);
+      setSocialError(error instanceof Error ? error.message : "Unable to load requests.");
+    } finally {
+      setIsRequestsLoading(false);
+    }
+  }, [accessToken, toRequestItem]);
+
+  useEffect(() => {
+    void loadFriends();
+    void loadPendingRequests();
+  }, [loadFriends, loadPendingRequests]);
+
   const filteredOnline = useMemo(() => {
+    const source = friends.length > 0 || accessToken ? friends : onlineFriends;
     const q = search.trim().toLowerCase();
-    if (!q) return onlineFriends;
-    return onlineFriends.filter((friend) => friend.name.toLowerCase().includes(q));
-  }, [search]);
+    const online = source.filter((friend) => friend.online);
+    if (!q) return online;
+    return online.filter((friend) => friend.name.toLowerCase().includes(q));
+  }, [accessToken, friends, search]);
 
   const filteredOffline = useMemo(() => {
+    const source = friends.length > 0 || accessToken ? friends : offlineFriends;
     const q = search.trim().toLowerCase();
-    if (!q) return offlineFriends;
-    return offlineFriends.filter((friend) => friend.name.toLowerCase().includes(q));
-  }, [search]);
+    const offline = source.filter((friend) => !friend.online);
+    if (!q) return offline;
+    return offline.filter((friend) => friend.name.toLowerCase().includes(q));
+  }, [accessToken, friends, search]);
 
   const filteredMessages = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -239,12 +351,37 @@ export default function SocialScreen() {
     );
   }, [requests, search]);
 
-  const handleAcceptRequest = (requestId: string) => {
-    setRequests((prev) => prev.filter((request) => request.id !== requestId));
+  const handleAcceptRequest = async (requestId: string) => {
+    if (!accessToken) return;
+    const target = requests.find((request) => request.id === requestId);
+    if (!target) return;
+    if (target.direction !== "incoming") {
+      showToast({ message: "Only incoming requests can be accepted." });
+      return;
+    }
+
+    setAcceptingRequestIds((prev) => new Set(prev).add(target.connectionId));
+    try {
+      await acceptConnectionRequest(accessToken, target.connectionId);
+      setRequests((prev) => prev.filter((request) => request.id !== requestId));
+      showToast({ message: `Accepted ${target.name}` });
+      void loadFriends();
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to accept request right now.",
+      });
+    } finally {
+      setAcceptingRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(target.connectionId);
+        return next;
+      });
+    }
   };
 
   const handleDeclineRequest = (requestId: string) => {
     setRequests((prev) => prev.filter((request) => request.id !== requestId));
+    showToast({ message: "Request hidden for now." });
   };
 
   const searchPlaceholder =
@@ -377,6 +514,12 @@ export default function SocialScreen() {
       </AnimatedEntrance>
 
       {activeTab === "friends" && (
+        isFriendsLoading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.loadingText}>Loading friends...</Text>
+          </View>
+        ) : (
         <FlatList
           data={[...filteredOnline, ...filteredOffline]}
           keyExtractor={(item) => item.id}
@@ -497,6 +640,7 @@ export default function SocialScreen() {
           contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
           showsVerticalScrollIndicator={false}
         />
+        )
       )}
 
       {activeTab === "messages" && (
@@ -620,28 +764,40 @@ export default function SocialScreen() {
 
                   <View style={styles.requestActions}>
                     <Pressable
-                      onPress={() => handleAcceptRequest(item.id)}
+                      onPress={() => {
+                        void handleAcceptRequest(item.id);
+                      }}
                       accessibilityRole="button"
                       accessibilityLabel={`Accept request from ${item.name}`}
+                      disabled={item.direction !== "incoming" || acceptingRequestIds.has(item.connectionId)}
                       style={({ pressed }) => [
                         styles.acceptButton,
                         { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin },
+                        item.direction !== "incoming" ? styles.acceptButtonDisabled : undefined,
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Text style={styles.acceptText}>Accept</Text>
+                      <Text style={styles.acceptText}>
+                        {acceptingRequestIds.has(item.connectionId)
+                          ? "Accepting..."
+                          : item.direction === "incoming"
+                            ? "Accept"
+                            : "Pending"}
+                      </Text>
                     </Pressable>
                     <Pressable
                       onPress={() => handleDeclineRequest(item.id)}
                       accessibilityRole="button"
-                      accessibilityLabel={`Decline request from ${item.name}`}
+                      accessibilityLabel={`Hide request from ${item.name}`}
                       style={({ pressed }) => [
                         styles.declineButton,
                         { minHeight: responsive.buttonHeightSmall, minWidth: responsive.touchTargetMin },
                         pressed && styles.pressed,
                       ]}
                     >
-                      <Text style={styles.declineText}>Decline</Text>
+                      <Text style={styles.declineText}>
+                        {item.direction === "incoming" ? "Later" : "Hide"}
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -649,15 +805,27 @@ export default function SocialScreen() {
             </AnimatedEntrance>
           )}
           ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No pending requests</Text>
-              <Text style={styles.emptyCopy}>New friend invites will appear here.</Text>
-            </View>
+            isRequestsLoading ? (
+              <View style={styles.loadingState}>
+                <ActivityIndicator color={colors.primary} />
+                <Text style={styles.loadingText}>Loading requests...</Text>
+              </View>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>No pending requests</Text>
+                <Text style={styles.emptyCopy}>New friend invites will appear here.</Text>
+              </View>
+            )
           }
           contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
           showsVerticalScrollIndicator={false}
         />
       )}
+      {socialError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorText}>{socialError}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -781,6 +949,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 110,
+  },
+  loadingState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  loadingText: {
+    color: colors.textSecondary,
+    fontSize: 13,
   },
   friendCard: {
     backgroundColor: "#242424",
@@ -967,6 +1145,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: spacing.sm,
   },
+  acceptButtonDisabled: {
+    backgroundColor: "#454545",
+  },
   acceptText: {
     color: "#1A1A1A",
     fontWeight: "800",
@@ -996,6 +1177,24 @@ const styles = StyleSheet.create({
   emptyCopy: {
     marginTop: 4,
     color: colors.textSecondary,
+  },
+  errorBanner: {
+    position: "absolute",
+    left: spacing.md,
+    right: spacing.md,
+    bottom: spacing.md,
+    backgroundColor: "#2A1D1D",
+    borderWidth: 1,
+    borderColor: colors.destructive,
+    borderRadius: 10,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  errorText: {
+    color: colors.destructive,
+    textAlign: "center",
+    fontWeight: "600",
+    fontSize: 12,
   },
   pressed: {
     opacity: 0.85,

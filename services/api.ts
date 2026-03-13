@@ -63,6 +63,9 @@ export async function apiRequest(
     : await response.text();
 
   if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("Session expired. Please sign in again.");
+    }
     throw new Error(
       typeof data === "string"
         ? data

@@ -14,7 +14,6 @@
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "usesCleartextTraffic": true,
       "package": "com.zech1v1.GameMate"
     },
     "web": {
@@ -31,7 +30,8 @@
           "project": "javascript-nextjs",
           "organization": "zwardstudio"
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true

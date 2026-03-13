@@ -734,6 +734,16 @@ export default function NewsScreen() {
                   >
                     <MaterialCommunityIcons name="magnify" size={16} color="#1A1A1A" />
                   </Pressable>
+                  <Pressable
+                    onPress={() => {
+                      void openWhyThis(item);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Why this post appeared: ${item.title}`}
+                    style={({ pressed }) => [styles.infoButton, pressed && styles.pressed]}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={16} color="#1A1A1A" />
+                  </Pressable>
                   {item.duration ? (
                     <View style={styles.durationBadge}>
                       <MaterialCommunityIcons name="play" size={12} color={colors.text} />
@@ -960,6 +970,14 @@ export default function NewsScreen() {
           onClose={() => setActivePostMenu(null)}
           options={[
             {
+              id: "why",
+              label: "Why this appeared",
+              icon: "information-outline",
+              onPress: () => {
+                void openWhyThis(activePostMenu);
+              },
+            },
+            {
               id: "share",
               label: "Share",
               icon: "share-variant-outline",
@@ -1140,6 +1158,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   advisorButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    width: 34,
+    height: 34,
+  },
+  infoButton: {
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,

@@ -2,11 +2,14 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Searchbar, Text } from "react-native-paper";
+import { sendConnectionRequest } from "../../services/connections";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useToast } from "../../src/components/ui/ToastProvider";
+import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -25,9 +28,12 @@ interface PlayerSearchResult {
 
 export default function SearchPlayersScreen() {
   const responsive = useResponsive();
+  const { accessToken } = useAuth();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [addedPlayers, setAddedPlayers] = useState<Set<string>>(new Set());
+  const [sendingPlayerIds, setSendingPlayerIds] = useState<Set<string>>(new Set());
 
   const allGenres = ["FPS", "RPG", "Strategy", "Sports", "Fighting", "MMO"];
 
@@ -78,16 +84,35 @@ export default function SearchPlayersScreen() {
     });
   }, [searchQuery, selectedGenres]);
 
-  const toggleAddPlayer = (playerId: string) => {
-    setAddedPlayers((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(playerId)) {
-        newSet.delete(playerId);
-      } else {
-        newSet.add(playerId);
-      }
-      return newSet;
-    });
+  const handleAddPlayer = async (playerId: string, playerName: string) => {
+    if (addedPlayers.has(playerId) || sendingPlayerIds.has(playerId)) return;
+    if (!accessToken) {
+      showToast({ message: "Sign in to send requests." });
+      return;
+    }
+
+    const numericId = Number(playerId);
+    if (!Number.isFinite(numericId)) {
+      showToast({ message: "Invalid player id." });
+      return;
+    }
+
+    setSendingPlayerIds((prev) => new Set(prev).add(playerId));
+    try {
+      await sendConnectionRequest(accessToken, numericId);
+      setAddedPlayers((prev) => new Set(prev).add(playerId));
+      showToast({ message: `Request sent to ${playerName}` });
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "Unable to send request right now.",
+      });
+    } finally {
+      setSendingPlayerIds((prev) => {
+        const next = new Set(prev);
+        next.delete(playerId);
+        return next;
+      });
+    }
   };
 
   const renderPlayerCard = (player: PlayerSearchResult) => (
@@ -116,9 +141,18 @@ export default function SearchPlayersScreen() {
 
         <Button
           mode={addedPlayers.has(player.id) ? "contained" : "outlined"}
-          onPress={() => toggleAddPlayer(player.id)}
+          onPress={() => {
+            void handleAddPlayer(player.id, player.name);
+          }}
           size="small"
-          label={addedPlayers.has(player.id) ? "Added" : "Add"}
+          disabled={addedPlayers.has(player.id) || sendingPlayerIds.has(player.id)}
+          label={
+            sendingPlayerIds.has(player.id)
+              ? "Sending..."
+              : addedPlayers.has(player.id)
+                ? "Requested"
+                : "Add"
+          }
         />
       </View>
 

@@ -80,3 +80,27 @@ export async function getGroupMembers(token: string, groupId: number) {
   const payload = await apiRequest(`/api/groups/${groupId}/members/`, { method: "GET" }, token);
   return unwrapResults<GroupMember>(payload);
 }
+
+export async function inviteGroupUser(token: string, groupId: number, usernameOrEmail: string) {
+  const payload = await apiRequest(
+    `/api/groups/${groupId}/invite/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ username: usernameOrEmail }),
+    },
+    token,
+  );
+  return payload as GroupMessage;
+}
+
+export async function promoteGroupUser(token: string, groupId: number, username: string) {
+  const payload = await apiRequest(
+    `/api/groups/${groupId}/promote/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ username }),
+    },
+    token,
+  );
+  return payload as GroupMessage;
+}

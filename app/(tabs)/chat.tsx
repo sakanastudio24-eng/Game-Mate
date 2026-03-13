@@ -1,130 +1,239 @@
 import { useLocalSearchParams } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
+import { createThread, getMessages, sendMessage, type MessageItem } from "../../services/messages";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useToast } from "../../src/components/ui/ToastProvider";
+import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
-import { mockFriends } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-// ChatScreen: Direct messages with a friend
-// Backend integration: GET /api/messages/{friendId}, POST /api/messages endpoint in Phase B
-// State: messages (local), messageInput
+type ChatRouteParams = {
+  userId?: string | string[];
+  threadId?: string | string[];
+  title?: string | string[];
+};
+
+function firstParam(value?: string | string[]) {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
+function parseNumericParam(value?: string | string[]) {
+  const raw = firstParam(value);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
 
 export default function ChatScreen() {
   const responsive = useResponsive();
-  const { userId } = useLocalSearchParams<{ userId?: string }>();
-  const friend = mockFriends.find((item) => item.id === userId) ?? mockFriends[0];
-  const [messages, setMessages] = useState<
-    Array<{ id: string; user: string; text: string; timestamp: Date }>
-  >([
-    {
-      id: "1",
-      user: friend.username,
-      text: "Hey! You free to play?",
-      timestamp: new Date(Date.now() - 10 * 60000),
-    },
-    {
-      id: "2",
-      user: "You",
-      text: "Yeah let me load in",
-      timestamp: new Date(Date.now() - 9 * 60000),
-    },
-    {
-      id: "3",
-      user: friend.username,
-      text: "Cool, creating a lobby",
-      timestamp: new Date(Date.now() - 5 * 60000),
-    },
-  ]);
+  const params = useLocalSearchParams<ChatRouteParams>();
+  const { accessToken, user } = useAuth();
+  const { showToast } = useToast();
+  const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [threadTitle, setThreadTitle] = useState<string | null>(firstParam(params.title) ?? null);
   const [messageInput, setMessageInput] = useState("");
 
-  const handleSendMessage = () => {
-    if (messageInput.trim()) {
-      setMessages([
-        ...messages,
-        {
-          id: Date.now().toString(),
-          user: "You",
-          text: messageInput,
-          timestamp: new Date(),
-        },
-      ]);
+  const selfUsername = String(user?.username ?? "");
+  const routeThreadId = useMemo(() => parseNumericParam(params.threadId), [params.threadId]);
+  const routeUserId = useMemo(() => parseNumericParam(params.userId), [params.userId]);
+
+  const loadThreadMessages = useCallback(
+    async (threadId: number) => {
+      if (!accessToken) return;
+      const payload = await getMessages(accessToken, threadId);
+      setMessages(payload);
+
+      const currentTitle = firstParam(params.title);
+      if (currentTitle) {
+        setThreadTitle(currentTitle);
+        return;
+      }
+
+      const peer = payload.find((item) => item.sender !== selfUsername)?.sender;
+      if (peer) {
+        setThreadTitle(peer);
+      } else {
+        setThreadTitle(`Thread #${threadId}`);
+      }
+    },
+    [accessToken, params.title, selfUsername],
+  );
+
+  const resolveThreadAndLoad = useCallback(async () => {
+    if (!accessToken) {
+      setActiveThreadId(null);
+      setMessages([]);
+      setLoadError("Sign in required.");
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      let resolvedThreadId = routeThreadId;
+
+      if (!resolvedThreadId && routeUserId) {
+        const created = await createThread(accessToken, routeUserId);
+        resolvedThreadId = created.thread_id;
+      }
+
+      if (!resolvedThreadId) {
+        throw new Error("No thread selected.");
+      }
+
+      setActiveThreadId(resolvedThreadId);
+      await loadThreadMessages(resolvedThreadId);
+    } catch (error) {
+      setActiveThreadId(null);
+      setMessages([]);
+      setLoadError(error instanceof Error ? error.message : "Unable to load chat.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken, loadThreadMessages, routeThreadId, routeUserId]);
+
+  useEffect(() => {
+    void resolveThreadAndLoad();
+  }, [resolveThreadAndLoad]);
+
+  const handleRefresh = useCallback(async () => {
+    if (!activeThreadId || !accessToken) return;
+    setIsRefreshing(true);
+    setLoadError(null);
+    try {
+      await loadThreadMessages(activeThreadId);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Unable to refresh chat.");
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [accessToken, activeThreadId, loadThreadMessages]);
+
+  const handleSendMessage = async () => {
+    const content = messageInput.trim();
+    if (!content || !activeThreadId || !accessToken || isSending) {
+      return;
+    }
+
+    setIsSending(true);
+    setLoadError(null);
+    try {
+      await sendMessage(accessToken, activeThreadId, content);
       setMessageInput("");
+      await loadThreadMessages(activeThreadId);
+    } catch (error) {
+      const nextError = error instanceof Error ? error.message : "Unable to send message.";
+      setLoadError(nextError);
+      showToast({ message: nextError });
+    } finally {
+      setIsSending(false);
     }
   };
 
   return (
     <Screen scrollable={false}>
       <Header
-        title={friend.username}
+        title={threadTitle ?? "Chat"}
         showBackButton
         rightAction={{
           icon: "phone",
           onPress: () => {},
-          label: `Call ${friend.username}`,
+          label: `Call ${threadTitle ?? "player"}`,
         }}
       />
 
-      {/* Messages list */}
-      <FlatList
-        data={messages}
-        keyExtractor={(msg) => msg.id}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.messageRow,
-              item.user === "You" && styles.messageRowOwn,
-            ]}
-          >
-            <View
-              style={[
-                styles.messageBubble,
-                { borderRadius: responsive.cardRadius - 2 },
-                item.user === "You"
-                  ? styles.messageBubbleOwn
-                  : styles.messageBubbleOther,
-              ]}
-            >
-              <View style={styles.messageMetaRow}>
-                <Text
+      {isLoading ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="progress-clock" size={44} color={colors.textSecondary} />
+          <Text style={[styles.stateText, { fontSize: responsive.bodySize }]}>Loading chat...</Text>
+        </View>
+      ) : loadError ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={44} color={colors.destructive} />
+          <Text style={[styles.stateText, { fontSize: responsive.bodySize }]}>{loadError}</Text>
+          <Pressable style={styles.retryButton} onPress={() => void resolveThreadAndLoad()}>
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <FlatList
+          data={messages}
+          keyExtractor={(item, index) => `${item.sender}-${item.created_at}-${index}`}
+          renderItem={({ item }) => {
+            const isOwn = item.sender === selfUsername;
+            return (
+              <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
+                <View
                   style={[
-                    styles.messageAuthor,
-                    { fontSize: responsive.captionSize },
-                    item.user === "You" && styles.messageAuthorOwn,
+                    styles.messageBubble,
+                    { borderRadius: responsive.cardRadius - 2 },
+                    isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
                   ]}
                 >
-                  {item.user}
-                </Text>
-                <Text
-                  style={[
-                    styles.messageTime,
-                    { fontSize: responsive.captionSize },
-                    item.user === "You" && styles.messageTimeOwn,
-                  ]}
-                >
-                  {formatChatTime(item.timestamp)}
-                </Text>
+                  <View style={styles.messageMetaRow}>
+                    <Text
+                      style={[
+                        styles.messageAuthor,
+                        { fontSize: responsive.captionSize },
+                        isOwn && styles.messageAuthorOwn,
+                      ]}
+                    >
+                      {isOwn ? "You" : item.sender}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.messageTime,
+                        { fontSize: responsive.captionSize },
+                        isOwn && styles.messageTimeOwn,
+                      ]}
+                    >
+                      {formatChatTime(item.created_at)}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[
+                      styles.messageText,
+                      { fontSize: responsive.bodySize, lineHeight: Math.round(responsive.bodySize * 1.4) },
+                      isOwn && styles.messageTextOwn,
+                    ]}
+                  >
+                    {item.content}
+                  </Text>
+                </View>
               </View>
-              <Text
-                style={[
-                  styles.messageText,
-                  { fontSize: responsive.bodySize, lineHeight: Math.round(responsive.bodySize * 1.4) },
-                  item.user === "You" && styles.messageTextOwn,
-                ]}
-              >
-                {item.text}
-              </Text>
+            );
+          }}
+          scrollEnabled={true}
+          style={styles.messageList}
+          contentContainerStyle={[
+            styles.messageListContent,
+            messages.length === 0 ? styles.messageListEmptyContent : undefined,
+          ]}
+          refreshing={isRefreshing}
+          onRefresh={() => {
+            void handleRefresh();
+          }}
+          ListEmptyComponent={
+            <View style={styles.stateContainer}>
+              <MaterialCommunityIcons name="message-outline" size={44} color={colors.textSecondary} />
+              <Text style={[styles.stateText, { fontSize: responsive.bodySize }]}>No messages yet</Text>
             </View>
-          </View>
-        )}
-        scrollEnabled={true}
-        style={styles.messageList}
-        contentContainerStyle={styles.messageListContent}
-      />
+          }
+        />
+      )}
 
       {/* Message composer */}
       <View style={styles.composer}>
@@ -163,6 +272,7 @@ export default function ChatScreen() {
           onPress={handleSendMessage}
           accessibilityRole="button"
           accessibilityLabel="Send message"
+          disabled={isSending || !activeThreadId || !messageInput.trim()}
           style={({ pressed }) => [
             styles.sendButton,
             {
@@ -170,11 +280,12 @@ export default function ChatScreen() {
               height: responsive.touchTargetMin,
               borderRadius: responsive.touchTargetMin / 2,
             },
+            (isSending || !activeThreadId || !messageInput.trim()) && styles.sendButtonDisabled,
             pressed && { opacity: 0.7 },
           ]}
         >
           <MaterialCommunityIcons
-            name="send"
+            name={isSending ? "progress-clock" : "send"}
             size={20}
             color={colors.background}
           />
@@ -184,7 +295,11 @@ export default function ChatScreen() {
   );
 }
 
-function formatChatTime(date: Date): string {
+function formatChatTime(dateValue: string): string {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
   return date.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",
@@ -198,6 +313,9 @@ const styles = StyleSheet.create({
   messageListContent: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
+  },
+  messageListEmptyContent: {
+    flexGrow: 1,
   },
   messageRow: {
     marginVertical: spacing.xs,
@@ -283,5 +401,31 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
+  },
+  sendButtonDisabled: {
+    opacity: 0.45,
+  },
+  stateContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  stateText: {
+    color: colors.textSecondary,
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
+  retryText: {
+    color: colors.primary,
+    fontWeight: "700",
   },
 });

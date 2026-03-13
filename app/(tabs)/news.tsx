@@ -15,7 +15,14 @@ import {
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { listFeedPage, type PostItem } from "../../services/posts";
+import {
+  likePost,
+  listFeedPage,
+  sharePost,
+  skipPost,
+  type FeedMeta,
+  type PostItem,
+} from "../../services/posts";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { Button } from "../../src/components/ui/Button";
@@ -29,6 +36,10 @@ import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 interface FeedSeed extends NewsFeedItem {
+  creator?: string;
+  createdAtIso?: string;
+  feedMeta?: FeedMeta;
+  backendPostId?: number;
   caption?: string;
   source?: string;
   whyReasons?: string[];
@@ -122,6 +133,7 @@ function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
   const signals = post.feed_meta?.signals ?? {};
   const title = (post.title ?? "").trim() || "Untitled";
   const description = (post.description ?? "").trim();
+  const creator = getPostAuthor(post);
   const hashtags = Array.from(
     new Set(
       (description.match(/#([\w-]+)/g) ?? [])
@@ -132,10 +144,13 @@ function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
 
   return {
     id: String(post.id),
+    backendPostId: post.id,
     type: "video",
     title,
-    author: getPostAuthor(post),
+    author: creator,
+    creator,
     date: toDisplayDate(post.created_at),
+    createdAtIso: post.created_at,
     game: post.game?.trim() || "General",
     hashtags: hashtags.length ? hashtags.slice(0, 3) : ["feed"],
     duration: NEWS_FEED[index % NEWS_FEED.length]?.duration,
@@ -144,6 +159,7 @@ function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
     comments: Number(signals.comments ?? 0),
     shares: Number(signals.shares ?? 0),
     category: toCategory(post),
+    feedMeta: post.feed_meta,
     caption: description,
     source: post.feed_meta?.source,
     whyReasons: toWhyReasons(post),
@@ -305,13 +321,26 @@ export default function NewsScreen() {
     });
   }, [feedItems, focusVideoId, itemHeight]);
 
-  const toggleLike = (feedId: string) => {
-    const wasLiked = likedIds.includes(feedId);
-    const undoToggle = toggleOptimisticLike(feedId);
+  const toggleLike = async (item: FeedEntry) => {
+    const wasLiked = likedIds.includes(item.feedId);
+    const undoToggle = toggleOptimisticLike(item.feedId);
 
     setLikedCache((prev) =>
-      prev.includes(feedId) ? prev.filter((item) => item !== feedId) : [...prev, feedId],
+      prev.includes(item.feedId)
+        ? prev.filter((value) => value !== item.feedId)
+        : [...prev, item.feedId],
     );
+
+    if (!wasLiked && accessToken && item.backendPostId) {
+      try {
+        await likePost(accessToken, item.backendPostId);
+      } catch {
+        undoToggle();
+        setLikedCache((prev) => prev.filter((value) => value !== item.feedId));
+        showToast({ message: "Unable to like post right now." });
+        return;
+      }
+    }
 
     if (!wasLiked) {
       showToast({
@@ -319,7 +348,7 @@ export default function NewsScreen() {
         actionLabel: "Undo",
         onAction: () => {
           undoToggle();
-          setLikedCache((prev) => prev.filter((item) => item !== feedId));
+          setLikedCache((prev) => prev.filter((value) => value !== item.feedId));
         },
       });
     }
@@ -479,12 +508,42 @@ export default function NewsScreen() {
     }
   };
 
-  const openShareDrawer = (item: FeedEntry) => {
+  const openShareDrawer = async (item: FeedEntry) => {
     setSharedIds((prev) => (prev.includes(item.feedId) ? prev : [...prev, item.feedId]));
+
+    if (accessToken && item.backendPostId) {
+      try {
+        await sharePost(accessToken, item.backendPostId);
+      } catch {
+        showToast({ message: "Unable to record share right now." });
+      }
+    }
+
     setShareTarget({
       feedId: item.feedId,
       title: item.title,
       message: `${item.title} · ${item.author}\nhttps://gamemate.app/p/${item.id}`,
+    });
+  };
+
+  const handleSkipItem = async (item: FeedEntry, index: number) => {
+    if (accessToken && item.backendPostId) {
+      try {
+        await skipPost(accessToken, item.backendPostId);
+      } catch {
+        showToast({ message: "Unable to skip post right now." });
+      }
+    }
+
+    const nextIndex = index + 1;
+    if (nextIndex >= feedItems.length - 1) {
+      appendFeedItems();
+    }
+
+    requestAnimationFrame(() => {
+      if (nextIndex < feedItems.length) {
+        feedListRef.current?.scrollToIndex({ index: nextIndex, animated: true, viewPosition: 0 });
+      }
     });
   };
 
@@ -584,7 +643,7 @@ export default function NewsScreen() {
             });
           }, 80);
         }}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const liked = isLiked(item.feedId);
 
           return (
@@ -637,7 +696,9 @@ export default function NewsScreen() {
                 ]}
               >
                 <Pressable
-                  onPress={() => toggleLike(item.feedId)}
+                  onPress={() => {
+                    void toggleLike(item);
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={liked ? `Unlike ${item.title}` : `Like ${item.title}`}
                   accessibilityState={{ selected: liked }}
@@ -664,7 +725,9 @@ export default function NewsScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => openShareDrawer(item)}
+                  onPress={() => {
+                    void openShareDrawer(item);
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Share ${item.title}`}
                   style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
@@ -673,6 +736,18 @@ export default function NewsScreen() {
                   <Text style={styles.railCount}>
                     {compactNumber(item.shares + (isShared(item.feedId) ? 1 : 0))}
                   </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    void handleSkipItem(item, index);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Skip ${item.title}`}
+                  style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
+                >
+                  <MaterialCommunityIcons name="skip-next-outline" size={32} color={colors.text} />
+                  <Text style={styles.railCount}>Skip</Text>
                 </Pressable>
 
                 <Pressable
@@ -712,10 +787,19 @@ export default function NewsScreen() {
                 <Text style={styles.description}>
                   {item.caption || `${item.game} · ${item.category.toUpperCase()} · #${item.hashtags[0] || "feed"}`}
                 </Text>
+                <Text style={styles.fieldSupportText}>
+                  creator: {item.creator || item.author} · game: {item.game}
+                </Text>
+                <Text style={styles.fieldSupportText}>
+                  created_at: {item.createdAtIso || item.date}
+                </Text>
                 {item.whyReasons && item.whyReasons.length > 0 ? (
                   <Text style={styles.whyReasonText}>
                     Why you're seeing this: {item.whyReasons.join(" · ")}
                   </Text>
+                ) : null}
+                {item.feedMeta?.source ? (
+                  <Text style={styles.fieldSupportText}>feed_meta: {item.feedMeta.source}</Text>
                 ) : null}
               </View>
             </View>
@@ -822,7 +906,18 @@ export default function NewsScreen() {
               id: "share",
               label: "Share",
               icon: "share-variant-outline",
-              onPress: () => openShareDrawer(activePostMenu),
+              onPress: () => {
+                void openShareDrawer(activePostMenu);
+              },
+            },
+            {
+              id: "skip",
+              label: "Skip",
+              icon: "skip-next-outline",
+              onPress: () => {
+                const index = feedItems.findIndex((entry) => entry.feedId === activePostMenu.feedId);
+                void handleSkipItem(activePostMenu, Math.max(index, 0));
+              },
             },
             {
               id: "save",
@@ -1085,6 +1180,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: spacing.xs,
     fontWeight: "600",
+  },
+  fieldSupportText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
   },
   drawerRoot: {
     flex: 1,

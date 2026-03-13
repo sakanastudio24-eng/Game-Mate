@@ -1,179 +1,256 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React, { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
-import { Button } from "../../src/components/ui/Button";
+import { listNotifications, type NotificationItem } from "../../services/notifications";
 import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useAuth } from "../../src/context/AuthContext";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-// NotificationsScreen: Notification center
-// Backend integration: GET /api/notifications endpoint in Phase B
+type UiNotification = NotificationItem & { id: string };
 
-interface Notification {
-  id: string;
-  type:
-    | "friend_request"
-    | "group_invite"
-    | "message"
-    | "achievement"
-    | "matchmaking";
-  title: string;
-  description: string;
-  icon: string;
-  timestamp: string;
-  read: boolean;
-  actionLabel?: string;
+function formatTypeLabel(type: string) {
+  return type
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (value) => value.toUpperCase());
+}
+
+function getTypeDetails(type: string) {
+  const normalized = type.toLowerCase();
+
+  if (normalized === "like") {
+    return {
+      icon: "thumb-up-outline",
+      color: "#60A5FA",
+      summary: "liked your post",
+    };
+  }
+  if (normalized === "comment") {
+    return {
+      icon: "comment-text-outline",
+      color: "#34D399",
+      summary: "commented on your post",
+    };
+  }
+  if (normalized === "share") {
+    return {
+      icon: "share-variant-outline",
+      color: "#F59E0B",
+      summary: "shared your post",
+    };
+  }
+  if (normalized === "friend_request") {
+    return {
+      icon: "account-plus-outline",
+      color: colors.primary,
+      summary: "sent you a friend request",
+    };
+  }
+  if (normalized === "friend_accept") {
+    return {
+      icon: "account-check-outline",
+      color: "#4ADE80",
+      summary: "accepted your friend request",
+    };
+  }
+  if (normalized === "message") {
+    return {
+      icon: "message-outline",
+      color: "#22D3EE",
+      summary: "sent you a message",
+    };
+  }
+  if (normalized === "group_invite") {
+    return {
+      icon: "account-group-outline",
+      color: "#A78BFA",
+      summary: "invited you to a group",
+    };
+  }
+
+  return {
+    icon: "bell-outline",
+    color: colors.textSecondary,
+    summary: "triggered an activity",
+  };
+}
+
+function formatRelativeTime(timestamp: string) {
+  const value = new Date(timestamp);
+  if (Number.isNaN(value.getTime())) return "";
+
+  const now = Date.now();
+  const diffMs = Math.max(0, now - value.getTime());
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 1) return "Just now";
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return value.toLocaleDateString();
 }
 
 export default function NotificationsScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "friend_request",
-      title: "New Friend Request",
-      description: "ProGamer92 sent you a friend request",
-      icon: "account-plus",
-      timestamp: "2 min ago",
-      read: false,
-      actionLabel: "Accept",
-    },
-    {
-      id: "2",
-      type: "group_invite",
-      title: "Group Invite",
-      description: "SkyWalker invited you to Valorant Group",
-      icon: "people",
-      timestamp: "15 min ago",
-      read: false,
-      actionLabel: "Join",
-    },
-    {
-      id: "3",
-      type: "matchmaking",
-      title: "Match Found!",
-      description: "Your matchmaking found a CS:GO group",
-      icon: "shuffle-variant",
-      timestamp: "1 hour ago",
-      read: false,
-      actionLabel: "View",
-    },
-    {
-      id: "4",
-      type: "achievement",
-      title: "Achievement Unlocked",
-      description: 'You unlocked "Team Player" achievement',
-      icon: "trophy",
-      timestamp: "3 hours ago",
-      read: true,
-    },
-    {
-      id: "5",
-      type: "message",
-      title: "New Message",
-      description: "EchoPlayer: Sounds good! See you at 8pm",
-      icon: "message",
-      timestamp: "5 hours ago",
-      read: true,
-    },
-  ]);
+  const { accessToken } = useAuth();
+  const [notifications, setNotifications] = useState<UiNotification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const fetchNotifications = useCallback(
+    async (refresh = false) => {
+      if (!accessToken) {
+        setNotifications([]);
+        setIsLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
 
-  const handleNotificationAction = (id: string) => {
+      if (refresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      setLoadError(null);
+      try {
+        const data = await listNotifications(accessToken);
+        const mapped = data.map((item, index) => ({
+          ...item,
+          id: `${item.created_at}-${item.actor}-${item.type}-${index}`,
+        }));
+        setNotifications(mapped);
+      } catch (error) {
+        setNotifications([]);
+        setLoadError(error instanceof Error ? error.message : "Unable to load notifications.");
+      } finally {
+        if (refresh) {
+          setIsRefreshing(false);
+        } else {
+          setIsLoading(false);
+        }
+      }
+    },
+    [accessToken],
+  );
+
+  useEffect(() => {
+    void fetchNotifications();
+  }, [fetchNotifications]);
+
+  const unreadCount = useMemo(
+    () => notifications.filter((notification) => !notification.is_read).length,
+    [notifications],
+  );
+
+  const markRead = useCallback((id: string) => {
     setNotifications((prev) =>
-      prev.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)),
+      prev.map((notification) =>
+        notification.id === id ? { ...notification, is_read: true } : notification,
+      ),
     );
-  };
+  }, []);
 
-  const handleDismiss = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
+  const onNotificationPress = useCallback(
+    (notification: UiNotification) => {
+      markRead(notification.id);
 
-  const getNotificationColor = (type: Notification["type"]): string => {
-    switch (type) {
-      case "friend_request":
-        return colors.primary;
-      case "group_invite":
-        return colors.primary;
-      case "matchmaking":
-        return colors.online;
-      case "achievement":
-        return "#FFD700";
-      case "message":
-        return colors.primary;
-      default:
-        return colors.textSecondary;
-    }
-  };
+      const type = notification.type.toLowerCase();
+      if (type === "message") {
+        router.push("/(tabs)/messages");
+        return;
+      }
+      if (type.startsWith("friend")) {
+        router.push("/(tabs)/social");
+        return;
+      }
+      if (type.startsWith("group")) {
+        router.push("/(tabs)/groups");
+        return;
+      }
 
-  const renderNotification = (notification: Notification) => (
-    <View key={notification.id}>
-      <Card style={styles.notificationCard}>
-        <View style={styles.notificationContent}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                width: responsive.iconButtonSize,
-                height: responsive.iconButtonSize,
-                borderRadius: responsive.searchRadius - 2,
-              },
-              {
-                backgroundColor: getNotificationColor(notification.type) + "20",
-              },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={notification.icon as any}
-              size={20}
-              color={getNotificationColor(notification.type)}
-            />
-          </View>
+      if (notification.post_id) {
+        router.push({
+          pathname: "/(tabs)/news",
+          params: { postId: String(notification.post_id) },
+        });
+        return;
+      }
 
-          <View style={styles.textContainer}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.title, { fontSize: responsive.bodySize }]}>{notification.title}</Text>
-              {!notification.read && (
-                <View
-                  style={[
-                    styles.unreadDot,
-                    { backgroundColor: colors.primary },
-                  ]}
+      router.push("/(tabs)/news");
+    },
+    [markRead, router],
+  );
+
+  const renderNotification = useCallback(
+    ({ item }: { item: UiNotification }) => {
+      const details = getTypeDetails(item.type);
+      return (
+        <Pressable
+          onPress={() => onNotificationPress(item)}
+          style={({ pressed }) => [pressed && styles.pressed]}
+          accessibilityRole="button"
+          accessibilityLabel={`Notification from ${item.actor}`}
+          accessibilityHint="Open related activity"
+        >
+          <Card style={styles.notificationCard}>
+            <View style={styles.notificationContent}>
+              <View
+                style={[
+                  styles.iconContainer,
+                  {
+                    width: responsive.iconButtonSize,
+                    height: responsive.iconButtonSize,
+                    borderRadius: responsive.searchRadius - 2,
+                    backgroundColor: `${details.color}20`,
+                  },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={details.icon as any}
+                  size={20}
+                  color={details.color}
                 />
-              )}
+              </View>
+
+              <View style={styles.textContainer}>
+                <View style={styles.titleRow}>
+                  <Text style={[styles.actorName, { fontSize: responsive.bodySize }]}>
+                    {item.actor}
+                  </Text>
+                  {!item.is_read ? <View style={styles.unreadDot} /> : null}
+                </View>
+                <Text style={[styles.summaryText, { fontSize: responsive.bodySmallSize }]}>
+                  {details.summary}
+                </Text>
+                <Text style={[styles.typeText, { fontSize: responsive.captionSize }]}>
+                  {formatTypeLabel(item.type)}
+                </Text>
+                <Text style={[styles.timestampText, { fontSize: responsive.captionSize }]}>
+                  {formatRelativeTime(item.created_at)}
+                </Text>
+              </View>
+
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={18}
+                color={colors.textSecondary}
+              />
             </View>
-            <Text style={[styles.description, { fontSize: responsive.bodySmallSize }]}>
-              {notification.description}
-            </Text>
-            <Text style={[styles.timestamp, { fontSize: responsive.captionSize }]}>
-              {notification.timestamp}
-            </Text>
-          </View>
-
-          {notification.actionLabel && (
-            <Button
-              mode="contained"
-              size="small"
-              onPress={() => handleNotificationAction(notification.id)}
-              label={notification.actionLabel}
-            />
-          )}
-        </View>
-
-        <View style={styles.actions}>
-          <MaterialCommunityIcons
-            name="close"
-            size={20}
-            color={colors.textSecondary}
-            onPress={() => handleDismiss(notification.id)}
-          />
-        </View>
-      </Card>
-    </View>
+          </Card>
+        </Pressable>
+      );
+    },
+    [onNotificationPress, responsive.bodySize, responsive.bodySmallSize, responsive.captionSize, responsive.iconButtonSize, responsive.searchRadius],
   );
 
   return (
@@ -181,26 +258,42 @@ export default function NotificationsScreen() {
       <Header
         title="Notifications"
         showBackButton
-
         subtitle={unreadCount > 0 ? `${unreadCount} new` : undefined}
       />
 
-      {notifications.length > 0 ? (
+      {isLoading ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="progress-clock" size={48} color={colors.textSecondary} />
+          <Text style={styles.stateText}>Loading notifications...</Text>
+        </View>
+      ) : loadError ? (
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={48} color={colors.destructive} />
+          <Text style={styles.stateText}>{loadError}</Text>
+          <Pressable
+            onPress={() => {
+              void fetchNotifications();
+            }}
+            style={styles.retryButton}
+          >
+            <Text style={styles.retryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : notifications.length > 0 ? (
         <FlatList
           data={notifications}
-          renderItem={({ item }) => renderNotification(item)}
+          renderItem={renderNotification}
           keyExtractor={(item) => item.id}
-          scrollEnabled={true}
+          refreshing={isRefreshing}
+          onRefresh={() => {
+            void fetchNotifications(true);
+          }}
           contentContainerStyle={styles.notificationsList}
         />
       ) : (
-        <View style={styles.emptyState}>
-          <MaterialCommunityIcons
-            name="bell-off"
-            size={48}
-            color={colors.textSecondary}
-          />
-          <Text style={styles.emptyText}>No notifications</Text>
+        <View style={styles.stateContainer}>
+          <MaterialCommunityIcons name="bell-off-outline" size={48} color={colors.textSecondary} />
+          <Text style={styles.stateText}>No notifications</Text>
         </View>
       )}
     </Screen>
@@ -222,9 +315,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
@@ -236,39 +326,55 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: spacing.xs,
+    gap: spacing.xs,
   },
-  title: {
+  actorName: {
     color: colors.text,
-    fontWeight: "600",
-    fontSize: 14,
-    flex: 1,
+    fontWeight: "700",
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginLeft: spacing.sm,
+    backgroundColor: colors.primary,
   },
-  description: {
+  summaryText: {
     color: colors.textSecondary,
-    fontSize: 13,
     marginBottom: spacing.xs,
   },
-  timestamp: {
+  typeText: {
+    color: colors.primary,
+    marginBottom: spacing.xs,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  timestampText: {
     color: colors.textSecondary,
-    fontSize: 11,
   },
-  actions: {
-    marginLeft: spacing.md,
-  },
-  emptyState: {
+  stateContainer: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
-  emptyText: {
+  stateText: {
     color: colors.textSecondary,
-    fontSize: 14,
-    marginTop: spacing.md,
+    textAlign: "center",
+  },
+  retryButton: {
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xs,
+  },
+  retryText: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.75,
   },
 });

@@ -3,6 +3,10 @@ import random
 from django.db.models import Count, Q
 
 from posts.models import Post
+from posts.services.cache_service import (
+    get_cached_like_counts,
+    get_cached_trending_post_ids,
+)
 from posts.services.scoring_service import build_scoring_context, calculate_post_score
 
 
@@ -48,13 +52,11 @@ class FeedService:
     @staticmethod
     def _collect_post_candidates():
         """Collect post candidates and attach source/type metadata."""
-        posts = (
+        trending_post_ids = get_cached_trending_post_ids(limit=80)
+
+        posts_qs = (
             Post.objects.filter(is_deleted=False)
             .annotate(
-                like_count=Count(
-                    "interactions",
-                    filter=Q(interactions__interaction_type="like"),
-                ),
                 share_count=Count(
                     "interactions",
                     filter=Q(interactions__interaction_type="share"),
@@ -63,9 +65,29 @@ class FeedService:
                     "interactions",
                     filter=Q(interactions__interaction_type="skip"),
                 ),
+                comment_count=Count(
+                    "interactions",
+                    filter=Q(interactions__interaction_type="comment"),
+                ),
             )
-            .order_by("-created_at")[:80]
         )
+
+        if trending_post_ids:
+            posts_by_id = {post.id: post for post in posts_qs.filter(id__in=trending_post_ids)}
+            posts = [posts_by_id[post_id] for post_id in trending_post_ids if post_id in posts_by_id]
+        else:
+            posts = list(posts_qs.order_by("-created_at")[:80])
+
+        if not posts:
+            return []
+
+        like_counts = get_cached_like_counts([post.id for post in posts])
+
+        for post in posts:
+            post.like_count = int(like_counts.get(post.id, 0))
+            post.share_count = int(getattr(post, "share_count", 0))
+            post.skip_count = int(getattr(post, "skip_count", 0))
+            post.comment_count = int(getattr(post, "comment_count", 0))
 
         return [
             {
@@ -75,7 +97,7 @@ class FeedService:
                 "signals": {
                     "likes": post.like_count,
                     "shares": post.share_count,
-                    "comments": post.comment_count if hasattr(post, "comment_count") else 0,
+                    "comments": post.comment_count,
                 },
             }
             for post in posts

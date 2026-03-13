@@ -79,3 +79,26 @@
 ### Prevention
 - Before adding new apps, check for collisions against built-in Django app labels.
 - Prefer explicit app labels for common names (`messages`, `auth`, `admin`, etc.).
+
+## 2026-03-13: Login 401 Message and Back-Navigation Loop
+
+### Symptom
+- Wrong credentials on login showed a session-expired style message instead of a credential error.
+- Android back behavior could bounce between screens in a loop for some navigation paths.
+
+### Root Cause
+- Frontend API helper mapped all `401` responses to a single “Session expired” message, including login failures.
+- Back helper used a history fallback that pushed routes, which could re-add previously visited routes and create ping-pong behavior.
+
+### Fix
+- API helper now distinguishes:
+  - unauthenticated login request `401`: show backend credential error.
+  - authenticated request `401` (Bearer token present): show session-expired message.
+- Back helper now:
+  - uses stack pop first (`goBack` on any navigator parent),
+  - uses history fallback with `replace` (not `push`) when needed,
+  - exits correctly on Android root routes instead of looping through tab history.
+
+### Prevention
+- Treat `401` as context-aware (`login` vs `token-authenticated request`) in frontend API clients.
+- Keep root-route hardware back behavior explicit and avoid custom tab-history back loops.

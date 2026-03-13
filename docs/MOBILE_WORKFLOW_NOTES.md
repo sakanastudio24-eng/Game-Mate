@@ -348,3 +348,32 @@ Scope audited: current Expo Router app under `app/` and shared modules under `sr
   2. `docs/FLOWS.md`
   3. `docs/BUILD_STATUS.md`
   4. `docs/FRONTEND_CHECKLIST_STATUS.md`
+
+## 14) Back Navigation Stack Rules (Required)
+
+Use stack-first navigation behavior for all deep flows.
+
+1. Core actions
+- `router.push(...)`: open a new deep screen.
+- `router.back()` / safe back helper: return to previous screen in stack.
+- `router.navigate(...)`: jump to an existing route/tab when that is intentional.
+- `router.replace(...)`: replace current route when avoiding duplicate loop entries.
+
+2. Loop prevention
+- Do not use `navigate("Feed")` as a generic back action from detail screens.
+- Do not push the same route repeatedly just to go “back”.
+- If a screen has no navigator history, use a deterministic fallback once.
+
+3. Android hardware back behavior
+- If `canGoBack()` is true: pop stack.
+- If user is on a root route (Feed/Groups/Social/Profile/Login/Onboarding): let Android handle app exit (`return false`).
+- Do not bounce between root tabs via custom history fallback on hardware back.
+
+4. Required verification flows
+- `Feed -> Post Detail -> Creator Profile -> Back -> Post Detail -> Back -> Feed`
+- `Groups -> Group Detail -> Members -> Back -> Group Detail -> Back -> Groups`
+- `Social -> Chat -> Back -> Social`
+- `Profile -> Edit Profile -> Back -> Profile`
+
+5. Pass criterion
+- Three consecutive back presses should return user to where the flow started, without ping-pong between two screens.

@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Group, GroupMembership
-from .permissions import IsGroupMember, IsGroupOwner
+from .permissions import CanViewGroup, IsGroupMember, IsGroupOwner
 from .serializers_invite import InviteSerializer
 from .serializers import GroupCreateSerializer, GroupMembershipListSerializer, GroupSerializer
 
@@ -93,9 +93,11 @@ class GroupViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Apply action-specific object permissions for detail and destructive operations."""
         perms = [IsAuthenticated()]
-        if self.action in ["retrieve", "members"]:
+        if self.action in ["retrieve"]:
+            perms.append(CanViewGroup())
+        if self.action in ["members"]:
             perms.append(IsGroupMember())
-        if self.action in ["update", "partial_update", "destroy"]:
+        if self.action in ["update", "partial_update", "destroy", "invite", "promote"]:
             perms.append(IsGroupOwner())
         return perms
 

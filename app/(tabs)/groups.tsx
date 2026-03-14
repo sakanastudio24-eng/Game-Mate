@@ -1414,6 +1414,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
+    paddingHorizontal: spacing.lg,
     paddingVertical: 12,
     alignItems: "center",
   },

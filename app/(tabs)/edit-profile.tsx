@@ -41,7 +41,7 @@ const avatarOptions = [
 ];
 
 export default function EditProfileScreen() {
-  const safeBack = useSafeBackNavigation();
+  const safeBack = useSafeBackNavigation("/(tabs)/profile");
   const responsive = useResponsive();
   const { accessToken, user } = useAuth();
   const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;

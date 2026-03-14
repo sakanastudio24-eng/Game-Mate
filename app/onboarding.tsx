@@ -4,6 +4,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -126,6 +129,7 @@ export default function OnboardingScreen() {
   const [platform, setPlatform] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
   const platformChipWidth = responsive.isSmallPhone ? "100%" : "48.5%";
   const reduceMotion = useReducedMotionPreference();
@@ -147,6 +151,19 @@ export default function OnboardingScreen() {
     }).start();
   }, [reduceMotion, responsive.motionBase, step, stepTransition]);
 
+  useEffect(() => {
+    const keyboardShowEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const keyboardHideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+
+    const showSub = Keyboard.addListener(keyboardShowEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(keyboardHideEvent, () => setKeyboardOpen(false));
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const stepAnimatedStyle = {
     opacity: stepTransition,
     transform: [
@@ -158,6 +175,20 @@ export default function OnboardingScreen() {
       },
     ],
   };
+
+  const keyboardBuffer = useMemo(() => {
+    if (!keyboardOpen || step !== "email") return 0;
+    if (responsive.isSmallPhone) return Platform.OS === "ios" ? 210 : 170;
+    if (responsive.isLargePhone) return Platform.OS === "ios" ? 165 : 130;
+    return Platform.OS === "ios" ? 180 : 145;
+  }, [keyboardOpen, responsive.isLargePhone, responsive.isSmallPhone, step]);
+
+  const keyboardVerticalOffset = useMemo(() => {
+    if (Platform.OS !== "ios") return 0;
+    if (responsive.isSmallPhone) return safeTop + 6;
+    if (responsive.isLargePhone) return safeTop + 18;
+    return safeTop + 12;
+  }, [responsive.isLargePhone, responsive.isSmallPhone, safeTop]);
 
   const progress = useMemo(() => {
     if (step === "email") return 1;
@@ -297,10 +328,18 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingBottom: safeBottom + 20 }]}
+    <KeyboardAvoidingView
+      style={styles.keyboardRoot}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={keyboardVerticalOffset}
     >
+      <ScrollView
+        style={styles.container}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+        automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+        contentContainerStyle={[styles.content, { paddingBottom: safeBottom + 20 + keyboardBuffer }]}
+      >
         <View
           style={[
             styles.inner,
@@ -764,11 +803,16 @@ export default function OnboardingScreen() {
           </View>
         )}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  keyboardRoot: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+  },
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",

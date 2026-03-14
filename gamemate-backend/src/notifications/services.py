@@ -4,7 +4,14 @@ from .models import Notification
 
 
 # Persist a notification row synchronously.
-def create_notification_record(user_id, actor_id, type, post_id=None):
+def create_notification_record(
+    user_id,
+    actor_id,
+    type,
+    post_id=None,
+    conversation_id=None,
+    message_id=None,
+):
     """Persist one notification row synchronously."""
 
     if user_id == actor_id:
@@ -15,11 +22,20 @@ def create_notification_record(user_id, actor_id, type, post_id=None):
         actor_id=actor_id,
         type=type,
         post_id=post_id,
+        conversation_id=conversation_id,
+        message_id=message_id,
     )
 
 
 # Queue notification processing; fallback to sync create if queue is unavailable.
-def queue_notification(user_id, actor_id, type, post_id=None):
+def queue_notification(
+    user_id,
+    actor_id,
+    type,
+    post_id=None,
+    conversation_id=None,
+    message_id=None,
+):
     """Queue notification write through Celery with sync fallback."""
 
     from .tasks import create_notification_task
@@ -30,6 +46,8 @@ def queue_notification(user_id, actor_id, type, post_id=None):
             actor_id=actor_id,
             type=type,
             post_id=post_id,
+            conversation_id=conversation_id,
+            message_id=message_id,
         )
     except Exception:
         create_notification_record(
@@ -37,11 +55,20 @@ def queue_notification(user_id, actor_id, type, post_id=None):
             actor_id=actor_id,
             type=type,
             post_id=post_id,
+            conversation_id=conversation_id,
+            message_id=message_id,
         )
 
 
 # Central notification helper used by signals and feature actions.
-def create_notification(user, actor, type, post_id=None):
+def create_notification(
+    user,
+    actor,
+    type,
+    post_id=None,
+    conversation_id=None,
+    message_id=None,
+):
     """Public helper that accepts ids or model objects and enqueues notification."""
 
     user_id = getattr(user, "id", user)
@@ -55,4 +82,6 @@ def create_notification(user, actor, type, post_id=None):
         actor_id=actor_id,
         type=type,
         post_id=post_id,
+        conversation_id=conversation_id,
+        message_id=message_id,
     )

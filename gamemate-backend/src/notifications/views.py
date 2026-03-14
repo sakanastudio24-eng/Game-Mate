@@ -24,6 +24,8 @@ def get_notifications(request):
             "actor": notification.actor.username,
             "type": notification.type,
             "post_id": notification.post_id,
+            "conversation_id": notification.conversation_id,
+            "message_id": notification.message_id,
             "is_read": notification.is_read,
             "created_at": notification.created_at,
         }

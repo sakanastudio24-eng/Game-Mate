@@ -16,6 +16,8 @@ class Notification(models.Model):
     )
     type = models.CharField(max_length=50)
     post_id = models.IntegerField(null=True, blank=True)
+    conversation_id = models.IntegerField(null=True, blank=True)
+    message_id = models.IntegerField(null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

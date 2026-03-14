@@ -29,6 +29,8 @@ def message_created(sender, instance, created, **kwargs):
             user=receiver,
             actor=instance.sender,
             type="message",
+            conversation_id=instance.conversation_id,
+            message_id=instance.id,
         )
 
     log_activity(

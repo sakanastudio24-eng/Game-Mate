@@ -12,6 +12,7 @@ import {
   Pressable,
   Share,
   StyleSheet,
+  type ViewToken,
   View,
 } from "react-native";
 import { Text, TextInput } from "react-native-paper";
@@ -42,6 +43,7 @@ interface FeedSeed extends NewsFeedItem {
   createdAtIso?: string;
   feedMeta?: FeedMeta;
   backendPostId?: number;
+  description?: string;
   caption?: string;
   source?: string;
   whyReasons?: string[];
@@ -64,6 +66,8 @@ interface ExplainPayload {
 }
 
 const INITIAL_LOOP_COUNT = 3;
+const DOUBLE_TAP_WINDOW_MS = 320;
+const PASSIVE_SKIP_MAX_VISIBLE_MS = 1800;
 const COMMENT_AVATARS: Record<string, string> = {
   Nova: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
   RiftKing:
@@ -175,6 +179,7 @@ function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
     comments: Number(signals.comments ?? 0),
     shares: Number(signals.shares ?? 0),
     category: toCategory(post),
+    description,
     feedMeta: post.feed_meta,
     caption: description,
     source: post.feed_meta?.source,
@@ -195,6 +200,22 @@ function createInitialFeed(seed: FeedSeed[]): FeedEntry[] {
     items.push(...createLoop(seed, loop, "loop"));
   }
   return items;
+}
+
+function shuffleFeedSeed(seed: FeedSeed[], previousFirstId?: string): FeedSeed[] {
+  if (seed.length <= 1) return seed;
+  const shuffled = [...seed];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  if (previousFirstId && shuffled[0]?.id === previousFirstId && shuffled.length > 1) {
+    [shuffled[0], shuffled[1]] = [shuffled[1], shuffled[0]];
+  }
+
+  return shuffled;
 }
 
 function compactNumber(value: number): string {
@@ -246,7 +267,7 @@ export default function NewsScreen() {
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const initialFeedSeed = useMemo(
-    () => NEWS_FEED.map((item) => ({ ...item, caption: "", source: "seed" })),
+    () => NEWS_FEED.map((item) => ({ ...item, description: "", caption: "", source: "seed" })),
     [],
   );
   const initialFeed = useMemo(() => createInitialFeed(initialFeedSeed), [initialFeedSeed]);
@@ -287,11 +308,7 @@ export default function NewsScreen() {
   const [commentThreads, setCommentThreads] = useState<Record<string, CommentItem[]>>({});
   const [replyCounts, setReplyCounts] = useState<Record<string, number>>({});
   const [commentDraft, setCommentDraft] = useState("");
-  const [shareTarget, setShareTarget] = useState<{
-    feedId: string;
-    title: string;
-    message: string;
-  } | null>(null);
+  const [shareTarget, setShareTarget] = useState<FeedEntry | null>(null);
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
@@ -305,6 +322,10 @@ export default function NewsScreen() {
   const handledCreateSuccessKeyRef = useRef<string | null>(null);
   const feedListRef = useRef<FlatList<FeedEntry> | null>(null);
   const commentsListRef = useRef<FlatList<CommentItem> | null>(null);
+  const lastMediaTapRef = useRef<{ feedId: string; at: number } | null>(null);
+  const visibleSinceRef = useRef<Record<string, number>>({});
+  const passiveSkippedIdsRef = useRef<Set<string>>(new Set());
+  const engagedFeedIdsRef = useRef<Set<string>>(new Set());
 
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
   const bottomSafeInset = Math.max(insets.bottom, responsive.safeBottomInset);
@@ -322,6 +343,41 @@ export default function NewsScreen() {
     if (!commentsTarget) return [];
     return commentThreads[commentsTarget.feedId] ?? buildCommentPreview(commentsTarget);
   }, [commentThreads, commentsTarget]);
+
+  const viewabilityConfig = useMemo(
+    () => ({
+      itemVisiblePercentThreshold: 80,
+    }),
+    [],
+  );
+
+  const onViewableItemsChanged = useRef(
+    ({ changed }: { changed: Array<ViewToken & { item: FeedEntry }> }) => {
+      for (const change of changed) {
+        const feedId = change.item?.feedId;
+        if (!feedId) continue;
+
+        if (change.isViewable) {
+          visibleSinceRef.current[feedId] = Date.now();
+          continue;
+        }
+
+        const seenAt = visibleSinceRef.current[feedId];
+        delete visibleSinceRef.current[feedId];
+        if (!seenAt) continue;
+
+        const visibleForMs = Date.now() - seenAt;
+        if (
+          visibleForMs <= PASSIVE_SKIP_MAX_VISIBLE_MS &&
+          !engagedFeedIdsRef.current.has(feedId) &&
+          !passiveSkippedIdsRef.current.has(feedId)
+        ) {
+          // Weak signal only. Keep local for future ranking/analytics use.
+          passiveSkippedIdsRef.current.add(feedId);
+        }
+      }
+    },
+  ).current;
 
   const isSaved = useCallback(
     (feedId: string) => savedIds.includes(feedId),
@@ -352,9 +408,32 @@ export default function NewsScreen() {
     });
   }, [feedItems, focusVideoId, itemHeight]);
 
-  const toggleLike = async (item: FeedEntry) => {
+  const markEngaged = useCallback((feedId: string) => {
+    engagedFeedIdsRef.current.add(feedId);
+  }, []);
+
+  const openCreatorProfile = useCallback(
+    (item: FeedEntry) => {
+      router.push({
+        pathname: "/(tabs)/user-profile",
+        params: {
+          userId: String(item.id),
+          name: item.author,
+          avatar: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR,
+          status: "online",
+          currentGame: item.game,
+        },
+      });
+    },
+    [router],
+  );
+
+  const toggleLike = async (item: FeedEntry, likeOnly = false) => {
     const wasLiked = likedIds.includes(item.feedId);
+    if (likeOnly && wasLiked) return;
+
     const undoToggle = toggleOptimisticLike(item.feedId);
+    markEngaged(item.feedId);
 
     setLikedCache((prev) =>
       prev.includes(item.feedId)
@@ -449,6 +528,7 @@ export default function NewsScreen() {
       const page = await listFeedPage(accessToken);
       const posts = page.results;
       const mapped = posts.map(mapPostToNewsItem);
+      const shuffled = mode === "refresh" ? shuffleFeedSeed(mapped, feedSeedRef.current[0]?.id) : mapped;
 
       paginationEnabledRef.current = page.paginationEnabled;
       nextPageUrlRef.current = page.next;
@@ -456,21 +536,21 @@ export default function NewsScreen() {
 
       if (page.paginationEnabled) {
         // Backend controls list size/order via pages.
-        feedSeedRef.current = mapped;
+        feedSeedRef.current = shuffled;
         nextLoopRef.current = 1;
-        setFeedItems(createLoop(mapped, 0, "page"));
+        setFeedItems(createLoop(shuffled, 0, "page"));
         return;
       }
 
-      feedSeedRef.current = mapped;
-      if (mapped.length === 0) {
+      feedSeedRef.current = shuffled;
+      if (shuffled.length === 0) {
         nextLoopRef.current = 0;
         setFeedItems([]);
         return;
       }
 
       nextLoopRef.current = INITIAL_LOOP_COUNT;
-      setFeedItems(createInitialFeed(mapped));
+      setFeedItems(createInitialFeed(shuffled));
     } catch (error) {
       setFeedError(error instanceof Error ? error.message : "Unable to load feed.");
     } finally {
@@ -505,6 +585,7 @@ export default function NewsScreen() {
   }, [createdTitle, focusFrom, focusVideoId, showToast]);
 
   const openChat = (item: FeedEntry) => {
+    markEngaged(item.feedId);
     setCommentDraft("");
     setCommentsTarget(item);
     setCommentThreads((prev) => {
@@ -549,48 +630,65 @@ export default function NewsScreen() {
     });
   };
 
-  const handleSystemShare = async (message: string) => {
-    try {
-      await Share.share({ message });
-    } catch {
-      // no-op
-    }
-  };
-
-  const openShareDrawer = async (item: FeedEntry) => {
-    setSharedIds((prev) => (prev.includes(item.feedId) ? prev : [...prev, item.feedId]));
+  const registerShareSuccess = async (item: FeedEntry) => {
+    if (sharedIds.includes(item.feedId)) return true;
+    markEngaged(item.feedId);
 
     if (accessToken && item.backendPostId) {
       try {
         await sharePost(accessToken, item.backendPostId);
       } catch {
         showToast({ message: "Unable to record share right now." });
+        return false;
       }
     }
 
-    setShareTarget({
-      feedId: item.feedId,
-      title: item.title,
-      message: `${item.title} · ${item.author}\nhttps://gamemate.app/p/${item.id}`,
-    });
+    setSharedIds((prev) => (prev.includes(item.feedId) ? prev : [...prev, item.feedId]));
+    showToast({ message: "Shared successfully." });
+    return true;
   };
 
-  const handleSkipItem = async (item: FeedEntry, index: number) => {
+  const handleSystemShare = async (item: FeedEntry) => {
+    const message = `${item.title} · ${item.author}\nhttps://gamemate.app/p/${item.id}`;
+    try {
+      const result = await Share.share({ message });
+      if (result.action === Share.sharedAction) {
+        await registerShareSuccess(item);
+      }
+    } catch {
+      // no-op
+    }
+  };
+
+  const openShareDrawer = async (item: FeedEntry) => {
+    setShareTarget(item);
+  };
+
+  const handleNotInterested = async (item: FeedEntry, index: number) => {
+    markEngaged(item.feedId);
     if (accessToken && item.backendPostId) {
       try {
         await skipPost(accessToken, item.backendPostId);
       } catch {
         showToast({ message: "Unable to skip post right now." });
+        return;
       }
     }
 
-    const nextIndex = index + 1;
-    if (nextIndex >= feedItems.length - 1) {
-      appendFeedItems();
-    }
+    let nextLength = 0;
+    setFeedItems((prev) => {
+      const next = prev.filter((entry) => entry.feedId !== item.feedId);
+      nextLength = next.length;
+      return next;
+    });
+    showToast({ message: "We will show less like this." });
 
     requestAnimationFrame(() => {
-      if (nextIndex < feedItems.length) {
+      if (nextLength < 5) {
+        appendFeedItems();
+      }
+      if (nextLength > 0) {
+        const nextIndex = Math.min(index, nextLength - 1);
         feedListRef.current?.scrollToIndex({ index: nextIndex, animated: true, viewPosition: 0 });
       }
     });
@@ -600,6 +698,17 @@ export default function NewsScreen() {
     if (!shareTarget) return;
     router.push("/(tabs)/messages");
     Alert.alert("Share", `Choose a friend to share "${shareTarget.title}".`);
+  };
+
+  const handleMediaTap = (item: FeedEntry) => {
+    const now = Date.now();
+    const lastTap = lastMediaTapRef.current;
+    if (lastTap && lastTap.feedId === item.feedId && now - lastTap.at <= DOUBLE_TAP_WINDOW_MS) {
+      lastMediaTapRef.current = null;
+      void toggleLike(item, true);
+      return;
+    }
+    lastMediaTapRef.current = { feedId: item.feedId, at: now };
   };
 
   const handleReportPost = (item: FeedEntry) => {
@@ -707,6 +816,8 @@ export default function NewsScreen() {
         windowSize={4}
         updateCellsBatchingPeriod={50}
         removeClippedSubviews
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         ListFooterComponent={
           isPaginating ? (
             <View style={styles.paginationFooter}>
@@ -728,7 +839,7 @@ export default function NewsScreen() {
             });
           }, 80);
         }}
-        renderItem={({ item, index }) => {
+        renderItem={({ item }) => {
           const liked = isLiked(item.feedId);
 
           return (
@@ -739,6 +850,12 @@ export default function NewsScreen() {
                 contentFit="cover"
                 cachePolicy="memory-disk"
                 accessibilityLabel={`${item.title} preview image`}
+              />
+              <Pressable
+                style={styles.mediaTapZone}
+                onPress={() => handleMediaTap(item)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${item.title}. Double tap to like.`}
               />
 
               <View style={styles.topScrim} />
@@ -772,12 +889,6 @@ export default function NewsScreen() {
                   >
                     <MaterialCommunityIcons name="information-outline" size={16} color="#1A1A1A" />
                   </Pressable>
-                  {item.duration ? (
-                    <View style={styles.durationBadge}>
-                      <MaterialCommunityIcons name="play" size={12} color={colors.text} />
-                      <Text style={styles.durationText}>{item.duration}</Text>
-                    </View>
-                  ) : null}
                 </View>
               </View>
 
@@ -790,6 +901,21 @@ export default function NewsScreen() {
                   },
                 ]}
               >
+                <Pressable
+                  onPress={() => openCreatorProfile(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open profile for ${item.author}`}
+                  style={({ pressed }) => [styles.profileRailButton, pressed && styles.pressed]}
+                >
+                  <ExpoImage
+                    source={{ uri: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR }}
+                    style={styles.profileRailAvatar}
+                    contentFit="cover"
+                    cachePolicy="memory-disk"
+                    accessibilityLabel={`${item.author} avatar`}
+                  />
+                </Pressable>
+
                 <Pressable
                   onPress={() => {
                     void toggleLike(item);
@@ -834,18 +960,6 @@ export default function NewsScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => {
-                    void handleSkipItem(item, index);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Skip ${item.title}`}
-                  style={({ pressed }) => [styles.railButton, pressed && styles.pressed]}
-                >
-                  <MaterialCommunityIcons name="skip-next-outline" size={32} color={colors.text} />
-                  <Text style={styles.railCount}>Skip</Text>
-                </Pressable>
-
-                <Pressable
                   onPress={() => setActivePostMenu(item)}
                   accessibilityRole="button"
                   accessibilityLabel={`More options for ${item.title}`}
@@ -865,53 +979,8 @@ export default function NewsScreen() {
                   },
                 ]}
               >
-                <Pressable
-                  onPress={() =>
-                    router.push({
-                      pathname: "/(tabs)/user-profile",
-                      params: {
-                        userId: String(item.id),
-                        name: item.author,
-                        avatar: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR,
-                        status: "online",
-                        currentGame: item.game,
-                      },
-                    })
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open profile for ${item.author}`}
-                  style={({ pressed }) => [styles.authorRow, pressed && styles.pressed]}
-                >
-                  <ExpoImage
-                    source={{ uri: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR }}
-                    style={styles.avatar}
-                    contentFit="cover"
-                    cachePolicy="memory-disk"
-                    accessibilityLabel={`${item.author} avatar`}
-                  />
-                  <View style={styles.authorText}>
-                    <Text style={styles.author}>{item.author}</Text>
-                    <Text style={styles.date}>{item.date}</Text>
-                  </View>
-                </Pressable>
                 <Text style={styles.title}>{truncateFeedTitle(item.title)}</Text>
-                <Text style={styles.description}>
-                  {item.caption || `${item.game} · ${item.category.toUpperCase()} · #${item.hashtags[0] || "feed"}`}
-                </Text>
-                <Text style={styles.fieldSupportText}>
-                  creator: {item.creator || item.author} · game: {item.game}
-                </Text>
-                <Text style={styles.fieldSupportText}>
-                  created_at: {item.createdAtIso || item.date}
-                </Text>
-                {item.whyReasons && item.whyReasons.length > 0 ? (
-                  <Text style={styles.whyReasonText}>
-                    Why you're seeing this: {item.whyReasons.join(" · ")}
-                  </Text>
-                ) : null}
-                {item.feedMeta?.source ? (
-                  <Text style={styles.fieldSupportText}>feed_meta: {item.feedMeta.source}</Text>
-                ) : null}
+                <Text style={styles.description}>{item.caption || item.description || "No description yet."}</Text>
               </View>
             </View>
           );
@@ -1030,12 +1099,12 @@ export default function NewsScreen() {
               },
             },
             {
-              id: "skip",
-              label: "Skip",
+              id: "not_interested",
+              label: "Not interested",
               icon: "skip-next-outline",
               onPress: () => {
                 const index = feedItems.findIndex((entry) => entry.feedId === activePostMenu.feedId);
-                void handleSkipItem(activePostMenu, Math.max(index, 0));
+                void handleNotInterested(activePostMenu, Math.max(index, 0));
               },
             },
             {
@@ -1075,7 +1144,7 @@ export default function NewsScreen() {
               label: "Share to Contacts",
               icon: "account-box-outline",
               onPress: () => {
-                void handleSystemShare(shareTarget.message);
+                void handleSystemShare(shareTarget);
               },
             },
             {
@@ -1083,7 +1152,7 @@ export default function NewsScreen() {
               label: "Copy Link",
               icon: "content-copy",
               onPress: () => {
-                const link = shareTarget.message.split("\n").slice(-1)[0];
+                const link = `https://gamemate.app/p/${shareTarget.id}`;
                 Alert.alert("Link Ready", link);
               },
             },
@@ -1232,6 +1301,10 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  mediaTapZone: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
   topScrim: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.22)",
@@ -1283,26 +1356,25 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     fontWeight: "800",
   },
-  durationBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "rgba(26,26,26,0.72)",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  durationText: {
-    color: colors.text,
-    fontSize: 12,
-    fontWeight: "700",
-    marginLeft: 4,
-  },
   actionRail: {
     position: "absolute",
     alignItems: "center",
     gap: spacing.md,
+    zIndex: 5,
+  },
+  profileRailButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  profileRailAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.65)",
   },
   railButton: {
     minWidth: 60,
@@ -1322,31 +1394,6 @@ const styles = StyleSheet.create({
   bottomMeta: {
     position: "absolute",
   },
-  authorRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.42)",
-    marginRight: spacing.sm,
-  },
-  authorText: {
-    flex: 1,
-  },
-  author: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  date: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginTop: 1,
-  },
   title: {
     color: colors.text,
     fontSize: 28,
@@ -1359,19 +1406,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginTop: spacing.xs,
-  },
-  whyReasonText: {
-    color: "rgba(255,255,255,0.86)",
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: spacing.xs,
-    fontWeight: "600",
-  },
-  fieldSupportText: {
-    color: "rgba(255,255,255,0.72)",
-    fontSize: 11,
-    lineHeight: 16,
-    marginTop: 2,
   },
   whyRoot: {
     flex: 1,

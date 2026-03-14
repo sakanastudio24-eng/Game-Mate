@@ -858,9 +858,6 @@ export default function NewsScreen() {
                 accessibilityLabel={`Open ${item.title}. Double tap to like.`}
               />
 
-              <View style={styles.topScrim} />
-              <View style={styles.bottomScrim} />
-
               <View style={[styles.topBar, { top: safeTop, paddingHorizontal: horizontalPadding }]}>
                 <Text accessibilityRole="header" style={styles.feedLabel}>
                   Feed
@@ -1304,18 +1301,6 @@ const styles = StyleSheet.create({
   mediaTapZone: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
-  },
-  topScrim: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.22)",
-  },
-  bottomScrim: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: "55%",
-    backgroundColor: "rgba(0,0,0,0.50)",
   },
   topBar: {
     position: "absolute",

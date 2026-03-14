@@ -256,7 +256,7 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 
 export default function NewsScreen() {
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, loading: authLoading } = useAuth();
   const params = useLocalSearchParams<{
     focusVideoId?: string;
     focusFrom?: string;
@@ -511,9 +511,16 @@ export default function NewsScreen() {
   }, [accessToken, setFeedItems]);
 
   const fetchBackendFeed = useCallback(async (mode: "initial" | "refresh" = "initial") => {
+    if (authLoading) {
+      if (mode !== "refresh") {
+        setIsFeedLoading(true);
+      }
+      return;
+    }
+
     if (!accessToken) {
       setIsFeedLoading(false);
-      setFeedError("Sign in to load your feed.");
+      setFeedError("Sign in is required to load your feed.");
       return;
     }
 
@@ -560,11 +567,27 @@ export default function NewsScreen() {
         setIsFeedLoading(false);
       }
     }
-  }, [accessToken, setFeedItems]);
+  }, [accessToken, authLoading, setFeedItems]);
 
   useEffect(() => {
+    if (authLoading) return;
     void fetchBackendFeed();
-  }, [fetchBackendFeed]);
+  }, [authLoading, fetchBackendFeed]);
+
+  const requiresSignInRecovery = useMemo(() => {
+    return (
+      !accessToken ||
+      /sign in is required|session expired/i.test(feedError ?? "")
+    );
+  }, [accessToken, feedError]);
+
+  const handleFeedRecovery = useCallback(() => {
+    if (requiresSignInRecovery) {
+      router.replace("/login");
+      return;
+    }
+    void fetchBackendFeed("refresh");
+  }, [fetchBackendFeed, requiresSignInRecovery, router]);
 
   useEffect(() => {
     if (refreshParam !== "1") return;
@@ -774,9 +797,20 @@ export default function NewsScreen() {
           <Text style={styles.stateText}>
             {feedError || "Your feed is empty right now. Pull in content by creating posts first."}
           </Text>
-          <Button variant="primary" onPress={() => void fetchBackendFeed()} size="medium">
-            Retry
-          </Button>
+          <View style={styles.stateActions}>
+            <Button
+              variant="primary"
+              onPress={handleFeedRecovery}
+              size="medium"
+            >
+              {requiresSignInRecovery ? "Sign In" : "Retry"}
+            </Button>
+            {requiresSignInRecovery ? (
+              <Button variant="secondary" onPress={() => void fetchBackendFeed("refresh")} size="medium">
+                Retry
+              </Button>
+            ) : null}
+          </View>
         </View>
       ) : null}
 
@@ -786,12 +820,12 @@ export default function NewsScreen() {
             {feedError}
           </Text>
           <Pressable
-            onPress={() => void fetchBackendFeed("refresh")}
+            onPress={handleFeedRecovery}
             accessibilityRole="button"
-            accessibilityLabel="Retry feed refresh"
+            accessibilityLabel={requiresSignInRecovery ? "Open sign in" : "Retry feed refresh"}
             style={({ pressed }) => [styles.errorRetryButton, pressed && styles.pressed]}
           >
-            <Text style={styles.errorRetryText}>Retry</Text>
+            <Text style={styles.errorRetryText}>{requiresSignInRecovery ? "Sign In" : "Retry"}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -1243,6 +1277,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     textAlign: "center",
     maxWidth: 320,
+  },
+  stateActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   errorBanner: {
     position: "absolute",

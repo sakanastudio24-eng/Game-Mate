@@ -3,7 +3,13 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { Text } from "react-native-paper";
-import { createThread, getMessages, sendMessage, type MessageItem } from "../../services/messages";
+import {
+  createThread,
+  getMessages,
+  listThreads,
+  sendMessage,
+  type MessageItem,
+} from "../../services/messages";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
@@ -47,6 +53,7 @@ export default function ChatScreen() {
   const selfUsername = String(user?.username ?? "");
   const routeThreadId = useMemo(() => parseNumericParam(params.threadId), [params.threadId]);
   const routeUserId = useMemo(() => parseNumericParam(params.userId), [params.userId]);
+  const routeTitle = useMemo(() => firstParam(params.title) ?? null, [params.title]);
 
   const loadThreadMessages = useCallback(
     async (threadId: number) => {
@@ -70,6 +77,27 @@ export default function ChatScreen() {
     [accessToken, params.title, selfUsername],
   );
 
+  const resolveDefaultThreadId = useCallback(async () => {
+    if (!accessToken) return null;
+    const threads = await listThreads(accessToken);
+    if (!threads.length) return null;
+
+    if (routeTitle) {
+      const normalizedTarget = routeTitle.trim().toLowerCase();
+      const matched = threads.find((thread) =>
+        (thread.participants ?? []).some(
+          (participant) =>
+            participant &&
+            participant !== selfUsername &&
+            participant.trim().toLowerCase() === normalizedTarget,
+        ),
+      );
+      if (matched?.thread_id) return matched.thread_id;
+    }
+
+    return threads[0]?.thread_id ?? null;
+  }, [accessToken, routeTitle, selfUsername]);
+
   const resolveThreadAndLoad = useCallback(async () => {
     if (!accessToken) {
       setActiveThreadId(null);
@@ -91,7 +119,15 @@ export default function ChatScreen() {
       }
 
       if (!resolvedThreadId) {
-        throw new Error("No thread selected.");
+        resolvedThreadId = await resolveDefaultThreadId();
+      }
+
+      if (!resolvedThreadId) {
+        setActiveThreadId(null);
+        setMessages([]);
+        setThreadTitle(routeTitle ?? "Chat");
+        setLoadError(null);
+        return;
       }
 
       setActiveThreadId(resolvedThreadId);
@@ -103,7 +139,7 @@ export default function ChatScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, loadThreadMessages, routeThreadId, routeUserId]);
+  }, [accessToken, loadThreadMessages, resolveDefaultThreadId, routeThreadId, routeTitle, routeUserId]);
 
   useEffect(() => {
     void resolveThreadAndLoad();

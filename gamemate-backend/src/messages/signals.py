@@ -21,7 +21,9 @@ def message_created(sender, instance, created, **kwargs):
     if not allow_event(instance.sender_id, "message"):
         return
 
-    receivers = instance.thread.participants.exclude(id=instance.sender_id)
+    receivers = (
+        instance.conversation.participants.exclude(id=instance.sender_id)
+    )
     for receiver in receivers:
         create_notification(
             user=receiver,
@@ -33,5 +35,5 @@ def message_created(sender, instance, created, **kwargs):
         user=instance.sender,
         type="message_sent",
         object_id=instance.id,
-        metadata={"thread_id": instance.thread_id},
+        metadata={"conversation_id": instance.conversation_id},
     )

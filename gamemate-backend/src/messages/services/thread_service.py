@@ -1,73 +1,129 @@
-"""Thread-domain business logic for direct messages."""
+"""Conversation-domain business logic for direct messages."""
 
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Count, Q
 
-from messages.models import Thread
+from messages.models import Conversation, ConversationParticipant
 from messages.services.errors import DomainNotFoundError, DomainPermissionError, DomainValidationError
 
 User = get_user_model()
 
 
-# Get or create a 1:1 thread for requester and target user.
-def get_or_create_thread(user, other_user_id):
-    """Return existing 1:1 thread or create a new one for two distinct users."""
+def _other_participants(conversation, user):
+    return list(conversation.participants.exclude(id=user.id).all())
+
+
+# Get or create a 1:1 direct conversation for requester and target user.
+@transaction.atomic
+def get_or_create_direct_conversation(user, other_user_id):
+    """Return existing direct conversation or create one for two distinct users."""
 
     other = User.objects.filter(id=other_user_id).first()
     if not other:
         raise DomainNotFoundError("User not found.")
 
     if other.id == user.id:
-        raise DomainValidationError("Cannot create a thread with yourself.")
+        raise DomainValidationError("Cannot create a conversation with yourself.")
 
-    threads = Thread.objects.filter(participants=user)
-    for thread in threads:
-        if thread.participants.filter(id=other.id).exists() and thread.participants.count() == 2:
-            return thread, False
+    existing = (
+        Conversation.objects.filter(type=Conversation.TYPE_DIRECT, participants=user)
+        .filter(participants=other)
+        .annotate(participant_count=Count("participants", distinct=True))
+        .filter(participant_count=2)
+        .order_by("-last_message_at", "-created_at")
+        .first()
+    )
+    if existing:
+        return existing, False
 
-    thread = Thread.objects.create()
-    thread.participants.add(user, other)
-    return thread, True
+    conversation = Conversation.objects.create(
+        type=Conversation.TYPE_DIRECT,
+        created_by=user,
+    )
+    conversation.participants.add(user, other)
+    ConversationParticipant.objects.bulk_create(
+        [
+            ConversationParticipant(conversation=conversation, user=user),
+            ConversationParticipant(conversation=conversation, user=other),
+        ]
+    )
+    return conversation, True
 
 
-# Fetch thread and ensure requester is a participant.
-def get_participant_thread(thread_id, user):
-    """Fetch a thread and verify that the requester is a participant."""
+# Fetch conversation and ensure requester is an active participant.
+def get_participant_conversation(conversation_id, user):
+    """Fetch a conversation and verify requester membership."""
 
-    thread = Thread.objects.filter(id=thread_id).first()
-    if not thread:
-        raise DomainNotFoundError("Thread not found.")
+    conversation = (
+        Conversation.objects.filter(id=conversation_id)
+        .prefetch_related("participants")
+        .first()
+    )
+    if not conversation:
+        raise DomainNotFoundError("Conversation not found.")
 
-    if not thread.participants.filter(id=user.id).exists():
+    if not conversation.participants.filter(id=user.id).exists():
         raise DomainPermissionError("Not allowed.")
 
-    return thread
+    membership_row, _ = ConversationParticipant.objects.get_or_create(
+        conversation=conversation,
+        user=user,
+    )
+    if membership_row.is_archived:
+        raise DomainPermissionError("Conversation is archived.")
+
+    return conversation
 
 
-# Return DM thread previews for the requester.
-def build_thread_list(user):
-    """Build DM inbox preview rows with participants, last message, and unread count."""
+# Return conversation list rows for the requester.
+def build_conversation_list(user):
+    """Build inbox preview rows with participants, last message, and unread count."""
 
-    threads = (
-        Thread.objects.filter(participants=user)
-        .prefetch_related("participants", "messages")
-        .order_by("-created_at")
+    conversations = (
+        Conversation.objects.filter(participants=user)
+        .select_related("last_message")
+        .prefetch_related("participants")
+        .order_by("-last_message_at", "-created_at")
     )
 
     results = []
-    for thread in threads:
-        participants = [
-            participant.username
-            for participant in thread.participants.all()
-            if participant.id != user.id
-        ]
-        last_message = thread.messages.order_by("-created_at").first()
-        unread_count = thread.messages.filter(~Q(sender=user), is_read=False).count()
+    for conversation in conversations:
+        participation, _ = ConversationParticipant.objects.get_or_create(
+            conversation=conversation,
+            user=user,
+        )
+        if participation.is_archived:
+            continue
+
+        others = _other_participants(conversation, user)
+        participant_names = [other.username for other in others]
+
+        unread_filter = Q(conversation=conversation, deleted_at__isnull=True)
+        if participation.last_read_message_id:
+            unread_filter &= Q(id__gt=participation.last_read_message_id)
+
+        unread_count = (
+            conversation.messages.filter(unread_filter)
+            .exclude(sender=user)
+            .count()
+        )
+
+        last_message = conversation.last_message
+        preview = ""
+        if last_message and last_message.deleted_at:
+            preview = "Message deleted"
+        elif last_message:
+            preview = last_message.body
+
         results.append(
             {
-                "thread_id": thread.id,
-                "participants": participants,
-                "last_message": last_message.content if last_message else "",
+                "conversation_id": conversation.id,
+                "thread_id": conversation.id,  # legacy alias for current frontend
+                "type": conversation.type,
+                "participants": participant_names,
+                "last_message": preview,
+                "last_message_at": conversation.last_message_at,
                 "unread": unread_count,
             }
         )

@@ -11,95 +11,53 @@ import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { useAuth } from "../../src/context/AuthContext";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
-import { MY_GROUPS } from "../../src/lib/content-data";
+import type { GroupListItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
-const achievements = [
-  {
-    name: "Tournament Winner",
-    icon: "trophy",
-    rarity: "Legendary",
-    color: "#FFD700",
-  },
-  {
-    name: "Team Player",
-    icon: "handshake-outline",
-    rarity: "Epic",
-    color: "#9B59B6",
-  },
-  {
-    name: "Veteran",
-    icon: "star-outline",
-    rarity: "Rare",
-    color: "#3498DB",
-  },
-  {
-    name: "Marksman",
-    icon: "crosshairs",
-    rarity: "Common",
-    color: "#95A5A6",
-  },
-] as const;
+type ProfileVideo = {
+  id: string;
+  title: string;
+  duration: string;
+  views: string;
+  image: string;
+};
+
+type ProfileAchievement = {
+  name: string;
+  icon: string;
+  rarity: string;
+  color: string;
+};
 
 const games = [
   {
     name: "Overwatch",
-    hours: 450,
     image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80",
   },
   {
     name: "Valorant",
-    hours: 320,
     image: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80",
   },
   {
     name: "CS2",
-    hours: 280,
     image: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&q=80",
   },
   {
     name: "Apex Legends",
-    hours: 190,
     image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&q=80",
   },
   {
     name: "League",
-    hours: 150,
     image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80",
   },
   {
     name: "Fortnite",
-    hours: 120,
     image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&q=80",
   },
 ] as const;
-const gameCatalogByName = new Map(games.map((game) => [game.name.toLowerCase(), game]));
-
-const videos = [
-  {
-    id: "v1",
-    title: "Ace Clutch in Overtime",
-    duration: "0:42",
-    views: "12.4K",
-    image: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=500&q=80",
-  },
-  {
-    id: "v2",
-    title: "Fast Rotate Breakdown",
-    duration: "1:08",
-    views: "9.1K",
-    image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500&q=80",
-  },
-  {
-    id: "v3",
-    title: "Aim Routine Day 7",
-    duration: "0:55",
-    views: "6.3K",
-    image: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=500&q=80",
-  },
-] as const;
+const gameCatalogByName = new Map(games.map((game) => [game.name.toLowerCase(), game.image]));
 
 type OnlineStatus = "online" | "away" | "busy" | "invisible" | "offline";
 
@@ -148,7 +106,7 @@ export default function ProfileScreen() {
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const profileErrorBottomOffset = safeBottom + 74;
 
-  const [myGroups, setMyGroups] = useState(MY_GROUPS);
+  const [myGroups, setMyGroups] = useState<GroupListItem[]>([]);
   const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
     "videos",
   );
@@ -196,22 +154,22 @@ export default function ProfileScreen() {
     }, [loadProfile]),
   );
 
-  const profileName = user?.username || "PlayerMaker34";
+  const profileName = user?.username || "Player";
   const profileAvatar = profileData.avatar_url || CURRENT_USER_AVATAR;
-  const profileBio =
-    profileData.bio?.trim() ||
-    "Competitive gamer · Tournament organizer · Always looking for new challenges";
+  const profileBio = profileData.bio?.trim() || "No bio yet. Tap Edit Profile to add one.";
   const profileAvatarUrl = profileData.avatar_url?.trim() || "";
   const favoriteGames = profileData.favorite_games || [];
+  const videosToRender: ProfileVideo[] = [];
+  const achievementsToRender: ProfileAchievement[] = [];
   const gamesToRender = useMemo(() => {
-    if (!favoriteGames.length) return [...games];
+    if (!favoriteGames.length) return [];
     return favoriteGames.map((gameName, index) => {
-      const matched = gameCatalogByName.get(gameName.toLowerCase());
-      if (matched) return matched;
+      const matchedImage = gameCatalogByName.get(gameName.toLowerCase());
       return {
         name: gameName,
         hours: 0,
         image:
+          matchedImage ||
           games[index % games.length]?.image ||
           "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80",
       };
@@ -225,7 +183,7 @@ export default function ProfileScreen() {
   const statRows = [
     {
       label: "Posts",
-      value: String(profileData.stats?.posts ?? videos.length),
+      value: String(profileData.stats?.posts ?? videosToRender.length),
       icon: "play-box-multiple-outline",
       color: "#66BAFF",
     },
@@ -241,7 +199,12 @@ export default function ProfileScreen() {
       icon: "account-group-outline",
       color: colors.primary,
     },
-    { label: "Events", value: "34", icon: "calendar-month-outline", color: "#4ADE80" },
+    {
+      label: "Achievements",
+      value: String(achievementsToRender.length),
+      icon: "trophy-outline",
+      color: "#4ADE80",
+    },
   ] as const;
 
   const leaveGroup = (groupId: string) => {
@@ -263,7 +226,7 @@ export default function ProfileScreen() {
     router.push(`/(tabs)/create-collection?type=${type}`);
   };
 
-  const openVideoPreview = (video: (typeof videos)[number]) => {
+  const openVideoPreview = (video: ProfileVideo) => {
     router.push({
       pathname: "/(tabs)/video-preview",
       params: {
@@ -518,17 +481,23 @@ export default function ProfileScreen() {
             <Text accessibilityRole="header" style={[styles.sectionTitle, { fontSize: responsive.sectionTitleSize }]}>
               Achievements
             </Text>
-            <View style={styles.achievementsGrid}>
-              {achievements.map((achievement) => (
-                <View key={achievement.name} style={[styles.achievementCard, { borderColor: `${achievement.color}66` }]}>
-                  <View style={[styles.achievementIconWrap, { backgroundColor: `${achievement.color}22` }]}>
-                    <MaterialCommunityIcons name={achievement.icon as any} size={20} color={achievement.color} />
+            {achievementsToRender.length === 0 ? (
+              <View style={styles.emptyCollectionState}>
+                <Text style={styles.emptyCollectionText}>No achievements yet.</Text>
+              </View>
+            ) : (
+              <View style={styles.achievementsGrid}>
+                {achievementsToRender.map((achievement) => (
+                  <View key={achievement.name} style={[styles.achievementCard, { borderColor: `${achievement.color}66` }]}>
+                    <View style={[styles.achievementIconWrap, { backgroundColor: `${achievement.color}22` }]}>
+                      <MaterialCommunityIcons name={achievement.icon as any} size={20} color={achievement.color} />
+                    </View>
+                    <Text style={styles.achievementName}>{achievement.name}</Text>
+                    <Text style={[styles.achievementRarity, { color: achievement.color }]}>{achievement.rarity}</Text>
                   </View>
-                  <Text style={styles.achievementName}>{achievement.name}</Text>
-                  <Text style={[styles.achievementRarity, { color: achievement.color }]}>{achievement.rarity}</Text>
-                </View>
-              ))}
-            </View>
+                ))}
+              </View>
+            )}
           </View>
         </AnimatedEntrance>
 
@@ -592,31 +561,37 @@ export default function ProfileScreen() {
                   <Text style={styles.addCollectionSubtitle}>Create a new profile clip</Text>
                 </Pressable>
 
-                {videos.map((video) => (
-                  <Pressable
-                    key={video.id}
-                    onPress={() => openVideoPreview(video)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${video.title}, ${video.views} views. Open preview`}
-                    style={[styles.videoCard, { width: videoCardWidth }]}
-                  >
-                    <ExpoImage
-                      source={{ uri: video.image }}
-                      style={styles.videoImage}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                    />
-                    <View style={styles.videoDurationBadge}>
-                      <Text style={styles.videoDurationText}>{video.duration}</Text>
-                    </View>
-                    <View style={styles.videoOverlay}>
-                      <Text style={styles.videoTitle} numberOfLines={2}>
-                        {video.title}
-                      </Text>
-                      <Text style={styles.videoMeta}>{video.views} views</Text>
-                    </View>
-                  </Pressable>
-                ))}
+                {videosToRender.length === 0 ? (
+                  <View style={styles.emptyCollectionState}>
+                    <Text style={styles.emptyCollectionText}>No videos yet.</Text>
+                  </View>
+                ) : (
+                  videosToRender.map((video) => (
+                    <Pressable
+                      key={video.id}
+                      onPress={() => openVideoPreview(video)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${video.title}, ${video.views} views. Open preview`}
+                      style={[styles.videoCard, { width: videoCardWidth }]}
+                    >
+                      <ExpoImage
+                        source={{ uri: video.image }}
+                        style={styles.videoImage}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                      />
+                      <View style={styles.videoDurationBadge}>
+                        <Text style={styles.videoDurationText}>{video.duration}</Text>
+                      </View>
+                      <View style={styles.videoOverlay}>
+                        <Text style={styles.videoTitle} numberOfLines={2}>
+                          {video.title}
+                        </Text>
+                        <Text style={styles.videoMeta}>{video.views} views</Text>
+                      </View>
+                    </Pressable>
+                  ))
+                )}
                 </View>
               </View>
             ) : activeCollectionTab === "games" ? (
@@ -634,25 +609,31 @@ export default function ProfileScreen() {
                   <Text style={styles.addCollectionSubtitle}>Track another game</Text>
                 </Pressable>
 
-                {gamesToRender.map((game) => (
-                  <View
-                    key={game.name}
-                    accessible
-                    accessibilityLabel={`${game.name}, ${game.hours} hours played`}
-                    style={[styles.gameCard, { width: gameCardWidth }]}
-                  >
-                    <ExpoImage
-                      source={{ uri: game.image }}
-                      style={styles.gameImage}
-                      contentFit="cover"
-                      cachePolicy="memory-disk"
-                    />
-                    <View style={styles.gameOverlay}>
-                      <Text style={styles.gameName}>{game.name}</Text>
-                      <Text style={styles.gameHours}>{game.hours}h</Text>
-                    </View>
+                {gamesToRender.length === 0 ? (
+                  <View style={styles.emptyCollectionState}>
+                    <Text style={styles.emptyCollectionText}>No games added yet.</Text>
                   </View>
-                ))}
+                ) : (
+                  gamesToRender.map((game) => (
+                    <View
+                      key={game.name}
+                      accessible
+                      accessibilityLabel={`${game.name}, ${game.hours} hours played`}
+                      style={[styles.gameCard, { width: gameCardWidth }]}
+                    >
+                      <ExpoImage
+                        source={{ uri: game.image }}
+                        style={styles.gameImage}
+                        contentFit="cover"
+                        cachePolicy="memory-disk"
+                      />
+                      <View style={styles.gameOverlay}>
+                        <Text style={styles.gameName}>{game.name}</Text>
+                        <Text style={styles.gameHours}>{game.hours}h</Text>
+                      </View>
+                    </View>
+                  ))
+                )}
               </View>
             ) : (
               <View>
@@ -1233,6 +1214,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A2A2A",
     alignItems: "center",
     justifyContent: "center",
+  },
+  emptyCollectionState: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#242424",
+    marginBottom: spacing.sm,
+  },
+  emptyCollectionText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    textAlign: "center",
   },
   emptyGroups: {
     backgroundColor: "#242424",

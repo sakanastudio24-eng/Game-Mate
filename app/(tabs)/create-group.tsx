@@ -8,6 +8,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { useAuth } from "../../src/context/AuthContext";
+import { SESSION_EXPIRED_MESSAGE } from "../../src/lib/auth-messages";
 import { Screen } from "../../src/components/ui/Screen";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -59,7 +60,7 @@ export default function CreateGroupScreen() {
     if (!accessToken) {
       setErrors((previous) => ({
         ...previous,
-        api: "Sign in again to create a group.",
+        api: SESSION_EXPIRED_MESSAGE,
       }));
       return;
     }

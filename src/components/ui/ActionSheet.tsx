@@ -27,7 +27,13 @@ export function ActionSheet({ visible, title, subtitle, options, onClose }: Acti
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
       <View style={styles.root}>
         <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Close menu" />
         <View style={styles.sheet}>

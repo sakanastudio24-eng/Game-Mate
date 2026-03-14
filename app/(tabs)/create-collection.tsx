@@ -8,6 +8,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { useAuth } from "../../src/context/AuthContext";
+import { SESSION_EXPIRED_MESSAGE } from "../../src/lib/auth-messages";
 import { Screen } from "../../src/components/ui/Screen";
 import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { useResponsive } from "../../src/lib/responsive";
@@ -137,7 +138,7 @@ export default function CreateCollectionScreen() {
 
     if (type === "video") {
       if (!accessToken) {
-        setSubmitError("Sign in again to publish.");
+        setSubmitError(SESSION_EXPIRED_MESSAGE);
         return;
       }
 

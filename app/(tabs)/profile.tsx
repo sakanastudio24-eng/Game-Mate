@@ -10,6 +10,7 @@ import { getMyProfile, type ProfileData } from "../../services/profile";
 import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { useAuth } from "../../src/context/AuthContext";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import type { GroupListItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
@@ -124,6 +125,7 @@ export default function ProfileScreen() {
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const isSessionExpiredError = isSessionExpiredMessage(profileError);
 
   const visibleProfileData = profileHydrated ? profileData : emptyProfileData;
   const hasCachedProfileData =
@@ -133,7 +135,7 @@ export default function ProfileScreen() {
 
   const loadProfile = useCallback(async () => {
     if (!accessToken) {
-      setProfileError("Sign in required.");
+      setProfileError(SESSION_EXPIRED_MESSAGE);
       return;
     }
 
@@ -727,13 +729,17 @@ export default function ProfileScreen() {
           <Text style={styles.profileErrorText}>{profileError}</Text>
           <Pressable
             onPress={() => {
+              if (isSessionExpiredError) {
+                router.replace("/login" as any);
+                return;
+              }
               void loadProfile();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Retry loading profile"
+            accessibilityLabel={isSessionExpiredError ? "Sign in again" : "Retry loading profile"}
             style={({ pressed }) => [styles.profileRetryButton, pressed && styles.pressed]}
           >
-            <Text style={styles.profileRetryText}>Retry</Text>
+            <Text style={styles.profileRetryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
           </Pressable>
         </View>
       ) : null}

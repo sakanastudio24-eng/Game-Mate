@@ -15,6 +15,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
+import { SESSION_EXPIRED_MESSAGE } from "../../src/lib/auth-messages";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -107,7 +108,7 @@ export default function ChatScreen() {
     if (!accessToken) {
       setActiveThreadId(null);
       setMessages([]);
-      setLoadError("Sign in required.");
+      setLoadError(SESSION_EXPIRED_MESSAGE);
       setIsLoading(false);
       return;
     }

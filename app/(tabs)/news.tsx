@@ -1023,6 +1023,7 @@ export default function NewsScreen() {
           visible
           transparent
           animationType="slide"
+          statusBarTranslucent
           onRequestClose={closeCommentsDrawer}
         >
           <KeyboardAvoidingView
@@ -1192,7 +1193,7 @@ export default function NewsScreen() {
       ) : null}
 
       {whyTarget ? (
-        <Modal visible transparent animationType="slide" onRequestClose={closeWhyThis}>
+        <Modal visible transparent animationType="slide" statusBarTranslucent onRequestClose={closeWhyThis}>
           <View style={styles.whyRoot}>
             <Pressable
               style={styles.whyScrim}

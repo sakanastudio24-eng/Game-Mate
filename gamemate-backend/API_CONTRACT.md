@@ -13,6 +13,27 @@ All protected routes require:
 
 ## Authentication
 
+### POST `/api/auth/signup/`
+Request:
+```json
+{
+  "email": "user@email.com",
+  "username": "user",
+  "password": "StrongPass123!"
+}
+```
+Response:
+```json
+{
+  "success": true,
+  "data": {
+    "id": 10,
+    "email": "user@email.com",
+    "username": "user"
+  }
+}
+```
+
 ### POST `/api/auth/token/`
 Request:
 ```json

@@ -1,4 +1,5 @@
 import { Image as ExpoImage } from "expo-image";
+import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
@@ -9,8 +10,8 @@ import { Chip } from "../../src/components/ui/Chip";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { useAuth } from "../../src/context/AuthContext";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
-import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { Screen } from "../../src/components/ui/Screen";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -41,7 +42,7 @@ const avatarOptions = [
 ];
 
 export default function EditProfileScreen() {
-  const safeBack = useSafeBackNavigation("/(tabs)/profile");
+  const router = useRouter();
   const responsive = useResponsive();
   const { accessToken, user } = useAuth();
   const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;
@@ -61,11 +62,12 @@ export default function EditProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const isSessionExpiredError = isSessionExpiredMessage(error);
 
   const loadProfile = useCallback(async () => {
     if (!accessToken) {
       setLoading(false);
-      setError("Sign in again to edit your profile.");
+      setError(SESSION_EXPIRED_MESSAGE);
       return;
     }
 
@@ -112,7 +114,7 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!accessToken) {
-      setError("Sign in again to edit your profile.");
+      setError(SESSION_EXPIRED_MESSAGE);
       return;
     }
 
@@ -125,7 +127,7 @@ export default function EditProfileScreen() {
         favorite_games: selectedGames,
       });
       setCachedProfile(updatedProfile);
-      safeBack();
+      router.replace("/(tabs)/profile");
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save profile.");
     } finally {
@@ -133,9 +135,21 @@ export default function EditProfileScreen() {
     }
   };
 
+  const handleDiscard = () => {
+    setBio(cachedProfile.bio || "");
+    setSelectedGames(cachedProfile.favorite_games || []);
+    setAvatarUrl(cachedProfile.avatar_url || "");
+    setError("");
+    router.replace("/(tabs)/profile");
+  };
+
+  const handleSessionRecovery = () => {
+    router.replace("/login" as any);
+  };
+
   return (
     <Screen scrollable>
-      <Header title="Edit Profile" showBackButton />
+      <Header title="Edit Profile" showBackButton onBack={handleDiscard} />
 
       {loading ? (
         <View style={styles.loadingWrap}>
@@ -148,14 +162,14 @@ export default function EditProfileScreen() {
         <View style={styles.errorRow}>
           <Text style={styles.errorText}>{error}</Text>
           <Pressable
-            onPress={() => {
+            onPress={isSessionExpiredError ? handleSessionRecovery : () => {
               void loadProfile();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Retry loading profile"
+            accessibilityLabel={isSessionExpiredError ? "Sign in again" : "Retry loading profile"}
             style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
           >
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -265,7 +279,7 @@ export default function EditProfileScreen() {
           Save Changes
         </Button>
 
-        <Button variant="secondary" fullWidth size="large" onPress={safeBack} disabled={saving}>
+        <Button variant="secondary" fullWidth size="large" onPress={handleDiscard} disabled={saving}>
           Cancel
         </Button>
       </View>

@@ -171,3 +171,6 @@ Messages:
 - Managed PostgreSQL recommended in hosted environments
 - Keep `.env` secrets out of git; only `.env.example` is committed
 - Consider Gunicorn + reverse proxy in production
+
+## Additional Design Docs
+- `MESSAGING_SYSTEM_OUTLINE.md` - direct messaging v1 scope, model contract, API shape, security, and rollout order.

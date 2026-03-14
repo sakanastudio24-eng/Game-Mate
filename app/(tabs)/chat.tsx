@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, TextInput, View } from "react-native";
@@ -37,9 +37,10 @@ function parseNumericParam(value?: string | string[]) {
 }
 
 export default function ChatScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const params = useLocalSearchParams<ChatRouteParams>();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, logoutUser } = useAuth();
   const { showToast } = useToast();
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -54,6 +55,10 @@ export default function ChatScreen() {
   const routeThreadId = useMemo(() => parseNumericParam(params.threadId), [params.threadId]);
   const routeUserId = useMemo(() => parseNumericParam(params.userId), [params.userId]);
   const routeTitle = useMemo(() => firstParam(params.title) ?? null, [params.title]);
+  const isSessionExpiredError = useMemo(
+    () => (loadError ?? "").toLowerCase().includes("session expired"),
+    [loadError],
+  );
 
   const loadThreadMessages = useCallback(
     async (threadId: number) => {
@@ -179,6 +184,14 @@ export default function ChatScreen() {
     }
   };
 
+  const handleSessionExpiredAction = useCallback(async () => {
+    try {
+      await logoutUser();
+    } finally {
+      router.replace("/login" as any);
+    }
+  }, [logoutUser, router]);
+
   return (
     <Screen scrollable={false}>
       <Header
@@ -198,11 +211,20 @@ export default function ChatScreen() {
         </View>
       ) : loadError ? (
         <View style={styles.stateContainer}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={44} color={colors.destructive} />
-          <Text style={[styles.stateText, { fontSize: responsive.bodySize }]}>{loadError}</Text>
-          <Pressable style={styles.retryButton} onPress={() => void resolveThreadAndLoad()}>
-            <Text style={styles.retryText}>Retry</Text>
-          </Pressable>
+          <View style={styles.errorStateCard}>
+            <MaterialCommunityIcons name="alert-circle-outline" size={44} color={colors.destructive} />
+            <Text style={[styles.stateText, { fontSize: responsive.bodySize }]}>{loadError}</Text>
+            <Pressable
+              style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+              onPress={() =>
+                isSessionExpiredError
+                  ? void handleSessionExpiredAction()
+                  : void resolveThreadAndLoad()
+              }
+            >
+              <Text style={styles.retryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
+            </Pressable>
+          </View>
         </View>
       ) : (
         <FlatList
@@ -410,7 +432,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    alignItems: "flex-end",
+    alignItems: "center",
   },
   attachButton: {
     width: 36,
@@ -425,10 +447,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     color: colors.text,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
     borderRadius: 20,
     maxHeight: 100,
-    minHeight: 36,
+    minHeight: 44,
+    lineHeight: 20,
+    textAlignVertical: "top",
   },
   sendButton: {
     backgroundColor: colors.primary,
@@ -448,20 +473,33 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
+  errorStateCard: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: `${colors.destructive}66`,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    gap: spacing.sm,
+  },
   stateText: {
     color: colors.textSecondary,
     textAlign: "center",
   },
   retryButton: {
     marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
   },
   retryText: {
-    color: colors.primary,
+    color: "#1A1A1A",
     fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.78,
   },
 });

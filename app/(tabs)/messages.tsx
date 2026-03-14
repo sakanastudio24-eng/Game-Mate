@@ -24,12 +24,16 @@ interface Conversation {
 export default function MessagesScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, logoutUser } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [threads, setThreads] = useState<ThreadItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isSessionExpiredError = useMemo(
+    () => (error ?? "").toLowerCase().includes("session expired"),
+    [error],
+  );
 
   const loadThreads = useCallback(
     async (refresh = false) => {
@@ -144,6 +148,14 @@ export default function MessagesScreen() {
     </Card>
   );
 
+  const handleSessionExpiredAction = useCallback(async () => {
+    try {
+      await logoutUser();
+    } finally {
+      router.replace("/login" as any);
+    }
+  }, [logoutUser, router]);
+
   return (
     <Screen scrollable={false}>
       <Header title="Messages" showBackButton />
@@ -169,12 +181,22 @@ export default function MessagesScreen() {
         </View>
       ) : error ? (
         <View style={styles.emptyState}>
-          <MaterialCommunityIcons
-            name="alert-circle-outline"
-            size={48}
-            color={colors.destructive}
-          />
-          <Text style={styles.emptyText}>{error}</Text>
+          <View style={styles.errorStateCard}>
+            <MaterialCommunityIcons
+              name="alert-circle-outline"
+              size={48}
+              color={colors.destructive}
+            />
+            <Text style={styles.emptyText}>{error}</Text>
+            <Pressable
+              onPress={() =>
+                isSessionExpiredError ? void handleSessionExpiredAction() : void loadThreads(true)
+              }
+              style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.retryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
+            </Pressable>
+          </View>
         </View>
       ) : filteredConversations.length > 0 ? (
         <FlatList
@@ -311,17 +333,31 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 14,
     marginTop: spacing.md,
+    textAlign: "center",
+  },
+  errorStateCard: {
+    width: "100%",
+    borderWidth: 1,
+    borderColor: `${colors.destructive}66`,
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    gap: spacing.sm,
   },
   retryButton: {
     marginTop: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
   },
   retryText: {
-    color: colors.primary,
+    color: "#1A1A1A",
     fontWeight: "700",
+  },
+  pressed: {
+    opacity: 0.78,
   },
 });

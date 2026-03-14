@@ -145,6 +145,8 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { accessToken, user } = useAuth();
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
+  const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
+  const profileErrorBottomOffset = safeBottom + 74;
 
   const [myGroups, setMyGroups] = useState(MY_GROUPS);
   const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
@@ -277,7 +279,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.content, { paddingBottom: profileError ? safeBottom + 120 : safeBottom + 24 }]}
+      >
         <AnimatedEntrance preset="screen">
           <View style={styles.cover}>
             <View style={styles.coverPattern} />
@@ -327,6 +332,26 @@ export default function ProfileScreen() {
               >
                 <MaterialCommunityIcons name="cog-outline" size={20} color={colors.text} />
               </Pressable>
+
+              <Pressable
+                onPress={() => router.push("/(tabs)/notifications")}
+                accessibilityRole="button"
+                accessibilityLabel="Open notifications"
+                style={({ pressed }) => [
+                  styles.headerIcon,
+                  {
+                    minWidth: responsive.touchTargetMin,
+                    minHeight: responsive.touchTargetMin,
+                    width: responsive.iconButtonSize,
+                    height: responsive.iconButtonSize,
+                    borderRadius: responsive.iconButtonSize / 2,
+                  },
+                  pressed && styles.pressed,
+                ]}
+                hitSlop={4}
+              >
+                <MaterialCommunityIcons name="bell-outline" size={20} color={colors.text} />
+              </Pressable>
             </View>
           </View>
         </AnimatedEntrance>
@@ -335,23 +360,6 @@ export default function ProfileScreen() {
           <View style={styles.profileStateCard}>
             <ActivityIndicator color={colors.primary} />
             <Text style={styles.profileStateText}>Loading profile...</Text>
-          </View>
-        ) : null}
-
-        {profileError ? (
-          <View style={styles.profileErrorCard}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={16} color={colors.destructive} />
-            <Text style={styles.profileErrorText}>{profileError}</Text>
-            <Pressable
-              onPress={() => {
-                void loadProfile();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Retry loading profile"
-              style={({ pressed }) => [styles.profileRetryButton, pressed && styles.pressed]}
-            >
-              <Text style={styles.profileRetryText}>Retry</Text>
-            </Pressable>
           </View>
         ) : null}
 
@@ -721,6 +729,32 @@ export default function ProfileScreen() {
         </AnimatedEntrance>
       </ScrollView>
 
+      {profileError ? (
+        <View
+          style={[
+            styles.profileErrorBanner,
+            {
+              left: responsive.horizontalPadding,
+              right: responsive.horizontalPadding,
+              bottom: profileErrorBottomOffset,
+            },
+          ]}
+        >
+          <MaterialCommunityIcons name="alert-circle-outline" size={16} color={colors.destructive} />
+          <Text style={styles.profileErrorText}>{profileError}</Text>
+          <Pressable
+            onPress={() => {
+              void loadProfile();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading profile"
+            style={({ pressed }) => [styles.profileRetryButton, pressed && styles.pressed]}
+          >
+            <Text style={styles.profileRetryText}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
       {statusPickerOpen ? (
         <ActionSheet
           visible
@@ -765,9 +799,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
   },
-  profileErrorCard: {
-    marginTop: spacing.md,
-    marginHorizontal: spacing.md,
+  profileErrorBanner: {
+    position: "absolute",
     borderWidth: 1,
     borderColor: `${colors.destructive}66`,
     borderRadius: 12,
@@ -777,6 +810,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.sm,
     backgroundColor: `${colors.destructive}11`,
+    zIndex: 15,
   },
   profileErrorText: {
     flex: 1,

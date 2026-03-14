@@ -10,11 +10,25 @@ export type RefreshResponse = {
   refresh?: string;
 };
 
+export type SignupResponse = {
+  id: number;
+  email: string;
+  username: string;
+};
+
 function unwrapData<T>(payload: unknown): T {
   if (payload && typeof payload === "object" && "data" in payload) {
     return (payload as { data: T }).data;
   }
   return payload as T;
+}
+
+export async function signup(email: string, username: string, password: string): Promise<SignupResponse> {
+  const payload = await apiRequest("/api/auth/signup/", {
+    method: "POST",
+    body: JSON.stringify({ email, username, password }),
+  });
+  return unwrapData<SignupResponse>(payload);
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {

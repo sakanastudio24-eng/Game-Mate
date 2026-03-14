@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { signup } from "../services/auth";
+import { useAuth } from "../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../src/lib/androidInput";
 import { useResponsive } from "../src/lib/responsive";
 import { primeHomeContentCache } from "../src/lib/content-data";
@@ -106,18 +108,24 @@ function isBirthdateBeforeToday(value: string): boolean {
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { loginUser } = useAuth();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const [step, setStep] = useState<Step>("welcome");
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [acceptEmails, setAcceptEmails] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [playStyle, setPlayStyle] = useState("");
   const [platform, setPlatform] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
   const platformChipWidth = responsive.isSmallPhone ? "100%" : "48.5%";
   const reduceMotion = useReducedMotionPreference();
@@ -172,19 +180,51 @@ export default function OnboardingScreen() {
 
   const canContinue = useMemo(() => {
     if (step === "welcome") return true;
-    if (step === "email") return email.includes("@");
+    if (step === "email") {
+      return (
+        email.includes("@") &&
+        username.trim().length >= 3 &&
+        password.length >= 8 &&
+        password === confirmPassword
+      );
+    }
     if (step === "birthdate") return acceptTerms && isValidBirthdate;
     return selectedGenres.length > 0 && playStyle.length > 0 && platform.length > 0;
-  }, [acceptTerms, email, isValidBirthdate, platform.length, playStyle, selectedGenres.length, step]);
+  }, [
+    acceptTerms,
+    confirmPassword,
+    email,
+    isValidBirthdate,
+    password,
+    platform.length,
+    playStyle,
+    selectedGenres.length,
+    step,
+    username,
+  ]);
 
   const finishOnboarding = async () => {
-    primeHomeContentCache();
-    await setCompletedOnboarding(true);
-    router.replace("/(tabs)/news");
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = username.trim();
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await signup(normalizedEmail, normalizedUsername, password);
+      await loginUser(normalizedEmail, password);
+      primeHomeContentCache();
+      await setCompletedOnboarding(true);
+      router.replace("/(tabs)/news");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Unable to create account.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleNext = async () => {
-    if (!canContinue) return;
+    if (!canContinue || submitting) return;
+    if (submitError) setSubmitError(null);
 
     if (step === "welcome") {
       setStep("email");
@@ -322,9 +362,9 @@ export default function OnboardingScreen() {
                 accessibilityRole="header"
                 style={[styles.stepTitle, { fontSize: stepTitleSize }]}
               >
-                What's Your Email?
+                Create Your Account
               </Text>
-              <Text style={styles.stepCopy}>We'll use this to keep your account secure</Text>
+              <Text style={styles.stepCopy}>Set your account details to get started</Text>
 
               <Text style={styles.fieldLabel}>Email Address</Text>
               <View style={styles.inputWrap}>
@@ -345,6 +385,70 @@ export default function OnboardingScreen() {
                   </View>
                 )}
               </View>
+
+              <Text style={styles.fieldLabel}>Username</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="your_username"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  {...androidKeyboardCompatProps}
+                  accessibilityLabel="Username"
+                  style={styles.input}
+                />
+                {username.trim().length >= 3 && (
+                  <View style={styles.validBadge}>
+                    <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
+                  </View>
+                )}
+              </View>
+
+              <Text style={styles.fieldLabel}>Password</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="At least 8 characters"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  secureTextEntry
+                  {...androidKeyboardCompatProps}
+                  accessibilityLabel="Password"
+                  style={styles.input}
+                />
+              </View>
+
+              <Text style={styles.fieldLabel}>Confirm Password</Text>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Re-enter password"
+                  placeholderTextColor="#999"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  secureTextEntry
+                  {...androidKeyboardCompatProps}
+                  accessibilityLabel="Confirm password"
+                  style={styles.input}
+                />
+                {password.length >= 8 && confirmPassword.length > 0 && password === confirmPassword && (
+                  <View style={styles.validBadge}>
+                    <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
+                  </View>
+                )}
+              </View>
+
+              {password.length > 0 && password.length < 8 ? (
+                <Text style={styles.validationHint}>Password must be at least 8 characters.</Text>
+              ) : null}
+              {confirmPassword.length > 0 && password !== confirmPassword ? (
+                <Text style={styles.validationHint}>Passwords do not match.</Text>
+              ) : null}
 
               <Pressable
                 onPress={() => setAcceptEmails((prev) => !prev)}
@@ -571,6 +675,7 @@ export default function OnboardingScreen() {
 
         {step !== "welcome" && (
           <View style={styles.footer}>
+            {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
             <Pressable
               onPress={handleNext}
               accessibilityRole="button"
@@ -581,14 +686,18 @@ export default function OnboardingScreen() {
                     ? "Continue to preferences step"
                     : "Finish onboarding"
               }
-              accessibilityState={{ disabled: !canContinue }}
+              accessibilityState={{ disabled: !canContinue || submitting }}
               style={({ pressed }) => [
                 styles.nextButton,
-                !canContinue ? styles.nextButtonDisabled : undefined,
+                !canContinue || submitting ? styles.nextButtonDisabled : undefined,
                 pressed && styles.pressed,
               ]}
             >
-              <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
+              {submitting ? (
+                <Text style={styles.nextButtonLoading}>...</Text>
+              ) : (
+                <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
+              )}
             </Pressable>
             <Text style={styles.stepFootnote}>
               {step === "email" ? "Step 1 of 3" : step === "birthdate" ? "Step 2 of 3" : "Step 3 of 3"}
@@ -762,6 +871,12 @@ const styles = StyleSheet.create({
   },
   birthdateHintSuccess: {
     color: "#22C55E",
+  },
+  validationHint: {
+    color: "#B44E2B",
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 12,
   },
   input: {
     backgroundColor: "#E8E8E8",
@@ -941,6 +1056,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
   },
+  submitError: {
+    color: "#B44E2B",
+    fontSize: 12,
+    textAlign: "center",
+    marginBottom: 8,
+    maxWidth: 320,
+  },
   nextButton: {
     width: 84,
     height: 84,
@@ -956,6 +1078,12 @@ const styles = StyleSheet.create({
     color: "#777",
     fontSize: 12,
     marginTop: 8,
+  },
+  nextButtonLoading: {
+    color: "#1A1A1A",
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: 2,
   },
   pressed: {
     opacity: 0.8,

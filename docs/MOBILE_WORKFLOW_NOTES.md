@@ -377,3 +377,50 @@ Use stack-first navigation behavior for all deep flows.
 
 5. Pass criterion
 - Three consecutive back presses should return user to where the flow started, without ping-pong between two screens.
+
+## 15) Commit Protocol (Reviewed + Enforced)
+
+This project follows commit practices that keep history easy to review, revert, and ship.
+
+Source references used for this policy:
+- Git docs (`git-commit`, `git-add`, `git-rebase`) and autosquash workflow
+- Conventional Commits spec (`feat/fix/docs/chore/refactor/test`)
+
+1. Atomic commit rule
+- One commit = one behavior change.
+- Never mix unrelated concerns in one commit (for example: feed UI + message API + docs).
+- Use path-based staging, not blanket staging, when multiple tasks are in progress.
+
+2. Required commit sequence per feature pass
+- Commit 1: API/data model changes.
+- Commit 2: UI wiring/state handling.
+- Commit 3: regression fixups.
+- Commit 4: docs/contracts/postmortem updates.
+
+3. Message format
+- Use `type(scope): imperative summary`.
+- Examples:
+  - `feat(feed): wire explain action modal for reason tags`
+  - `fix(messages): prevent composer overlap with keyboard`
+  - `docs(api): update conversation endpoints and payloads`
+
+4. Pre-commit gate (must run each commit)
+- `git status --short`
+- `git diff --staged`
+- Confirm only intended files are staged.
+- Confirm message scope matches staged files.
+
+5. Safe refinement workflow
+- If a commit is incomplete but should be combined, create follow-up as:
+  - `git commit --fixup=<sha>`
+  - later: `git rebase -i --autosquash`
+- Do not push messy “wip” history to shared branches.
+
+6. Scope guardrails from this repo history
+- Keep frontend navigation/back-button fixes isolated from backend messaging/refactor commits.
+- Keep migrations in their own commit when possible.
+- Keep docs and contracts in dedicated `docs(...)` commit unless they are tiny and tightly coupled.
+
+7. Final check before push
+- `git log --oneline -n 10`
+- Verify commit order reads like a changelog (feature -> fix -> docs), not a mixed batch.

@@ -3,6 +3,38 @@ from rest_framework import serializers
 from .models import Profile, User
 
 
+# Serializer for account registration (`/api/auth/signup/`).
+class SignupSerializer(serializers.ModelSerializer):
+    """Validate and create a new auth user with email-username-password fields."""
+
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = User
+        fields = ["email", "username", "password"]
+
+    def validate_email(self, value):
+        normalized = value.strip().lower()
+        if User.objects.filter(email__iexact=normalized).exists():
+            raise serializers.ValidationError("Email is already in use.")
+        return normalized
+
+    def validate_username(self, value):
+        normalized = value.strip()
+        if len(normalized) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters.")
+        if User.objects.filter(username__iexact=normalized).exists():
+            raise serializers.ValidationError("Username is already in use.")
+        return normalized
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
+
+
 # Serializer for profile fields returned in account APIs.
 class ProfileSerializer(serializers.ModelSerializer):
     """Serialize public profile fields for account/me responses."""

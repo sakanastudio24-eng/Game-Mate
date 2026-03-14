@@ -6,6 +6,7 @@ from django.urls import include, path
 
 from accounts.views import (
     AuthLogoutView,
+    AuthSignupView,
     AuthTokenRefreshView,
     LoginView,
     ProfileMeView,
@@ -30,6 +31,7 @@ def crash(_request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/auth/signup/", AuthSignupView.as_view(), name="auth_signup"),
     path("api/auth/token/", LoginView.as_view(), name="token_obtain_pair"),
     path("api/auth/token/refresh/", AuthTokenRefreshView.as_view(), name="token_refresh"),
     path("api/auth/logout/", AuthLogoutView.as_view(), name="token_blacklist"),

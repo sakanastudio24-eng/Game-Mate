@@ -8,6 +8,7 @@ from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer,
     TokenRefreshSerializer,
 )
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from connections.models import Connection
@@ -16,7 +17,7 @@ from posts.models import Post
 from posts.serializers import PostSerializer
 from config.pagination import StandardPageNumberPagination
 from .models import Profile, User
-from .serializers import MeSerializer, ProfileSerializer, PublicProfileSerializer
+from .serializers import MeSerializer, ProfileSerializer, PublicProfileSerializer, SignupSerializer
 from .throttles import LoginThrottle
 
 
@@ -73,6 +74,29 @@ class LoginView(TokenObtainPairView):
         return Response({"success": True, "data": serializer.validated_data})
 
 
+# Signup endpoint for new account creation.
+class AuthSignupView(APIView):
+    """Create a new user account and return minimal identity payload."""
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "id": user.id,
+                    "email": user.email,
+                    "username": user.username,
+                },
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
 # JWT refresh endpoint with normalized response shape.
 class AuthTokenRefreshView(TokenRefreshView):
     """Refresh an access token using a valid refresh token."""
@@ -83,7 +107,13 @@ class AuthTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         """Validate incoming refresh token and return a new access token."""
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as exc:
+            return Response(
+                {"success": False, "message": str(exc)},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
         return Response({"success": True, "data": serializer.validated_data})
 
 
@@ -96,8 +126,13 @@ class AuthLogoutView(APIView):
     def post(self, request):
         """Blacklist the provided refresh token and confirm logout."""
         serializer = TokenBlacklistSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as exc:
+            return Response(
+                {"success": False, "message": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response({"success": True, "message": "Logged out."}, status=status.HTTP_200_OK)
 
 

@@ -111,23 +111,25 @@ export default function ProfileScreen() {
     "videos",
   );
   const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;
-  const { value: profileData, setValue: setProfileData } = useLocalCache<ProfileData>(
+  const emptyProfileData: ProfileData = {
+    bio: "",
+    avatar_url: "",
+    favorite_games: [],
+  };
+  const { value: profileData, setValue: setProfileData, hydrated: profileHydrated } = useLocalCache<ProfileData>(
     profileCacheKey,
-    {
-      bio: "",
-      avatar_url: "",
-      favorite_games: [],
-    },
+    emptyProfileData,
   );
   const [onlineStatus, setOnlineStatus] = useState<OnlineStatus>("online");
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  const visibleProfileData = profileHydrated ? profileData : emptyProfileData;
   const hasCachedProfileData =
-    Boolean(profileData.bio?.trim()) ||
-    Boolean(profileData.avatar_url?.trim()) ||
-    Boolean(profileData.favorite_games?.length);
+    Boolean(visibleProfileData.bio?.trim()) ||
+    Boolean(visibleProfileData.avatar_url?.trim()) ||
+    Boolean(visibleProfileData.favorite_games?.length);
 
   const loadProfile = useCallback(async () => {
     if (!accessToken) {
@@ -155,10 +157,10 @@ export default function ProfileScreen() {
   );
 
   const profileName = user?.username || "Player";
-  const profileAvatar = profileData.avatar_url || CURRENT_USER_AVATAR;
-  const profileBio = profileData.bio?.trim() || "No bio yet. Tap Edit Profile to add one.";
-  const profileAvatarUrl = profileData.avatar_url?.trim() || "";
-  const favoriteGames = profileData.favorite_games || [];
+  const profileAvatar = visibleProfileData.avatar_url || CURRENT_USER_AVATAR;
+  const profileBio = visibleProfileData.bio?.trim() || "No bio yet. Tap Edit Profile to add one.";
+  const profileAvatarUrl = visibleProfileData.avatar_url?.trim() || "";
+  const favoriteGames = visibleProfileData.favorite_games || [];
   const videosToRender: ProfileVideo[] = [];
   const achievementsToRender: ProfileAchievement[] = [];
   const gamesToRender = useMemo(() => {
@@ -183,19 +185,19 @@ export default function ProfileScreen() {
   const statRows = [
     {
       label: "Posts",
-      value: String(profileData.stats?.posts ?? videosToRender.length),
+      value: String(visibleProfileData.stats?.posts ?? videosToRender.length),
       icon: "play-box-multiple-outline",
       color: "#66BAFF",
     },
     {
       label: "Friends",
-      value: String(profileData.stats?.friends ?? 0),
+      value: String(visibleProfileData.stats?.friends ?? 0),
       icon: "account-multiple-outline",
       color: "#FFD700",
     },
     {
       label: "Groups",
-      value: String(profileData.stats?.groups ?? myGroups.length),
+      value: String(visibleProfileData.stats?.groups ?? myGroups.length),
       icon: "account-group-outline",
       color: colors.primary,
     },

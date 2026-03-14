@@ -457,6 +457,8 @@ Response:
       "actor": "zan",
       "type": "friend_request",
       "post_id": null,
+      "conversation_id": null,
+      "message_id": null,
       "is_read": false,
       "created_at": "..."
     }
@@ -474,9 +476,9 @@ Supported `type` values currently emitted:
 
 ---
 
-## Messages (DM)
+## Messages (DM / Conversations)
 
-### GET `/api/messages/threads/`
+### GET `/api/messages/conversations/`
 Response:
 ```json
 {
@@ -484,23 +486,36 @@ Response:
   "count": 1,
   "results": [
     {
+      "conversation_id": 1,
       "thread_id": 1,
+      "type": "direct",
       "participants": ["zan"],
       "last_message": "yo wanna play ranked?",
+      "last_message_at": "...",
       "unread": 2
     }
   ]
 }
 ```
 
-### POST `/api/messages/thread/{user_id}/`
-Creates or returns existing 1:1 thread.
+### POST `/api/messages/conversations/`
+Creates or returns existing 1:1 direct conversation.
+Request:
+```json
+{ "user_id": 2 }
+```
 Response:
 ```json
-{ "success": true, "data": { "thread_id": 1, "created": true } }
+{
+  "success": true,
+  "data": { "conversation_id": 1, "thread_id": 1, "created": true }
+}
 ```
 
-### POST `/api/messages/send/{thread_id}/`
+### GET `/api/messages/conversations/{conversation_id}/messages/`
+Returns message history and marks read pointer.
+
+### POST `/api/messages/conversations/{conversation_id}/messages/`
 Request:
 ```json
 { "content": "yo wanna play ranked?" }
@@ -510,8 +525,13 @@ Response:
 { "success": true, "data": { "message_id": 42 } }
 ```
 
-### GET `/api/messages/messages/{thread_id}/`
-Returns message history; unread incoming messages are marked read.
+### POST `/api/messages/conversations/{conversation_id}/read/`
+Response:
+```json
+{ "success": true, "data": { "last_read_message_id": 42 } }
+```
+
+Message history response:
 Response:
 ```json
 {
@@ -519,14 +539,26 @@ Response:
   "count": 1,
   "results": [
     {
+      "id": 42,
+      "sender_id": 1,
       "sender": "dan",
+      "body": "yo wanna play ranked?",
       "content": "yo wanna play ranked?",
-      "is_read": true,
-      "created_at": "..."
+      "message_type": "text",
+      "is_deleted": false,
+      "created_at": "...",
+      "edited_at": null,
+      "deleted_at": null
     }
   ]
 }
 ```
+
+Legacy aliases (kept for frontend compatibility):
+- `GET /api/messages/threads/`
+- `POST /api/messages/thread/{user_id}/`
+- `POST /api/messages/send/{thread_id}/`
+- `GET /api/messages/messages/{thread_id}/`
 
 ---
 

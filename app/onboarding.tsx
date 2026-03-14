@@ -203,6 +203,46 @@ export default function OnboardingScreen() {
     username,
   ]);
 
+  const emailStepMissingOptions = useMemo(() => {
+    const issues: string[] = [];
+    if (!email.includes("@")) issues.push("Enter a valid email address.");
+    if (username.trim().length < 3) issues.push("Username must be at least 3 characters.");
+    if (password.length < 8) issues.push("Password must be at least 8 characters.");
+    if (confirmPassword.length > 0 && password !== confirmPassword) {
+      issues.push("Passwords must match.");
+    }
+    return issues;
+  }, [confirmPassword, email, password, username]);
+
+  const stepMissingOptions = useMemo(() => {
+    if (step === "email") return emailStepMissingOptions;
+
+    if (step === "birthdate") {
+      const issues: string[] = [];
+      if (!isValidBirthdate) issues.push("Enter a valid birthdate before today.");
+      if (!acceptTerms) issues.push("Accept Terms of Service and Privacy Policy.");
+      return issues;
+    }
+
+    if (step === "preferences") {
+      const issues: string[] = [];
+      if (selectedGenres.length === 0) issues.push("Select at least one genre.");
+      if (!playStyle) issues.push("Choose one play style.");
+      if (!platform) issues.push("Choose a primary platform.");
+      return issues;
+    }
+
+    return [];
+  }, [
+    acceptTerms,
+    emailStepMissingOptions,
+    isValidBirthdate,
+    platform,
+    playStyle,
+    selectedGenres.length,
+    step,
+  ]);
+
   const finishOnboarding = async () => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedUsername = username.trim();
@@ -450,6 +490,16 @@ export default function OnboardingScreen() {
                 <Text style={styles.validationHint}>Passwords do not match.</Text>
               ) : null}
 
+              {emailStepMissingOptions.length > 0 ? (
+                <View style={styles.missingOptionsWrap}>
+                  {emailStepMissingOptions.map((issue) => (
+                    <Text key={issue} style={styles.missingOptionText}>
+                      • {issue}
+                    </Text>
+                  ))}
+                </View>
+              ) : null}
+
               <Pressable
                 onPress={() => setAcceptEmails((prev) => !prev)}
                 accessibilityRole="checkbox"
@@ -675,6 +725,15 @@ export default function OnboardingScreen() {
 
         {step !== "welcome" && (
           <View style={styles.footer}>
+            {!canContinue && stepMissingOptions.length > 0 ? (
+              <View style={styles.missingOptionsWrap}>
+                {stepMissingOptions.map((issue) => (
+                  <Text key={`${step}-${issue}`} style={styles.missingOptionText}>
+                    • {issue}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
             {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
             <Pressable
               onPress={handleNext}
@@ -877,6 +936,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: -10,
     marginBottom: 12,
+  },
+  missingOptionsWrap: {
+    marginBottom: 12,
+    paddingHorizontal: 2,
+    gap: 4,
+  },
+  missingOptionText: {
+    color: "#B44E2B",
+    fontSize: 12,
+    lineHeight: 16,
   },
   input: {
     backgroundColor: "#E8E8E8",

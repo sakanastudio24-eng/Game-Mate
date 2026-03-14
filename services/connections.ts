@@ -8,6 +8,8 @@ export type ConnectionItem = {
   id: number;
   sender: string;
   receiver: string;
+  sender_id?: number;
+  receiver_id?: number;
   status: ConnectionStatus;
   created_at: string;
 };

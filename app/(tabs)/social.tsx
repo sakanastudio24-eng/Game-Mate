@@ -22,6 +22,7 @@ type SocialTab = "friends" | "messages" | "requests";
 
 interface FriendItem {
   id: string;
+  userId?: number | null;
   name: string;
   game?: string;
   statusText: string;
@@ -241,10 +242,13 @@ export default function SocialScreen() {
   const toFriendItem = useCallback(
     (connection: ConnectionItem): FriendItem => {
       const selfUsername = String(user?.username ?? "");
+      const isSender = connection.sender === selfUsername;
       const peerName =
-        connection.sender === selfUsername ? connection.receiver : connection.sender;
+        isSender ? connection.receiver : connection.sender;
+      const peerUserId = isSender ? connection.receiver_id : connection.sender_id;
       return {
-        id: `friend-${connection.id}`,
+        id: String(peerUserId ?? `friend-${connection.id}`),
+        userId: peerUserId ?? null,
         name: peerName,
         statusText: "Connected",
         level: 1,
@@ -615,7 +619,11 @@ export default function SocialScreen() {
                       <Pressable
                         onPress={(event) => {
                           event.stopPropagation();
-                          router.push(`/(tabs)/chat?userId=${item.id}`);
+                          if (typeof item.userId === "number" && Number.isFinite(item.userId)) {
+                            router.push(`/(tabs)/chat?userId=${item.userId}&title=${encodeURIComponent(item.name)}`);
+                          } else {
+                            router.push(`/(tabs)/chat?title=${encodeURIComponent(item.name)}`);
+                          }
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`Message ${item.name}`}
@@ -658,7 +666,11 @@ export default function SocialScreen() {
                 }}
               >
                 <Pressable
-                  onPress={() => router.push(`/(tabs)/chat?userId=${item.userId}`)}
+                  onPress={() =>
+                    router.push(
+                      `/(tabs)/chat?userId=${item.userId}&title=${encodeURIComponent(item.user)}`,
+                    )
+                  }
                   accessibilityRole="button"
                   accessibilityLabel={`Open chat with ${item.user}. ${item.message}`}
                   style={({ pressed }) => [

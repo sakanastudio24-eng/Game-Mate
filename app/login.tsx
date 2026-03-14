@@ -42,6 +42,11 @@ export default function LoginScreen() {
     }
   };
 
+  const handleCreateAccount = () => {
+    if (submitting) return;
+    router.push("/onboarding" as any);
+  };
+
   if (loading && !accessToken) {
     return (
       <View style={styles.loadingContainer}>
@@ -98,6 +103,16 @@ export default function LoginScreen() {
             loading={submitting}
           >
             Sign In
+          </Button>
+
+          <Button
+            variant="secondary"
+            fullWidth
+            size="large"
+            onPress={handleCreateAccount}
+            disabled={submitting}
+          >
+            Create Account
           </Button>
         </Card>
       </View>

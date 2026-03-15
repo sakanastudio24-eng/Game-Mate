@@ -43,11 +43,12 @@ export default Sentry.wrap(function RootLayout() {
               <Stack
                 screenOptions={{
                   headerShown: false,
-                  animation: 'slide_from_right',
+                  animation: 'fade_from_bottom',
+                  animationDuration: 180,
                 }}
               >
                 <Stack.Screen name="index" />
-                <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+                <Stack.Screen name="onboarding" options={{ animation: 'fade', animationDuration: 160 }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen
                   name="modal"
@@ -56,6 +57,7 @@ export default Sentry.wrap(function RootLayout() {
                     title: 'Modal',
                     headerShown: true,
                     animation: 'slide_from_bottom',
+                    animationDuration: 200,
                   }}
                 />
               </Stack>

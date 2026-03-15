@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
@@ -149,6 +150,13 @@ export default function NotificationsScreen() {
   useEffect(() => {
     void fetchNotifications();
   }, [fetchNotifications]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void fetchNotifications();
+      return undefined;
+    }, [fetchNotifications]),
+  );
 
   const unreadCount = useMemo(
     () => notifications.filter((notification) => !notification.is_read).length,

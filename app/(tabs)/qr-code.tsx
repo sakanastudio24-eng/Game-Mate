@@ -59,7 +59,7 @@ export default function QRCodeScreen() {
 
   const handleShare = useCallback(async () => {
     if (!qrValue) {
-      Alert.alert("Missing Username", "Sign in to generate your GameMate QR code.");
+      Alert.alert("Missing Username", "Sign in with a valid username to generate your GameMate QR code.");
       return;
     }
 
@@ -93,7 +93,7 @@ export default function QRCodeScreen() {
       if (!username) {
         Alert.alert(
           "Unsupported QR Code",
-          "This code is not a GameMate profile code.",
+          "This code is not a valid GameMate profile code.",
           [{ text: "Scan Again", onPress: () => setHasScanned(false) }],
         );
         return;
@@ -173,7 +173,7 @@ export default function QRCodeScreen() {
                 </View>
                 <View style={styles.identityMeta}>
                   <Text style={[styles.qrLabel, { fontSize: responsive.bodySize + 2 }]}>{qrPreviewLabel}</Text>
-                  <Text style={[styles.qrUrl, { fontSize: responsive.bodySmallSize }]}>{qrValue || "gamemate:user:"}</Text>
+                  <Text style={[styles.qrUrl, { fontSize: responsive.bodySmallSize }]}>{qrValue || "gm:user:"}</Text>
                 </View>
               </View>
             </View>
@@ -244,7 +244,7 @@ export default function QRCodeScreen() {
                   {scanPermission === false ? "Camera permission is required." : "Checking camera access..."}
                 </Text>
                 <Text style={[styles.scanSubtext, { fontSize: responsive.bodySmallSize }]}>
-                  Scan a GameMate QR code that contains `gamemate:user:username`.
+                  Scan a GameMate QR code that contains `gm:user:username`.
                 </Text>
               </View>
             )}

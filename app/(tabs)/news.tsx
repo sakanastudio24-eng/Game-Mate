@@ -4,10 +4,12 @@ import { Image as ExpoImage } from "expo-image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   Share,
@@ -311,6 +313,7 @@ export default function NewsScreen() {
   const [commentDraft, setCommentDraft] = useState("");
   const [shareTarget, setShareTarget] = useState<FeedEntry | null>(null);
   const [viewportHeight, setViewportHeight] = useState(responsive.height);
+  const commentsSheetTranslateY = useRef(new Animated.Value(0)).current;
 
   const nextLoopRef = useRef(INITIAL_LOOP_COUNT);
   const nextPageUrlRef = useRef<string | null>(null);
@@ -625,6 +628,62 @@ export default function NewsScreen() {
     setCommentDraft("");
     setCommentsTarget(null);
   };
+
+  const resetCommentsDrawerPosition = useCallback(() => {
+    commentsSheetTranslateY.stopAnimation();
+    commentsSheetTranslateY.setValue(0);
+  }, [commentsSheetTranslateY]);
+
+  useEffect(() => {
+    if (commentsTarget) {
+      resetCommentsDrawerPosition();
+    }
+  }, [commentsTarget, resetCommentsDrawerPosition]);
+
+  const closeCommentsDrawerWithGesture = useCallback(() => {
+    Animated.timing(commentsSheetTranslateY, {
+      toValue: Math.max(viewportHeight, 360),
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      closeCommentsDrawer();
+      resetCommentsDrawerPosition();
+    });
+  }, [closeCommentsDrawer, commentsSheetTranslateY, resetCommentsDrawerPosition, viewportHeight]);
+
+  const commentsDrawerPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          gestureState.dy > 8 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+        onPanResponderMove: (_, gestureState) => {
+          commentsSheetTranslateY.setValue(Math.max(0, gestureState.dy));
+        },
+        onPanResponderTerminationRequest: () => false,
+        onPanResponderRelease: (_, gestureState) => {
+          if (gestureState.dy > 120 || gestureState.vy > 1.15) {
+            closeCommentsDrawerWithGesture();
+            return;
+          }
+
+          Animated.spring(commentsSheetTranslateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 90,
+            friction: 12,
+          }).start();
+        },
+        onPanResponderTerminate: () => {
+          Animated.spring(commentsSheetTranslateY, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 90,
+            friction: 12,
+          }).start();
+        },
+      }),
+    [closeCommentsDrawerWithGesture, commentsSheetTranslateY],
+  );
 
   const handleSubmitComment = () => {
     if (!commentsTarget) return;
@@ -1037,17 +1096,20 @@ export default function NewsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Close comments drawer"
             />
-            <View
+            <Animated.View
               style={[
                 styles.drawerSheet,
                 {
                   paddingBottom: bottomSafeInset + spacing.xs,
+                  transform: [{ translateY: commentsSheetTranslateY }],
                 },
               ]}
             >
-              <View style={styles.drawerHandle} />
-              <Text style={styles.drawerTitle}>Comments</Text>
-              <Text style={styles.drawerSubtitle}>{commentsTarget.title}</Text>
+              <View style={styles.drawerDragArea} {...commentsDrawerPanResponder.panHandlers}>
+                <View style={styles.drawerHandle} />
+                <Text style={styles.drawerTitle}>Comments</Text>
+                <Text style={styles.drawerSubtitle}>{commentsTarget.title}</Text>
+              </View>
               <View style={styles.drawerListWrap}>
                 <FlatList
                   ref={commentsListRef}
@@ -1110,7 +1172,7 @@ export default function NewsScreen() {
                   <MaterialCommunityIcons name="send" size={20} color={colors.onPrimary} />
                 </Pressable>
               </View>
-            </View>
+            </Animated.View>
           </KeyboardAvoidingView>
         </Modal>
       ) : null}
@@ -1544,6 +1606,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
+  },
+  drawerDragArea: {
+    paddingBottom: spacing.xs,
   },
   drawerHandle: {
     width: 44,

@@ -10,7 +10,7 @@ This contract supports:
 - Intro message drafting for group joins
 
 Frontend source of truth: `src/ai/advisorClient.ts`.
-Canonical backend contract: `docs/FLOWS_BACKEND.md`.
+Canonical backend contract: `docs/backend/API_HANDOFF.md`.
 
 ## Base URL + Versioning
 - Base URL: `EXPO_PUBLIC_API_BASE_URL`

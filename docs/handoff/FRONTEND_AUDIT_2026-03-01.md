@@ -8,7 +8,7 @@ Scope: Expo Router frontend in `app/` and shared UI/state modules in `src/`
 This audit used:
 - Route and UI flow review (all tab + hidden routes)
 - Static code review of navigation, list rendering, and state hooks
-- Contract alignment review against `docs/FLOWS_BACKEND.md`
+- Contract alignment review against `docs/backend/API_HANDOFF.md`
 - Type safety gate check (`npx tsc --noEmit`)
 
 Limitations:

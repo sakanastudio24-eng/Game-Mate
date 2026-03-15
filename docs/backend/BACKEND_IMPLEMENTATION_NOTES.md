@@ -95,5 +95,5 @@ Backend QA should confirm:
 4. Repeated delete call remains idempotent and safe.
 
 Reference contracts:
-- `docs/FLOWS_BACKEND.md`
-- `docs/BUILD_STATUS.md`
+- `docs/backend/API_HANDOFF.md`
+- `docs/handoff/HANDOFF_STATUS.md`

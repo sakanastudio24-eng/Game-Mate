@@ -241,19 +241,19 @@ When any user-facing mobile flow changes, update these docs in the same pass:
 1. `README.md`
 - Keep runtime stack, tab names, and feature highlights current.
 
-2. `docs/FLOWS.md`
+2. `docs/flows/APP_FLOWS.md`
 - Keep route names, back behavior, and per-screen flow sequence accurate.
 
-3. `docs/FLOWS_BACKEND.md`
+3. `docs/backend/API_HANDOFF.md`
 - Keep endpoint matrix, payload shape, limits, and rate limits current.
 
-4. `docs/AI_HANDOFF.md`
+4. `docs/handoff/AI_HANDOFF.md`
 - Keep AI/search/autocomplete request+response contracts current.
 
-5. `docs/BUILD_STATUS.md`
+5. `docs/handoff/HANDOFF_STATUS.md`
 - Keep Android status accurate and note iOS validation gaps clearly.
 
-6. `docs/FRONTEND_CHECKLIST_STATUS.md`
+6. `docs/handoff/HANDOFF_STATUS.md`
 - Keep component/hook checklist truthfully marked complete/partial/missing.
 
 ## 11) Current High-Value Rules
@@ -372,12 +372,12 @@ Scope audited: current Expo Router app under `app/` and shared modules under `sr
 
 ## 13) Frontend Handoff Checklist (Release/Backend Ready)
 
-- Canonical checklist: `docs/FRONTEND_HANDOFF_CHECKLIST.md`
+- Canonical checklist: `docs/handoff/HANDOFF_STATUS.md`
 - Keep this checklist in sync with:
   1. `README.md`
-  2. `docs/FLOWS.md`
-  3. `docs/BUILD_STATUS.md`
-  4. `docs/FRONTEND_CHECKLIST_STATUS.md`
+  2. `docs/flows/APP_FLOWS.md`
+  3. `docs/handoff/HANDOFF_STATUS.md`
+  4. `docs/handoff/HANDOFF_STATUS.md`
 
 ## 14) Back Navigation Stack Rules (Required)
 

@@ -282,19 +282,6 @@ eas build:download --id <BUILD_ID>
 3. **Add push notifications** - Implement Expo notifications
 4. **Configure app store listing** - Create title, description, screenshots, pricing
 5. **Set up app signing** - Generate signing certificate for Play Store
-6. **Create store assets:**
-   - App icon (512x512 PNG)
-   - Feature graphic (1024x500 PNG)
-   - Screenshots (4-5 min, up to 8)
-   - Description (max 4000 characters)
-   - Privacy policy URL
-   - Support email
-
-7. **Final review** - Ensure all screens, navigation, and functionality work perfectly
-8. **Beta testing** - Release as "Closed track" for internal testers first
-9. **Full release** - Launch to "Production" track
-
----
 
 ## Git Commits for Deployment
 
@@ -346,7 +333,6 @@ npx eas build:list       # Show build history
 - [ ] No console errors or warnings
 - [ ] Backend APIs integrated and tested
 - [ ] Push notifications configured
-- [ ] App icons and splash screens created
 - [ ] Release notes written
 - [ ] Privacy policy created and linked
 - [ ] App signing certificate generated

@@ -1,8 +1,20 @@
+from django.conf import settings
+from django.core.cache import cache
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
 from posts.models import Post, PostInteraction
+
+
+TEST_REST_FRAMEWORK = {
+    **settings.REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        **settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+        "post_create": "1/min",
+    },
+}
 
 
 # Permission regression tests for owner-only post mutations.
@@ -194,6 +206,48 @@ class PostValidationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("game", response.data.get("errors", {}))
+
+
+@override_settings(REST_FRAMEWORK=TEST_REST_FRAMEWORK)
+class PostCreateThrottleTests(APITestCase):
+    """Ensure rapid post creation is throttled cleanly."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            email="post-throttle@gamemate.dev",
+            username="post_throttle",
+            password="posterpass123",
+        )
+        self.client.force_authenticate(user=self.user)
+        self.create_url = "/api/posts/"
+
+    def test_post_create_is_throttled_after_limit(self):
+        """Second rapid create should return a throttle response."""
+
+        first_response = self.client.post(
+            self.create_url,
+            {
+                "game": "Apex Legends",
+                "title": "First post",
+                "description": "Valid description",
+                "video_url": "",
+            },
+            format="json",
+        )
+        second_response = self.client.post(
+            self.create_url,
+            {
+                "game": "Valorant",
+                "title": "Second post",
+                "description": "Valid description",
+                "video_url": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second_response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
 
 # Interaction reversal tests for like/unlike behavior.

@@ -12,6 +12,7 @@ from .models import Post, PostInteraction, PostShare
 from .permissions import IsOwnerOrReadOnly
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
+from .throttles import PostCreateThrottle
 from posts.services.cache_service import (
     invalidate_like_count_cache,
     invalidate_trending_post_ids_cache,
@@ -32,6 +33,13 @@ class PostViewSet(viewsets.ModelViewSet):
     )
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_throttles(self):
+        """Apply extra throttling only when creating a new post."""
+        throttles = super().get_throttles()
+        if self.action == "create":
+            throttles.append(PostCreateThrottle())
+        return throttles
 
     def get_permissions(self):
         """Require creator ownership for post edit/delete actions."""

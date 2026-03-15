@@ -363,7 +363,7 @@ export default function AIAdvisorScreen() {
   };
 
   return (
-    <Screen scrollable={false}>
+    <Screen scrollable={false} style={styles.screen}>
       <Header
         title="Search"
         subtitle={typeof params.source === "string" ? `Source: ${params.source}` : "Video search"}
@@ -609,6 +609,9 @@ export default function AIAdvisorScreen() {
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    paddingBottom: 0,
+  },
   fixedSearchWrap: {
     marginTop: spacing.md,
     marginBottom: spacing.md,

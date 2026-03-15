@@ -267,7 +267,7 @@ export default function OnboardingScreen() {
   }, [confirmPassword.length, emailIssues.length, passwordIssues.length, preferenceIssues.length, profileIssues.length, step]);
 
   const currentIssues = useMemo(() => {
-    if (step === "email") return emailIssues;
+    if (step === "email") return [];
     if (step === "password") return passwordIssues;
     if (step === "profile") return profileIssues;
     return preferenceIssues;
@@ -451,6 +451,16 @@ export default function OnboardingScreen() {
                     </View>
                   ) : null}
                 </View>
+
+                {emailIssues.length > 0 ? (
+                  <View style={styles.inlineIssueWrap}>
+                    {emailIssues.map((issue) => (
+                      <Text key={issue} style={styles.inlineIssueText}>
+                        {issue}
+                      </Text>
+                    ))}
+                  </View>
+                ) : null}
               </>
             )}
 
@@ -826,6 +836,15 @@ const styles = StyleSheet.create({
   inputWrap: {
     position: "relative",
     marginBottom: 12,
+  },
+  inlineIssueWrap: {
+    marginTop: -6,
+    marginBottom: 8,
+  },
+  inlineIssueText: {
+    color: "#B44E2B",
+    fontSize: 12,
+    lineHeight: 16,
   },
   input: {
     backgroundColor: "#E8E8E8",

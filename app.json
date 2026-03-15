@@ -16,6 +16,10 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.zech1v1.GameMate"
     },
+    "androidNavigationBar": {
+      "backgroundColor": "#F5F5F5",
+      "barStyle": "dark-content"
+    },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"

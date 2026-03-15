@@ -11,7 +11,9 @@ interface RecentSearchListProps {
 }
 
 export function RecentSearchList({ items, onSelect, onClear }: RecentSearchListProps) {
-  if (items.length === 0) return null;
+  const visibleItems = items.slice(0, 4);
+
+  if (visibleItems.length === 0) return null;
 
   return (
     <View style={styles.wrap}>
@@ -28,7 +30,7 @@ export function RecentSearchList({ items, onSelect, onClear }: RecentSearchListP
       </View>
 
       <View style={styles.list}>
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <Pressable
             key={item}
             onPress={() => onSelect(item)}

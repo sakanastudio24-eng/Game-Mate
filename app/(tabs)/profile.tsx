@@ -160,8 +160,8 @@ export default function ProfileScreen() {
 
   const profileName = user?.username || "Player";
   const profileAvatar = visibleProfileData.avatar_url || CURRENT_USER_AVATAR;
-  const profileBio = visibleProfileData.bio?.trim() || "No bio yet. Tap Edit Profile to add one.";
-  const profileAvatarUrl = visibleProfileData.avatar_url?.trim() || "";
+  const profileBio =
+    visibleProfileData.bio?.trim() || "No bio yet. Tap your profile photo or use settings to edit.";
   const favoriteGames = visibleProfileData.favorite_games || [];
   const videosToRender: ProfileVideo[] = [];
   const achievementsToRender: ProfileAchievement[] = [];
@@ -348,14 +348,20 @@ export default function ProfileScreen() {
               },
             ]}
           >
-            <View style={styles.avatarRing}>
+            <Pressable
+              onPress={() => router.push("/(tabs)/edit-profile")}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile photo"
+              accessibilityHint="Open edit profile"
+              style={({ pressed }) => [styles.avatarRing, pressed && styles.pressed]}
+            >
               <ExpoImage
                 source={{ uri: profileAvatar }}
                 style={styles.avatar}
                 contentFit="cover"
                 cachePolicy="memory-disk"
               />
-            </View>
+            </Pressable>
             <View style={[styles.onlineDot, { backgroundColor: activeStatus.color }]} />
 
             <View style={styles.nameRow}>
@@ -423,12 +429,6 @@ export default function ProfileScreen() {
               {profileBio}
             </Text>
 
-            {profileAvatarUrl ? (
-              <Text style={styles.avatarUrlText} numberOfLines={1}>
-                avatar_url: {profileAvatarUrl}
-              </Text>
-            ) : null}
-
             {favoriteGames.length ? (
               <View style={styles.interestsRow}>
                 {favoriteGames.map((game) => (
@@ -439,19 +439,6 @@ export default function ProfileScreen() {
               </View>
             ) : null}
 
-            <Pressable
-              onPress={() => router.push("/(tabs)/edit-profile")}
-              accessibilityRole="button"
-              accessibilityLabel="Edit profile"
-              style={({ pressed }) => [
-                styles.editButton,
-                { minHeight: responsive.buttonHeightMedium },
-                pressed && styles.pressed,
-              ]}
-            >
-              <MaterialCommunityIcons name="pencil-outline" size={16} color="#1A1A1A" />
-              <Text style={[styles.editButtonText, { fontSize: responsive.bodySize + 1 }]}>Edit Profile</Text>
-            </Pressable>
           </View>
         </AnimatedEntrance>
 
@@ -930,12 +917,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     lineHeight: 20,
   },
-  avatarUrlText: {
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
-    fontSize: 11,
-    opacity: 0.9,
-  },
   interestsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -954,21 +935,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 11,
     fontWeight: "700",
-  },
-  editButton: {
-    marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: 14,
-    paddingVertical: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  editButtonText: {
-    color: "#1A1A1A",
-    fontWeight: "800",
-    fontSize: 15,
-    marginLeft: 6,
   },
   section: {
     marginBottom: spacing.lg,

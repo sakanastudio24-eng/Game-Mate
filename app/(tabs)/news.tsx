@@ -328,6 +328,7 @@ export default function NewsScreen() {
   const params = useLocalSearchParams<{
     focusVideoId?: string;
     focusFrom?: string;
+    searchOrder?: string;
     refresh?: string;
     createdTitle?: string;
   }>();
@@ -407,6 +408,32 @@ export default function NewsScreen() {
   const focusFrom = typeof params.focusFrom === "string" ? params.focusFrom : "";
   const createdTitle = typeof params.createdTitle === "string" ? params.createdTitle : "";
   const refreshParam = typeof params.refresh === "string" ? params.refresh : "";
+  const searchOrderParam = typeof params.searchOrder === "string" ? params.searchOrder : "";
+  const orderedSearchIds = useMemo(
+    () =>
+      searchOrderParam
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    [searchOrderParam],
+  );
+  const isSearchPlaybackMode = focusFrom === "search" && orderedSearchIds.length > 0;
+  const searchPlaybackItems = useMemo(() => {
+    if (!isSearchPlaybackMode) return [];
+
+    const seedById = new Map(initialFeedSeed.map((item) => [item.id, item]));
+    return orderedSearchIds
+      .map((id, index) => {
+        const item = seedById.get(id);
+        if (!item) return null;
+        return {
+          ...item,
+          feedId: `${item.id}-search-${index}`,
+        } satisfies FeedEntry;
+      })
+      .filter(Boolean) as FeedEntry[];
+  }, [initialFeedSeed, isSearchPlaybackMode, orderedSearchIds]);
+  const visibleFeedItems = isSearchPlaybackMode ? searchPlaybackItems : feedItems;
 
   const activeComments = useMemo(() => {
     if (!commentsTarget) return [];
@@ -462,9 +489,9 @@ export default function NewsScreen() {
   }, [likedCache, setLikedIds]);
 
   useEffect(() => {
-    if (!focusVideoId || feedItems.length === 0 || itemHeight <= 1) return;
+    if (!focusVideoId || visibleFeedItems.length === 0 || itemHeight <= 1) return;
     if (handledFocusVideoIdRef.current === focusVideoId) return;
-    const focusIndex = feedItems.findIndex((item) => item.id === focusVideoId);
+    const focusIndex = visibleFeedItems.findIndex((item) => item.id === focusVideoId);
     if (focusIndex < 0) return;
     handledFocusVideoIdRef.current = focusVideoId;
 
@@ -475,7 +502,7 @@ export default function NewsScreen() {
         viewPosition: 0,
       });
     });
-  }, [feedItems, focusVideoId, itemHeight]);
+  }, [focusVideoId, itemHeight, visibleFeedItems]);
 
   const markEngaged = useCallback((feedId: string) => {
     engagedFeedIdsRef.current.add(feedId);
@@ -640,9 +667,16 @@ export default function NewsScreen() {
   }, [accessToken, authLoading, setFeedItems]);
 
   useEffect(() => {
+    if (isSearchPlaybackMode) {
+      setIsFeedLoading(false);
+      setIsRefreshing(false);
+      setIsPaginating(false);
+      setFeedError(null);
+      return;
+    }
     if (authLoading) return;
     void fetchBackendFeed();
-  }, [authLoading, fetchBackendFeed]);
+  }, [authLoading, fetchBackendFeed, isSearchPlaybackMode]);
 
   const requiresSignInRecovery = useMemo(() => {
     return !accessToken || isSessionExpiredMessage(feedError);
@@ -660,11 +694,12 @@ export default function NewsScreen() {
 
   useEffect(() => {
     if (refreshParam !== "1") return;
+    if (isSearchPlaybackMode) return;
     const refreshKey = `${refreshParam}:${focusVideoId || "none"}`;
     if (handledRefreshKeyRef.current === refreshKey) return;
     handledRefreshKeyRef.current = refreshKey;
     void fetchBackendFeed("refresh");
-  }, [fetchBackendFeed, focusVideoId, refreshParam]);
+  }, [fetchBackendFeed, focusVideoId, isSearchPlaybackMode, refreshParam]);
 
   useEffect(() => {
     if (focusFrom !== "create") return;
@@ -824,6 +859,11 @@ export default function NewsScreen() {
     }
 
     let nextLength = 0;
+    if (isSearchPlaybackMode) {
+      showToast({ message: "End of search results reached." });
+      return;
+    }
+
     setFeedItems((prev) => {
       const next = prev.filter((entry) => entry.feedId !== item.feedId);
       nextLength = next.length;
@@ -909,14 +949,14 @@ export default function NewsScreen() {
         }
       }}
     >
-      {isFeedLoading && feedItems.length === 0 ? (
+      {isFeedLoading && visibleFeedItems.length === 0 ? (
         <View style={styles.centerState}>
           <Text style={styles.stateTitle}>Loading feed...</Text>
           <Text style={styles.stateText}>Fetching your latest posts and recommendations.</Text>
         </View>
       ) : null}
 
-      {!isFeedLoading && feedItems.length === 0 ? (
+      {!isFeedLoading && visibleFeedItems.length === 0 ? (
         <View style={styles.centerState}>
           <Text style={styles.stateTitle}>No feed posts yet</Text>
           <Text style={styles.stateText}>
@@ -939,7 +979,7 @@ export default function NewsScreen() {
         </View>
       ) : null}
 
-      {!isFeedLoading && feedItems.length > 0 && feedError ? (
+      {!isFeedLoading && visibleFeedItems.length > 0 && feedError ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorBannerText} numberOfLines={2}>
             {feedError}
@@ -957,7 +997,7 @@ export default function NewsScreen() {
 
       <FlatList
         ref={feedListRef}
-        data={feedItems}
+        data={visibleFeedItems}
         keyExtractor={(item) => item.feedId}
         pagingEnabled
         decelerationRate="fast"
@@ -965,9 +1005,10 @@ export default function NewsScreen() {
         snapToAlignment="start"
         showsVerticalScrollIndicator={false}
         onEndReachedThreshold={0.35}
-        onEndReached={appendFeedItems}
-        refreshing={isRefreshing}
+        onEndReached={isSearchPlaybackMode ? undefined : appendFeedItems}
+        refreshing={isSearchPlaybackMode ? false : isRefreshing}
         onRefresh={() => {
+          if (isSearchPlaybackMode) return;
           void fetchBackendFeed("refresh");
         }}
         initialNumToRender={3}
@@ -978,7 +1019,7 @@ export default function NewsScreen() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         ListFooterComponent={
-          isPaginating ? (
+          !isSearchPlaybackMode && isPaginating ? (
             <View style={styles.paginationFooter}>
               <Text style={styles.paginationFooterText}>Loading more...</Text>
             </View>
@@ -992,7 +1033,7 @@ export default function NewsScreen() {
         onScrollToIndexFailed={(info) => {
           setTimeout(() => {
             feedListRef.current?.scrollToIndex({
-              index: Math.min(info.index, feedItems.length - 1),
+              index: Math.min(info.index, visibleFeedItems.length - 1),
               animated: true,
               viewPosition: 0,
             });

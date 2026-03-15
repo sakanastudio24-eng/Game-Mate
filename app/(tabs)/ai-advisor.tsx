@@ -346,6 +346,7 @@ export default function AIAdvisorScreen() {
   };
 
   const openVideo = (item: PagedVideoResult) => {
+    const orderedSearchIds = rankedTopTen.map((entry) => entry.video.id).join(",");
     setContinueSurface((previous) => ({
       ...previous,
       lastVideoId: item.video.id,
@@ -358,6 +359,7 @@ export default function AIAdvisorScreen() {
       params: {
         focusVideoId: item.video.id,
         focusFrom: "search",
+        searchOrder: orderedSearchIds,
       },
     } as any);
   };

@@ -3,6 +3,7 @@ import * as SystemUI from "expo-system-ui";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   KeyboardAvoidingView,
@@ -23,10 +24,16 @@ import { useAuth } from "../src/context/AuthContext";
 import { useReducedMotionPreference } from "../src/lib/accessibility";
 import { androidKeyboardCompatProps } from "../src/lib/androidInput";
 import { primeHomeContentCache } from "../src/lib/content-data";
-import { setCompletedOnboarding } from "../src/lib/onboarding-store";
+import {
+  clearOnboardingDraft,
+  getOnboardingDraft,
+  saveOnboardingDraft,
+  setCompletedOnboarding,
+  type OnboardingStep,
+} from "../src/lib/onboarding-store";
 import { useResponsive } from "../src/lib/responsive";
 
-type Step = "email" | "password" | "profile" | "preferences";
+type Step = OnboardingStep;
 
 const ONBOARDING_GAMES = [
   "Apex Legends",
@@ -119,6 +126,8 @@ export default function OnboardingScreen() {
   const [selectedGames, setSelectedGames] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  const hasHydratedDraft = useRef(false);
 
   const stepTransition = useRef(new Animated.Value(1)).current;
   const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
@@ -146,6 +155,47 @@ export default function OnboardingScreen() {
       // Keep onboarding resilient even if the platform ignores background updates.
     });
   }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    getOnboardingDraft()
+      .then((draft) => {
+        if (!active || !draft) return;
+        setEmail(draft.email ?? "");
+        setPassword(draft.password ?? "");
+        setConfirmPassword(draft.confirmPassword ?? "");
+        setUsername(draft.username ?? "");
+        setBirthdate(draft.birthdate ?? "");
+        setAcceptTerms(Boolean(draft.acceptTerms));
+        setSelectedGames(Array.isArray(draft.favoriteGames) ? draft.favoriteGames.slice(0, 5) : []);
+        setStep(draft.step ?? "email");
+      })
+      .finally(() => {
+        if (!active) return;
+        hasHydratedDraft.current = true;
+        setDraftReady(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasHydratedDraft.current) return;
+
+    saveOnboardingDraft({
+      email,
+      password,
+      confirmPassword,
+      username,
+      birthdate,
+      acceptTerms,
+      favoriteGames: selectedGames,
+      step,
+    });
+  }, [acceptTerms, birthdate, confirmPassword, email, password, selectedGames, step, username]);
 
   const stepAnimatedStyle = {
     opacity: stepTransition,
@@ -257,10 +307,12 @@ export default function OnboardingScreen() {
       }
 
       primeHomeContentCache();
+      await clearOnboardingDraft();
       await setCompletedOnboarding(true);
       router.replace("/(tabs)/news");
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "Unable to create account.");
+      const message = error instanceof Error ? error.message : "Unable to create account.";
+      setSubmitError(`${message} Your onboarding progress is still saved on this device.`);
     } finally {
       setSubmitting(false);
     }
@@ -290,6 +342,15 @@ export default function OnboardingScreen() {
       return [...prev, game];
     });
   };
+
+  if (!draftReady) {
+    return (
+      <View style={styles.loadingState}>
+        <ActivityIndicator size="large" color="#FF9F66" />
+        <Text style={styles.loadingText}>Restoring your onboarding progress...</Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -639,6 +700,17 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingState: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 12,
+  },
+  loadingText: {
+    color: "#666",
+    fontSize: 14,
+  },
   keyboardRoot: {
     flex: 1,
     backgroundColor: "#F5F5F5",

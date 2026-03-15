@@ -242,6 +242,9 @@ export default function OnboardingScreen() {
     return issues;
   }, [confirmPassword, password]);
 
+  const showEmailIssues = email.trim().length > 0;
+  const showPasswordValidation = password.length > 0 || confirmPassword.length > 0;
+
   const profileIssues = useMemo(() => {
     const issues: string[] = [];
     if (!isValidUsername(username)) {
@@ -268,10 +271,10 @@ export default function OnboardingScreen() {
 
   const currentIssues = useMemo(() => {
     if (step === "email") return [];
-    if (step === "password") return passwordIssues;
+    if (step === "password") return showPasswordValidation ? passwordIssues : [];
     if (step === "profile") return profileIssues;
     return preferenceIssues;
-  }, [emailIssues, passwordIssues, preferenceIssues, profileIssues, step]);
+  }, [passwordIssues, preferenceIssues, profileIssues, showPasswordValidation, step]);
 
   const handleNext = async () => {
     if (!canContinue || submitting) return;
@@ -453,7 +456,7 @@ export default function OnboardingScreen() {
                   ) : null}
                 </View>
 
-                {emailIssues.length > 0 ? (
+                {showEmailIssues && emailIssues.length > 0 ? (
                   <View style={styles.inlineIssueWrap}>
                     {emailIssues.map((issue) => (
                       <Text key={issue} style={styles.inlineIssueText}>
@@ -509,25 +512,27 @@ export default function OnboardingScreen() {
                   ) : null}
                 </View>
 
-                <View style={styles.passwordChecklist}>
-                  {passwordChecks.map((check) => (
-                    <View key={check.key} style={styles.passwordChecklistRow}>
-                      <MaterialCommunityIcons
-                        name={check.passed ? "check-circle" : "close-circle-outline"}
-                        size={18}
-                        color={check.passed ? "#22C55E" : "#9A9A9A"}
-                      />
-                      <Text
-                        style={[
-                          styles.passwordChecklistText,
-                          check.passed ? styles.passwordChecklistTextPassed : undefined,
-                        ]}
-                      >
-                        {check.label}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                {showPasswordValidation ? (
+                  <View style={styles.passwordChecklist}>
+                    {passwordChecks.map((check) => (
+                      <View key={check.key} style={styles.passwordChecklistRow}>
+                        <MaterialCommunityIcons
+                          name={check.passed ? "check-circle" : "close-circle-outline"}
+                          size={18}
+                          color={check.passed ? "#22C55E" : "#9A9A9A"}
+                        />
+                        <Text
+                          style={[
+                            styles.passwordChecklistText,
+                            check.passed ? styles.passwordChecklistTextPassed : undefined,
+                          ]}
+                        >
+                          {check.label}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
               </>
             )}
 

@@ -372,11 +372,19 @@ export default function ProfileScreen() {
               onPress={() => setStatusPickerOpen(true)}
               accessibilityRole="button"
               accessibilityLabel="Choose online status"
-              style={({ pressed }) => [styles.statusRow, pressed && styles.pressed]}
+              style={({ pressed }) => [
+                styles.statusRow,
+                {
+                  minHeight: Math.max(42, responsive.touchTargetMin - 2),
+                  borderRadius: 999,
+                  paddingHorizontal: spacing.sm,
+                },
+                pressed && styles.pressed,
+              ]}
             >
               <MaterialCommunityIcons
                 name={activeStatus.icon as any}
-                size={15}
+                size={17}
                 color={colors.textSecondary}
               />
               <View style={styles.statusTextRow}>
@@ -394,7 +402,7 @@ export default function ProfileScreen() {
                   {activeStatus.detail}
                 </Text>
               </View>
-              <MaterialCommunityIcons name="chevron-down" size={16} color={colors.textSecondary} />
+              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textSecondary} />
             </Pressable>
 
             <Text
@@ -886,6 +894,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginTop: 4,
+    backgroundColor: "rgba(36, 36, 36, 0.88)",
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   statusText: {
     color: colors.textSecondary,

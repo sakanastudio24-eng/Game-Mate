@@ -83,7 +83,7 @@ export const NEWS_FEED: NewsFeedItem[] = [
     hashtags: ["clutch", "overtime", "ranked"],
     duration: "0:44",
     thumbnail:
-      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80",
+      "https://images.unsplash.com/photo-1511882150382-421056c89033?w=600&q=80",
     likes: 28400,
     comments: 10,
     shares: 1830,

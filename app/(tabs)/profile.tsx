@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image as ExpoImage } from "expo-image";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,6 +11,7 @@ import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { useAuth } from "../../src/context/AuthContext";
 import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
+import { getDemoProfileSeedForUser } from "../../src/lib/demo-profile-seeds";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import type { GroupListItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
@@ -106,6 +107,7 @@ export default function ProfileScreen() {
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const profileErrorBottomOffset = safeBottom + 74;
+  const demoSeed = useMemo(() => getDemoProfileSeedForUser(user), [user?.email, user?.username]);
 
   const [myGroups, setMyGroups] = useState<GroupListItem[]>([]);
   const [activeCollectionTab, setActiveCollectionTab] = useState<"videos" | "games" | "groups">(
@@ -128,6 +130,12 @@ export default function ProfileScreen() {
   const isSessionExpiredError = isSessionExpiredMessage(profileError);
 
   const visibleProfileData = profileHydrated ? profileData : emptyProfileData;
+
+  useEffect(() => {
+    setMyGroups(demoSeed?.groups ?? []);
+    setOnlineStatus(demoSeed?.defaultStatus ?? "online");
+  }, [demoSeed]);
+
   const hasCachedProfileData =
     Boolean(visibleProfileData.bio?.trim()) ||
     Boolean(visibleProfileData.avatar_url?.trim()) ||
@@ -163,8 +171,8 @@ export default function ProfileScreen() {
   const profileBio =
     visibleProfileData.bio?.trim() || "No bio yet. Tap your profile photo or use settings to edit.";
   const favoriteGames = visibleProfileData.favorite_games || [];
-  const videosToRender: ProfileVideo[] = [];
-  const achievementsToRender: ProfileAchievement[] = [];
+  const videosToRender: ProfileVideo[] = demoSeed?.videos ?? [];
+  const achievementsToRender: ProfileAchievement[] = demoSeed?.achievements ?? [];
   const gamesToRender = useMemo(() => {
     if (!favoriteGames.length) return [];
     return favoriteGames.map((gameName, index) => {

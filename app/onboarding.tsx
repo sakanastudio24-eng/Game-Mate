@@ -92,19 +92,24 @@ function isStrongPassword(value: string) {
   return PASSWORD_PATTERN.test(value);
 }
 
-function getPasswordChecks(value: string, confirmValue: string) {
-  return [
+function getPasswordChecks(value: string, confirmValue: string, phase: "create" | "confirm") {
+  const checks = [
     { key: "length", label: "At least 10 characters", passed: value.length >= 10 },
     { key: "upper", label: "At least 1 uppercase letter", passed: /[A-Z]/.test(value) },
     { key: "lower", label: "At least 1 lowercase letter", passed: /[a-z]/.test(value) },
     { key: "number", label: "At least 1 number", passed: /\d/.test(value) },
     { key: "spaces", label: "No spaces allowed", passed: !/\s/.test(value) },
-    {
+  ];
+
+  if (phase === "confirm") {
+    checks.push({
       key: "match",
       label: "Passwords match",
       passed: confirmValue.length > 0 && value === confirmValue,
-    },
-  ];
+    });
+  }
+
+  return checks;
 }
 
 export default function OnboardingScreen() {
@@ -120,6 +125,7 @@ export default function OnboardingScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordPhase, setPasswordPhase] = useState<"create" | "confirm">("create");
   const [username, setUsername] = useState("");
   const [birthdate, setBirthdate] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -133,7 +139,10 @@ export default function OnboardingScreen() {
   const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
   const scrollEnabled = step === "preferences";
   const heroCompact = step !== "preferences";
-  const passwordChecks = useMemo(() => getPasswordChecks(password, confirmPassword), [confirmPassword, password]);
+  const passwordChecks = useMemo(
+    () => getPasswordChecks(password, confirmPassword, passwordPhase),
+    [confirmPassword, password, passwordPhase],
+  );
 
   useEffect(() => {
     if (reduceMotion) {
@@ -165,6 +174,7 @@ export default function OnboardingScreen() {
         setEmail(draft.email ?? "");
         setPassword(draft.password ?? "");
         setConfirmPassword(draft.confirmPassword ?? "");
+        setPasswordPhase(draft.passwordPhase ?? (draft.confirmPassword ? "confirm" : "create"));
         setUsername(draft.username ?? "");
         setBirthdate(draft.birthdate ?? "");
         setAcceptTerms(Boolean(draft.acceptTerms));
@@ -189,13 +199,14 @@ export default function OnboardingScreen() {
       email,
       password,
       confirmPassword,
+      passwordPhase,
       username,
       birthdate,
       acceptTerms,
       favoriteGames: selectedGames,
       step,
     });
-  }, [acceptTerms, birthdate, confirmPassword, email, password, selectedGames, step, username]);
+  }, [acceptTerms, birthdate, confirmPassword, email, password, passwordPhase, selectedGames, step, username]);
 
   const stepAnimatedStyle = {
     opacity: stepTransition,
@@ -236,14 +247,16 @@ export default function OnboardingScreen() {
     if (!isStrongPassword(password)) {
       issues.push("Password must meet all listed rules.");
     }
-    if (confirmPassword.length > 0 && password !== confirmPassword) {
+    if (passwordPhase === "confirm" && confirmPassword.length > 0 && password !== confirmPassword) {
       issues.push("Passwords must match.");
     }
     return issues;
-  }, [confirmPassword, password]);
+  }, [confirmPassword, password, passwordPhase]);
 
   const showEmailIssues = email.trim().length > 0;
-  const showPasswordValidation = password.length > 0 || confirmPassword.length > 0;
+  const showPasswordValidation =
+    passwordPhase === "create" ? password.length > 0 : confirmPassword.length > 0;
+  const currentPasswordEntry = passwordPhase === "create" ? password : confirmPassword;
 
   const profileIssues = useMemo(() => {
     const issues: string[] = [];
@@ -264,10 +277,22 @@ export default function OnboardingScreen() {
 
   const canContinue = useMemo(() => {
     if (step === "email") return emailIssues.length === 0;
-    if (step === "password") return passwordIssues.length === 0 && confirmPassword.length > 0;
+    if (step === "password") {
+      if (passwordPhase === "create") return password.length > 0 && isStrongPassword(password);
+      return confirmPassword.length > 0 && passwordIssues.length === 0;
+    }
     if (step === "profile") return profileIssues.length === 0;
     return preferenceIssues.length === 0;
-  }, [confirmPassword.length, emailIssues.length, passwordIssues.length, preferenceIssues.length, profileIssues.length, step]);
+  }, [
+    confirmPassword.length,
+    emailIssues.length,
+    password.length,
+    passwordIssues.length,
+    passwordPhase,
+    preferenceIssues.length,
+    profileIssues.length,
+    step,
+  ]);
 
   const currentIssues = useMemo(() => {
     if (step === "email") return [];
@@ -285,6 +310,11 @@ export default function OnboardingScreen() {
       return;
     }
     if (step === "password") {
+      if (passwordPhase === "create") {
+        setConfirmPassword("");
+        setPasswordPhase("confirm");
+        return;
+      }
       setStep("profile");
       return;
     }
@@ -332,6 +362,11 @@ export default function OnboardingScreen() {
       return;
     }
     if (step === "password") {
+      if (passwordPhase === "confirm") {
+        setPasswordPhase("create");
+        setConfirmPassword("");
+        return;
+      }
       setStep("email");
       return;
     }
@@ -422,7 +457,7 @@ export default function OnboardingScreen() {
               <MaterialCommunityIcons name="gamepad-variant" size={52} color="#1A1A1A" />
             </View>
             <View style={styles.heroTextWrap}>
-              <Text style={styles.appTitle}>Game Mate</Text>
+              {step === "email" ? <Text style={styles.appTitle}>Game Mate</Text> : null}
               <Text style={styles.welcomeCopy}>Squads, clips, groups, and a feed shaped by what you play.</Text>
             </View>
           </View>
@@ -471,41 +506,40 @@ export default function OnboardingScreen() {
             {step === "password" && (
               <>
                 <Text accessibilityRole="header" style={[styles.stepTitle, { fontSize: stepTitleSize }]}>
-                  Create a Password
+                  {passwordPhase === "create" ? "Create a Password" : "Confirm Your Password"}
                 </Text>
-                <Text style={styles.stepCopy}>Keep it strong with upper, lower, and a number.</Text>
+                <Text style={styles.stepCopy}>
+                  {passwordPhase === "create"
+                    ? "Keep it strong with upper, lower, and a number."
+                    : "Please re-enter password to confirm it before continuing."}
+                </Text>
 
-                <Text style={styles.fieldLabel}>Password</Text>
+                <Text style={styles.fieldLabel}>
+                  {passwordPhase === "create" ? "Password" : "Please Re-enter Password"}
+                </Text>
                 <View style={styles.inputWrap}>
                   <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="10+ chars, upper, lower, number"
+                    value={currentPasswordEntry}
+                    onChangeText={passwordPhase === "create" ? setPassword : setConfirmPassword}
+                    placeholder={
+                      passwordPhase === "create"
+                        ? "10+ chars, upper, lower, number"
+                        : "Please re-enter password"
+                    }
                     placeholderTextColor="#999"
                     autoCapitalize="none"
                     autoCorrect={false}
                     secureTextEntry
-                    accessibilityLabel="Password"
+                    accessibilityLabel={
+                      passwordPhase === "create" ? "Password" : "Please re-enter password"
+                    }
                     {...androidKeyboardCompatProps}
                     style={styles.input}
                   />
-                </View>
-
-                <Text style={styles.fieldLabel}>Confirm Password</Text>
-                <View style={styles.inputWrap}>
-                  <TextInput
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    placeholder="Re-enter password"
-                    placeholderTextColor="#999"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    secureTextEntry
-                    accessibilityLabel="Confirm password"
-                    {...androidKeyboardCompatProps}
-                    style={styles.input}
-                  />
-                  {isStrongPassword(password) && confirmPassword.length > 0 && password === confirmPassword ? (
+                  {passwordPhase === "confirm" &&
+                  isStrongPassword(password) &&
+                  confirmPassword.length > 0 &&
+                  password === confirmPassword ? (
                     <View style={styles.validBadge}>
                       <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
                     </View>

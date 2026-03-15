@@ -14,6 +14,7 @@ export type OnboardingDraft = {
   acceptTerms: boolean;
   favoriteGames: string[];
   step: OnboardingStep;
+  passwordPhase?: "create" | "confirm";
   password?: string;
   confirmPassword?: string;
 };

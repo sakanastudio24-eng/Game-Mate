@@ -33,7 +33,7 @@ import { useToast } from "../../src/components/ui/ToastProvider";
 import { Button } from "../../src/components/ui/Button";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
-import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
+import { AUTHOR_AVATARS, AUTHOR_BIOS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useAuth } from "../../src/context/AuthContext";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
@@ -516,6 +516,7 @@ export default function NewsScreen() {
           userId: String(item.id),
           name: item.author,
           avatar: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR,
+          bio: AUTHOR_BIOS[item.author] || "No bio yet.",
           status: "online",
           currentGame: item.game,
           source: "feed",

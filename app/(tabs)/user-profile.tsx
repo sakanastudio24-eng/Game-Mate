@@ -27,6 +27,7 @@ export default function UserProfileScreen() {
     userId?: string;
     name?: string;
     avatar?: string;
+    bio?: string;
     status?: string;
     currentGame?: string;
     level?: string;
@@ -119,6 +120,10 @@ export default function UserProfileScreen() {
       mode: "legacy" as const,
       id: params.userId ?? "unknown-user",
       username: params.name ?? "Player",
+      bio:
+        typeof params.bio === "string" && params.bio.trim()
+          ? params.bio.trim()
+          : "No bio yet.",
       rank: "Unranked",
       status: parsedStatus,
       currentGame: params.currentGame,
@@ -131,6 +136,7 @@ export default function UserProfileScreen() {
     isRemoteProfileMode,
     matchedUser,
     params.avatar,
+    params.bio,
     params.currentGame,
     params.level,
     params.name,

@@ -72,6 +72,20 @@ export const AUTHOR_AVATARS: Record<string, string> = {
     "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=100&h=100&fit=crop",
 };
 
+export const AUTHOR_BIOS: Record<string, string> = {
+  ProGamingLeague: "Tournament recaps, bracket runs, and event-level meta breakdowns.",
+  GameStrategy: "Ranked-focused guides, settings checks, and concise improvement drills.",
+  GameDevs: "Patch note summaries, balance changes, and live-service update coverage.",
+  StreamScout: "Clip scouting, scrim takeaways, and stream highlight curation.",
+  MetaWatch: "Meta reads, team comp ideas, and queue-ready strategy notes.",
+  ClipCircuit: "Fast guides and clean clips for players trying to level up quickly.",
+  QueueTheory: "Matchup lab work, timing windows, and comp-first gameplay reads.",
+  PixelPulse: "Creator spotlights, patch recaps, and fast scrollable gaming coverage.",
+  RespawnRadio:
+    "Aggressive entry player posting ranked clutch clips, round breakdowns, and comm-heavy team play.",
+  LobbyLegends: "Squad stories, co-op highlights, and community-first play sessions.",
+};
+
 export const NEWS_FEED: NewsFeedItem[] = [
   {
     id: "viral-1",

@@ -40,7 +40,7 @@ const ONBOARDING_GAMES = [
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
-const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{10,}$/;
 
 function sanitizeBirthdateInput(value: string): string {
   return value.replace(/\D/g, "").slice(0, 8);
@@ -84,6 +84,21 @@ function isStrongPassword(value: string) {
   return PASSWORD_PATTERN.test(value);
 }
 
+function getPasswordChecks(value: string, confirmValue: string) {
+  return [
+    { key: "length", label: "At least 10 characters", passed: value.length >= 10 },
+    { key: "upper", label: "At least 1 uppercase letter", passed: /[A-Z]/.test(value) },
+    { key: "lower", label: "At least 1 lowercase letter", passed: /[a-z]/.test(value) },
+    { key: "number", label: "At least 1 number", passed: /\d/.test(value) },
+    { key: "spaces", label: "No spaces allowed", passed: !/\s/.test(value) },
+    {
+      key: "match",
+      label: "Passwords match",
+      passed: confirmValue.length > 0 && value === confirmValue,
+    },
+  ];
+}
+
 export default function OnboardingScreen() {
   const router = useRouter();
   const { loginUser } = useAuth();
@@ -108,6 +123,7 @@ export default function OnboardingScreen() {
   const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
   const scrollEnabled = step === "preferences";
   const heroCompact = step !== "preferences";
+  const passwordChecks = useMemo(() => getPasswordChecks(password, confirmPassword), [confirmPassword, password]);
 
   useEffect(() => {
     if (reduceMotion) {
@@ -161,7 +177,7 @@ export default function OnboardingScreen() {
   const passwordIssues = useMemo(() => {
     const issues: string[] = [];
     if (!isStrongPassword(password)) {
-      issues.push("Password must be at least 10 characters and include upper, lower, and number.");
+      issues.push("Password must meet all listed rules.");
     }
     if (confirmPassword.length > 0 && password !== confirmPassword) {
       issues.push("Passwords must match.");
@@ -302,7 +318,17 @@ export default function OnboardingScreen() {
           ]}
         >
           <View style={styles.headerBlock}>
-            <Text style={styles.brandText}>Welcome to Game Mate</Text>
+            <View style={styles.headerTopRow}>
+              <Text style={styles.brandText}>Welcome to Game Mate</Text>
+              <Pressable
+                onPress={handleBack}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                style={({ pressed }) => [styles.topBackButton, pressed && styles.pressed]}
+              >
+                <MaterialCommunityIcons name="chevron-left" size={20} color="#1A1A1A" />
+              </Pressable>
+            </View>
             <Text accessibilityRole="header" style={[styles.heading, { fontSize: responsive.titleSize }]}>
               Create Account
             </Text>
@@ -402,6 +428,26 @@ export default function OnboardingScreen() {
                       <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
                     </View>
                   ) : null}
+                </View>
+
+                <View style={styles.passwordChecklist}>
+                  {passwordChecks.map((check) => (
+                    <View key={check.key} style={styles.passwordChecklistRow}>
+                      <MaterialCommunityIcons
+                        name={check.passed ? "check-circle" : "close-circle-outline"}
+                        size={18}
+                        color={check.passed ? "#22C55E" : "#9A9A9A"}
+                      />
+                      <Text
+                        style={[
+                          styles.passwordChecklistText,
+                          check.passed ? styles.passwordChecklistTextPassed : undefined,
+                        ]}
+                      >
+                        {check.label}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               </>
             )}
@@ -539,15 +585,6 @@ export default function OnboardingScreen() {
 
             <View style={styles.footerActions}>
               <Pressable
-                onPress={handleBack}
-                accessibilityRole="button"
-                accessibilityLabel="Go back"
-                style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-              >
-                <MaterialCommunityIcons name="chevron-left" size={24} color="#1A1A1A" />
-              </Pressable>
-
-              <Pressable
                 onPress={handleNext}
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -612,10 +649,23 @@ const styles = StyleSheet.create({
   headerBlock: {
     marginBottom: 12,
   },
+  headerTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
   brandText: {
     color: "#8A8A8A",
     fontSize: 13,
-    marginBottom: 8,
+  },
+  topBackButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#DFDFDF",
   },
   heading: {
     color: "#1A1A1A",
@@ -711,6 +761,24 @@ const styles = StyleSheet.create({
     right: 14,
     top: 14,
   },
+  passwordChecklist: {
+    marginTop: -2,
+    marginBottom: 4,
+    gap: 6,
+  },
+  passwordChecklistRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  passwordChecklistText: {
+    color: "#7A7A7A",
+    fontSize: 13,
+  },
+  passwordChecklistTextPassed: {
+    color: "#1A1A1A",
+    fontWeight: "700",
+  },
   validBadge: {
     position: "absolute",
     right: 12,
@@ -799,7 +867,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 8,
   },
   missingOptionsWrap: {
     marginBottom: 12,
@@ -820,17 +888,8 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   footerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 18,
-  },
-  backButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#DCDCDC",
   },
   nextButton: {
     width: 84,

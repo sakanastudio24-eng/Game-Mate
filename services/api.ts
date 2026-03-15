@@ -7,17 +7,22 @@ function normalizeBaseUrl(url: string) {
   return url.replace(/\/+$/, "");
 }
 
-function inferExpoDevBaseUrl() {
+function getExpoDevHost() {
   const possibleHostUri =
     (Constants.expoConfig as any)?.hostUri ??
     (Constants as any)?.manifest2?.extra?.expoClient?.hostUri ??
     (Constants as any)?.manifest?.debuggerHost;
 
-  if (typeof possibleHostUri === "string" && possibleHostUri.length > 0) {
-    const host = possibleHostUri.split(":")[0];
-    if (host) {
-      return `http://${host}:${API_PORT}`;
-    }
+  if (typeof possibleHostUri !== "string" || possibleHostUri.length === 0) return null;
+
+  const host = possibleHostUri.split(":")[0];
+  return host || null;
+}
+
+function inferExpoDevBaseUrl() {
+  const host = getExpoDevHost();
+  if (host) {
+    return `http://${host}:${API_PORT}`;
   }
 
   // Android emulator localhost bridge.
@@ -28,9 +33,27 @@ function inferExpoDevBaseUrl() {
   return "http://127.0.0.1:8000";
 }
 
-const BASE_URL = normalizeBaseUrl(
-  process.env.EXPO_PUBLIC_API_URL?.trim() || inferExpoDevBaseUrl(),
-);
+function resolveBaseUrl() {
+  const configured = process.env.EXPO_PUBLIC_API_URL?.trim();
+  if (!configured) return inferExpoDevBaseUrl();
+
+  try {
+    const parsed = new URL(configured);
+    const host = parsed.hostname;
+    const expoHost = getExpoDevHost();
+
+    // When running on a physical device, localhost points at the phone, not the dev machine.
+    if (expoHost && (host === "127.0.0.1" || host === "localhost")) {
+      return `${parsed.protocol}//${expoHost}${parsed.port ? `:${parsed.port}` : ""}`;
+    }
+  } catch {
+    return configured;
+  }
+
+  return configured;
+}
+
+const BASE_URL = normalizeBaseUrl(resolveBaseUrl());
 
 export async function apiRequest(
   endpoint: string,

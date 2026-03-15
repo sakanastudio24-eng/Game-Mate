@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 
 from .feed import score_post
 from .models import Post, PostInteraction, PostShare
-from .permissions import IsPostOwner
+from .permissions import IsOwnerOrReadOnly
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
 from posts.services.cache_service import (
@@ -34,10 +34,10 @@ class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        """Require ownership for post mutation actions."""
+        """Require creator ownership for post edit/delete actions."""
         perms = [IsAuthenticated()]
         if self.action in ["update", "partial_update", "destroy", "restore"]:
-            perms.append(IsPostOwner())
+            perms.append(IsOwnerOrReadOnly())
         return perms
 
     def perform_create(self, serializer):

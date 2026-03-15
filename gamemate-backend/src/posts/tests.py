@@ -116,3 +116,81 @@ class PostOwnershipPermissionTests(APITestCase):
         self.post.refresh_from_db()
         self.assertTrue(self.post.is_deleted)
         self.assertIsNotNone(self.post.deleted_at)
+
+
+# Validation regression tests for post create payloads.
+class PostValidationTests(APITestCase):
+    """Ensure invalid create payloads fail with clear 400-level responses."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="poster@gamemate.dev",
+            username="poster",
+            password="posterpass123",
+        )
+        self.client.force_authenticate(user=self.user)
+        self.create_url = "/api/posts/"
+
+    def test_whitespace_only_title_is_rejected(self):
+        """Whitespace-only titles should fail validation."""
+        response = self.client.post(
+            self.create_url,
+            {
+                "game": "Apex Legends",
+                "title": "   ",
+                "description": "Valid description",
+                "video_url": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("title", response.data.get("errors", {}))
+
+    def test_whitespace_only_description_is_rejected(self):
+        """Whitespace-only descriptions should fail validation when supplied."""
+        response = self.client.post(
+            self.create_url,
+            {
+                "game": "Apex Legends",
+                "title": "Valid title",
+                "description": "   ",
+                "video_url": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("description", response.data.get("errors", {}))
+
+    def test_overlong_title_is_rejected(self):
+        """Titles exceeding the max length should fail cleanly."""
+        response = self.client.post(
+            self.create_url,
+            {
+                "game": "Apex Legends",
+                "title": "T" * 256,
+                "description": "Valid description",
+                "video_url": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("title", response.data.get("errors", {}))
+
+    def test_overlong_game_is_rejected(self):
+        """Games exceeding the max length should fail cleanly."""
+        response = self.client.post(
+            self.create_url,
+            {
+                "game": "G" * 101,
+                "title": "Valid title",
+                "description": "Valid description",
+                "video_url": "",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("game", response.data.get("errors", {}))

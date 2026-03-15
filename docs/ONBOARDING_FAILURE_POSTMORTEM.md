@@ -67,6 +67,38 @@ For this onboarding flow:
 - Android should not use keyboard avoidance that resizes the entire screen
 - inline validation should stay next to the relevant field, not fall into the footer area
 
+## Additional Issue: Settings Back Flow
+
+### Problem
+
+The back button in profile/settings routes could return to the feed instead of the profile path.
+
+That breaks the expected stack behavior and makes the app feel unreliable.
+
+### Root Cause
+
+The settings stack was relying on generic history fallback behavior.
+
+When history was thin, stale, or entered from a non-standard path, the fallback could resolve to feed instead of the intended parent screen.
+
+### Fix
+
+Settings-related screens now use explicit back targets:
+
+- profile settings -> profile
+- account settings -> settings
+- notification settings -> settings
+- privacy settings -> settings
+- platform connections -> settings
+- help -> settings
+- privacy detail -> privacy settings
+
+### Rule
+
+Sensitive nested settings flows should not rely on generic history fallback.
+
+When the intended parent screen is known, back navigation should use an explicit return target.
+
 ## Correct Product Rule
 
 Onboarding should behave like a temporary draft until final completion succeeds.

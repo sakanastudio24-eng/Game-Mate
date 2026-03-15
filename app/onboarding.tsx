@@ -452,15 +452,17 @@ export default function OnboardingScreen() {
             </View>
           </View>
 
-          <View style={[styles.welcomeHero, heroCompact ? styles.welcomeHeroCompact : undefined]}>
-            <View style={styles.logoCircle}>
-              <MaterialCommunityIcons name="gamepad-variant" size={52} color="#1A1A1A" />
+          {step === "email" ? (
+            <View style={[styles.welcomeHero, heroCompact ? styles.welcomeHeroCompact : undefined]}>
+              <View style={styles.logoCircle}>
+                <MaterialCommunityIcons name="gamepad-variant" size={52} color="#1A1A1A" />
+              </View>
+              <View style={styles.heroTextWrap}>
+                <Text style={styles.appTitle}>Game Mate</Text>
+                <Text style={styles.welcomeCopy}>Squads, clips, groups, and a feed shaped by what you play.</Text>
+              </View>
             </View>
-            <View style={styles.heroTextWrap}>
-              {step === "email" ? <Text style={styles.appTitle}>Game Mate</Text> : null}
-              <Text style={styles.welcomeCopy}>Squads, clips, groups, and a feed shaped by what you play.</Text>
-            </View>
-          </View>
+          ) : null}
 
           <Animated.View style={[styles.stepSection, styles.stepSectionCompact, stepAnimatedStyle]}>
             {step === "email" && (

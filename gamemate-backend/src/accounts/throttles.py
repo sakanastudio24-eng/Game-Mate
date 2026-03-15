@@ -11,3 +11,14 @@ class LoginThrottle(SimpleRateThrottle):
     def get_cache_key(self, request, view):
         """Use requester IP as the throttling identity key."""
         return self.get_ident(request)
+
+
+# Throttle class for signup endpoint abuse protection.
+class SignupThrottle(SimpleRateThrottle):
+    """Throttle account creation attempts per client IP."""
+
+    scope = "signup"
+
+    def get_cache_key(self, request, view):
+        """Use requester IP as the throttling identity key."""
+        return self.get_ident(request)

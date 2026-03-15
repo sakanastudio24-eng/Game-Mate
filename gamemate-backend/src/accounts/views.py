@@ -18,7 +18,7 @@ from posts.serializers import PostSerializer
 from config.pagination import StandardPageNumberPagination
 from .models import Profile, User
 from .serializers import MeSerializer, ProfileSerializer, PublicProfileSerializer, SignupSerializer
-from .throttles import LoginThrottle
+from .throttles import LoginThrottle, SignupThrottle
 
 
 def _is_friend(user, target_user) -> bool:
@@ -79,6 +79,7 @@ class AuthSignupView(APIView):
     """Create a new user account and return minimal identity payload."""
 
     permission_classes = [AllowAny]
+    throttle_classes = [SignupThrottle]
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)

@@ -143,10 +143,11 @@ Header routes:
 
 QR code flow:
 1. Open `/(tabs)/qr-code` from Profile, Groups, or Social.
-2. `My Code` renders a QR that encodes `gamemate:user:{username}`.
-3. `Scan` reads QR text and parses the username from that payload.
+2. `My Code` renders a QR that encodes `gm:user:{username}`.
+3. `Scan` accepts only the expected GameMate profile payload format and validates username characters before routing.
 4. Valid GameMate payloads route to `/(tabs)/user-profile?username=...`.
 5. `user-profile` loads the real backend profile with `GET /api/profile/{username}/`.
+6. Invalid or non-existent users fail safely through local validation or backend `404`.
 
 Collection tabs in profile section:
 - `Videos`

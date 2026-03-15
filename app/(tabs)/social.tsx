@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, Pressable, StyleSheet, View } from "react-native";
@@ -178,6 +179,15 @@ export default function SocialScreen() {
     void loadThreads();
   }, [loadFriends, loadPendingRequests, loadThreads]);
 
+  useFocusEffect(
+    useCallback(() => {
+      void loadFriends();
+      void loadPendingRequests();
+      void loadThreads();
+      return undefined;
+    }, [loadFriends, loadPendingRequests, loadThreads]),
+  );
+
   const filteredOnline = useMemo(() => {
     const source = accessToken ? friends : [];
     const q = search.trim().toLowerCase();
@@ -242,6 +252,7 @@ export default function SocialScreen() {
       setRequests((prev) => prev.filter((request) => request.id !== requestId));
       showToast({ message: `Accepted ${target.name}` });
       void loadFriends();
+      void loadPendingRequests();
     } catch (error) {
       showToast({
         message: error instanceof Error ? error.message : "Unable to accept request right now.",

@@ -8,9 +8,8 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { useAuth } from "../../src/context/AuthContext";
-import { SESSION_EXPIRED_MESSAGE } from "../../src/lib/auth-messages";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { Screen } from "../../src/components/ui/Screen";
-import { useSafeBackNavigation } from "../../src/lib/navigation";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -68,7 +67,6 @@ function resolveType(rawType?: string | string[]): CreateType {
 export default function CreateCollectionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ type?: string | string[] }>();
-  const safeBack = useSafeBackNavigation("/(tabs)/profile");
   const responsive = useResponsive();
   const { accessToken } = useAuth();
 
@@ -86,18 +84,30 @@ export default function CreateCollectionScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const isSessionExpiredError = isSessionExpiredMessage(submitError);
 
   const normalizedTitle = title.trim();
   const normalizedDescription = description.trim();
   const normalizedPlatform = platform.trim();
 
+  const handleExit = () => {
+    if (isSubmitting) return;
+    setErrors({});
+    setSubmitError(null);
+    setSubmitSuccess(null);
+    setStep(1);
+    router.replace("/(tabs)/profile");
+  };
+
   const handleHeaderBack = () => {
     if (isSubmitting) return;
     if (step === 2) {
       setStep(1);
+      setSubmitError(null);
+      setSubmitSuccess(null);
       return;
     }
-    safeBack();
+    handleExit();
   };
 
   const validateStepOne = () => {
@@ -170,7 +180,7 @@ export default function CreateCollectionScreen() {
 
     setSubmitSuccess(`${copy.itemLabel} created.`);
     Alert.alert(`${copy.itemLabel} Created`, `${title.trim()} is now in your profile.`);
-    safeBack();
+    handleExit();
   };
 
   return (
@@ -281,7 +291,7 @@ export default function CreateCollectionScreen() {
           <Button variant="primary" fullWidth size="large" onPress={handleContinue}>
             Continue
           </Button>
-          <Button variant="secondary" fullWidth size="large" onPress={safeBack} disabled={isSubmitting}>
+          <Button variant="secondary" fullWidth size="large" onPress={handleExit} disabled={isSubmitting}>
             Cancel
           </Button>
         </>
@@ -332,6 +342,17 @@ export default function CreateCollectionScreen() {
             </Button>
           </View>
           {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
+          {isSessionExpiredError ? (
+            <Button
+              variant="secondary"
+              size="large"
+              fullWidth
+              onPress={() => router.replace("/login" as any)}
+              disabled={isSubmitting}
+            >
+              Sign In
+            </Button>
+          ) : null}
           {submitSuccess ? <Text style={styles.submitSuccess}>{submitSuccess}</Text> : null}
         </>
       )}

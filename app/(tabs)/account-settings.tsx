@@ -4,6 +4,7 @@ import { StyleSheet, View } from "react-native";
 import { Button, Dialog, Portal, Text, TextInput } from "react-native-paper";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
+import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -14,6 +15,7 @@ import { colors, spacing } from "../../src/lib/theme";
 export default function AccountSettingsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -27,6 +29,7 @@ export default function AccountSettingsScreen() {
   const [enable2FADialogVisible, setEnable2FADialogVisible] = useState(false);
   const [deleteAccountDialogVisible, setDeleteAccountDialogVisible] =
     useState(false);
+  const currentEmail = user?.email?.trim() || "No email available";
 
   const handleChangeEmail = () => {
     // Mock: validate & submit
@@ -64,7 +67,7 @@ export default function AccountSettingsScreen() {
         <View style={styles.sectionHeader}>
           <View>
             <Text style={[styles.label, { fontSize: responsive.bodySmallSize }]}>Current Email</Text>
-            <Text style={[styles.value, { fontSize: responsive.bodySize + 2 }]}>user@example.com</Text>
+            <Text style={[styles.value, { fontSize: responsive.bodySize + 2 }]}>{currentEmail}</Text>
           </View>
         </View>
         <Button

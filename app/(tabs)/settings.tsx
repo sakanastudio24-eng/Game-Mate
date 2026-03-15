@@ -9,7 +9,6 @@ import { useAuth } from "../../src/context/AuthContext";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
-import { mockCurrentUser } from "../../src/lib/mockData";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -20,8 +19,10 @@ export default function SettingsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const { showToast } = useToast();
-  const { logoutUser } = useAuth();
+  const { user, logoutUser } = useAuth();
   const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
+  const displayUsername = user?.username?.trim() || "Player";
+  const displayEmail = user?.email?.trim() || "No email available";
 
   const handleDeleteAccount = async () => {
     setDeleteDialogVisible(false);
@@ -43,10 +44,10 @@ export default function SettingsScreen() {
           <Image source={{ uri: SELF_AVATAR }} style={styles.profileAvatar} />
           <View style={styles.profileMeta}>
             <Text style={[styles.profileName, { fontSize: responsive.sectionTitleSize - 2 }]}>
-              {mockCurrentUser.username}
+              {displayUsername}
             </Text>
             <Text style={[styles.profileEmail, { fontSize: responsive.bodySmallSize }]}>
-              {mockCurrentUser.email}
+              {displayEmail}
             </Text>
           </View>
         </View>

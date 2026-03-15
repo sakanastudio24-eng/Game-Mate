@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { getMe, login, refreshToken } from "../../services/auth";
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "../../services/storage";
+import { SESSION_EXPIRED_MESSAGE } from "../lib/auth-messages";
 
 type AuthState = {
   user: any | null;
@@ -86,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
         setAccessToken(null);
         setUser(null);
-        setAuthError("Session expired. Please sign in again.");
+        setAuthError(SESSION_EXPIRED_MESSAGE);
         setLoading(false);
       }
 

@@ -7,6 +7,21 @@ function normalizeBaseUrl(url: string) {
   return url.replace(/\/+$/, "");
 }
 
+function stripHtmlDebugError(payload: string) {
+  const normalized = payload.toLowerCase();
+  const looksLikeHtml = normalized.includes("<!doctype html") || normalized.includes("<html");
+  const looksLikeDjangoDebug =
+    normalized.includes("you're seeing this error because you have debug = true") ||
+    normalized.includes("debug = true") ||
+    normalized.includes("debug=true");
+
+  if (looksLikeHtml || looksLikeDjangoDebug) {
+    return "Server error. Please try again.";
+  }
+
+  return payload;
+}
+
 function getExpoDevHost() {
   const possibleHostUri =
     (Constants.expoConfig as any)?.hostUri ??
@@ -88,7 +103,7 @@ export async function apiRequest(
   if (!response.ok) {
     const resolvedErrorMessage =
       typeof data === "string"
-        ? data
+        ? stripHtmlDebugError(data)
         : data?.message || data?.detail || "Request failed";
 
     if (response.status === 401) {

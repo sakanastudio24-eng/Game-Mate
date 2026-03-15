@@ -235,6 +235,71 @@ function truncateFeedTitle(title: string, maxWords = 6): string {
 }
 
 function buildCommentPreview(item: FeedEntry): CommentItem[] {
+  if (item.id === "viral-1") {
+    return [
+      {
+        id: `${item.feedId}-c1`,
+        user: "Nova",
+        avatar: COMMENT_AVATARS.Nova,
+        message: "That final swing was filthy.",
+      },
+      {
+        id: `${item.feedId}-c2`,
+        user: "RiftKing",
+        avatar: COMMENT_AVATARS.RiftKing,
+        message: "No way they all lined up like that.",
+      },
+      {
+        id: `${item.feedId}-c3`,
+        user: "Echo",
+        avatar: COMMENT_AVATARS.Echo,
+        message: "Crosshair placement stayed perfect the whole round.",
+      },
+      {
+        id: `${item.feedId}-c4`,
+        user: "Nova",
+        avatar: COMMENT_AVATARS.Nova,
+        message: "Clip this for the squad chat immediately.",
+      },
+      {
+        id: `${item.feedId}-c5`,
+        user: "RiftKing",
+        avatar: COMMENT_AVATARS.RiftKing,
+        message: "That third kill was all sound cue discipline.",
+      },
+      {
+        id: `${item.feedId}-c6`,
+        user: "Echo",
+        avatar: COMMENT_AVATARS.Echo,
+        message: "You can feel the panic from the other team.",
+      },
+      {
+        id: `${item.feedId}-c7`,
+        user: "Nova",
+        avatar: COMMENT_AVATARS.Nova,
+        message: "This deserves the top slot today.",
+      },
+      {
+        id: `${item.feedId}-c8`,
+        user: "RiftKing",
+        avatar: COMMENT_AVATARS.RiftKing,
+        message: "Last bullet finish made it even colder.",
+      },
+      {
+        id: `${item.feedId}-c9`,
+        user: "Echo",
+        avatar: COMMENT_AVATARS.Echo,
+        message: "Please post the comms audio next.",
+      },
+      {
+        id: `${item.feedId}-c10`,
+        user: "Nova",
+        avatar: COMMENT_AVATARS.Nova,
+        message: "I watched this five times already.",
+      },
+    ];
+  }
+
   return [
     {
       id: `${item.feedId}-c1`,

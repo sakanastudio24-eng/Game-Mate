@@ -74,6 +74,22 @@ export const AUTHOR_AVATARS: Record<string, string> = {
 
 export const NEWS_FEED: NewsFeedItem[] = [
   {
+    id: "viral-1",
+    type: "video",
+    title: "1v4 Overtime Clutch With 3 HP Left",
+    author: "RespawnRadio",
+    date: "Mar 15, 2026",
+    game: "Valorant",
+    hashtags: ["clutch", "overtime", "ranked"],
+    duration: "0:44",
+    thumbnail:
+      "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&q=80",
+    likes: 28400,
+    comments: 10,
+    shares: 1830,
+    category: "fyp",
+  },
+  {
     id: "1",
     type: "video",
     title: "Disco 2024 Tournament Finals Recap",

@@ -909,7 +909,7 @@ export default function NewsScreen() {
                     accessibilityLabel="Open recommendations search"
                     style={({ pressed }) => [styles.advisorButton, pressed && styles.pressed]}
                   >
-                    <MaterialCommunityIcons name="magnify" size={16} color="#1A1A1A" />
+                    <MaterialCommunityIcons name="magnify" size={16} color={colors.onPrimary} />
                   </Pressable>
                   <Pressable
                     onPress={() => {
@@ -919,7 +919,7 @@ export default function NewsScreen() {
                     accessibilityLabel={`Why this post appeared: ${item.title}`}
                     style={({ pressed }) => [styles.infoButton, pressed && styles.pressed]}
                   >
-                    <MaterialCommunityIcons name="information-outline" size={16} color="#1A1A1A" />
+                    <MaterialCommunityIcons name="information-outline" size={16} color={colors.onPrimary} />
                   </Pressable>
                 </View>
               </View>
@@ -1107,7 +1107,7 @@ export default function NewsScreen() {
                     pressed && styles.pressed,
                   ]}
                 >
-                  <MaterialCommunityIcons name="send" size={20} color="#1A1A1A" />
+                  <MaterialCommunityIcons name="send" size={20} color={colors.onPrimary} />
                 </Pressable>
               </View>
             </View>
@@ -1322,7 +1322,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   errorRetryText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -1451,7 +1451,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.42)",
   },
   whySheet: {
-    backgroundColor: "#1F1F1F",
+    backgroundColor: colors.surfaceOverlay,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
@@ -1535,7 +1535,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.42)",
   },
   drawerSheet: {
-    backgroundColor: "#1F1F1F",
+    backgroundColor: colors.surfaceOverlay,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
@@ -1613,7 +1613,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
   },
   drawerInputContent: {
     fontSize: 14,

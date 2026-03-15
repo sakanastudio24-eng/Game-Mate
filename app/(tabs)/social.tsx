@@ -531,7 +531,7 @@ export default function SocialScreen() {
                           pressed && styles.pressed,
                         ]}
                       >
-                        <MaterialCommunityIcons name="message-outline" size={19} color="#1A1A1A" />
+                        <MaterialCommunityIcons name="message-outline" size={19} color={colors.onPrimary} />
                       </Pressable>
                     ) : null}
                   </Pressable>
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
   iconButton: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: spacing.sm,
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
     width: "31.5%",
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: "center",
@@ -829,10 +829,10 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   tabTextActive: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
   },
   searchbar: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
@@ -854,7 +854,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   sectionCount: {
-    color: "#4ADE80",
+    color: colors.online,
     backgroundColor: "rgba(74,222,128,0.12)",
     borderWidth: 1,
     borderColor: "rgba(74,222,128,0.3)",
@@ -867,7 +867,7 @@ const styles = StyleSheet.create({
   },
   sectionCountMuted: {
     color: colors.textSecondary,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 999,
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   friendCard: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
@@ -918,7 +918,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     borderWidth: 2,
-    borderColor: "#444",
+    borderColor: colors.borderStrong,
   },
   friendOnlineDot: {
     position: "absolute",
@@ -928,8 +928,8 @@ const styles = StyleSheet.create({
     height: 13,
     borderRadius: 7,
     borderWidth: 2,
-    borderColor: "#242424",
-    backgroundColor: "#4ADE80",
+    borderColor: colors.surfaceRaised,
+    backgroundColor: colors.online,
   },
   friendInfo: {
     flex: 1,
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 11,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: colors.borderStrong,
     borderRadius: 999,
     overflow: "hidden",
     paddingHorizontal: 8,
@@ -961,7 +961,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   friendSecondaryStatus: {
-    color: "#4ADE80",
+    color: colors.online,
     fontSize: 11,
     marginTop: 2,
     fontWeight: "600",
@@ -975,7 +975,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   messageCard: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
@@ -993,7 +993,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: colors.borderStrong,
   },
   messageInfo: {
     flex: 1,
@@ -1027,12 +1027,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   unreadText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontSize: 12,
     fontWeight: "800",
   },
   requestCard: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
@@ -1050,7 +1050,7 @@ const styles = StyleSheet.create({
     borderRadius: 27,
     marginRight: spacing.md,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: colors.borderStrong,
   },
   requestInfo: {
     flex: 1,
@@ -1082,17 +1082,17 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   acceptButtonDisabled: {
-    backgroundColor: "#454545",
+    backgroundColor: colors.borderStrong,
   },
   acceptText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontWeight: "800",
   },
   declineButton: {
     flex: 1,
-    backgroundColor: "#333",
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "#444",
+    borderColor: colors.borderStrong,
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: "center",

@@ -736,7 +736,7 @@ export default function GroupsScreen() {
                   pressed && styles.pressed,
                 ]}
               >
-                <MaterialCommunityIcons name="plus" size={16} color="#1A1A1A" />
+                <MaterialCommunityIcons name="plus" size={16} color={colors.onPrimary} />
                 <Text style={styles.createButtonText}>Create</Text>
               </Pressable>
             </View>
@@ -1086,7 +1086,7 @@ export default function GroupsScreen() {
                       accessibilityLabel={`Join ${activeAiItem.group.name}`}
                       style={({ pressed }) => [styles.aiJoinButton, pressed && styles.pressed]}
                     >
-                      <MaterialCommunityIcons name="check" size={18} color="#1A1A1A" />
+                      <MaterialCommunityIcons name="check" size={18} color={colors.onPrimary} />
                         <Text style={styles.aiJoinButtonText}>Join</Text>
                       </Pressable>
                     </View>
@@ -1204,7 +1204,7 @@ const styles = StyleSheet.create({
   iconButton: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: spacing.sm,
@@ -1222,12 +1222,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   statPrimaryText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontWeight: "800",
     fontSize: 12,
   },
   statSecondary: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1240,16 +1240,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#4ADE80",
+    backgroundColor: colors.online,
     marginRight: 6,
   },
   statSecondaryText: {
-    color: "#4ADE80",
+    color: colors.online,
     fontSize: 12,
     fontWeight: "700",
   },
   searchbar: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1296,7 +1296,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   aiSwipeButton: {
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1316,7 +1316,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   createButtonText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontSize: 13,
     fontWeight: "800",
     marginLeft: 4,
@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
   groupCard: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     marginBottom: spacing.sm,
   },
   cardPressable: {
@@ -1354,7 +1354,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   groupMeta: {
-    color: "#4ADE80",
+    color: colors.online,
     fontSize: 11,
     marginTop: 4,
   },
@@ -1375,7 +1375,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   groupVisibilityPublic: {
-    borderColor: "#4ADE80",
+    borderColor: colors.online,
     backgroundColor: "rgba(74,222,128,0.14)",
   },
   groupVisibilityPrivate: {
@@ -1405,29 +1405,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   groupJoinButtonText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontWeight: "800",
     fontSize: 12,
   },
   groupJoinedButton: {
     backgroundColor: "#2E4E3A",
     borderWidth: 1,
-    borderColor: "#4ADE80",
+    borderColor: colors.online,
   },
   groupJoinedButtonText: {
-    color: "#4ADE80",
+    color: colors.online,
   },
   groupOptionsButton: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: colors.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
     marginLeft: spacing.sm,
   },
   loadMoreButton: {
     marginTop: spacing.xs,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
@@ -1478,7 +1478,7 @@ const styles = StyleSheet.create({
   aiModalCard: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: colors.surfaceInset,
     padding: spacing.md,
   },
   aiModalHeader: {
@@ -1498,7 +1498,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1506,14 +1506,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     padding: spacing.md,
   },
   aiLoadingWrap: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     padding: spacing.md,
   },
   aiLoadingCopy: {
@@ -1544,7 +1544,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -1604,7 +1604,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 10,
     paddingVertical: 6,
     flexDirection: "row",
@@ -1627,7 +1627,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#2A2A2A",
+    backgroundColor: colors.surfaceMuted,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -1649,7 +1649,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   aiJoinButtonText: {
-    color: "#1A1A1A",
+    color: colors.onPrimary,
     fontWeight: "800",
     fontSize: 13,
   },

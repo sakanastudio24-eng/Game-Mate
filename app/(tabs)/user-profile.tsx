@@ -158,18 +158,18 @@ export default function UserProfileScreen() {
   const statCards =
     profile.mode === "remote"
       ? [
-          { label: "Posts", value: profile.posts, icon: "play-box-multiple-outline", color: "#66BAFF" },
-          { label: "Friends", value: profile.friends, icon: "account-multiple-outline", color: "#FFD700" },
+          { label: "Posts", value: profile.posts, icon: "play-box-multiple-outline", color: colors.info },
+          { label: "Friends", value: profile.friends, icon: "account-multiple-outline", color: colors.highlight },
           { label: "Groups", value: profile.groups, icon: "account-group-outline", color: colors.primary },
         ]
       : [
           { label: "Level", value: profile.level, icon: "account-star-outline", color: colors.primary },
-          { label: "Groups", value: profile.groupsJoined, icon: "account-group-outline", color: "#66BAFF" },
+          { label: "Groups", value: profile.groupsJoined, icon: "account-group-outline", color: colors.info },
           {
             label: "Games",
             value: profile.gamesPlayed.length,
             icon: "controller-classic-outline",
-            color: "#4ADE80",
+            color: colors.online,
           },
         ];
 
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     borderRadius: 43,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 2,
     borderColor: colors.border,
   },
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,

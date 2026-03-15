@@ -38,21 +38,22 @@ Entry:
 - `/login` -> tap `Create Account`
 
 Sequence:
-1. Enter `email`
-2. Enter `username`
-3. Enter `password`
-4. Confirm `password`
-5. `Create Account` -> sign up -> sign in -> persist onboarding completion -> route to `/(tabs)/news`
+1. Step 1: enter `email` and `username`
+2. Step 2: create and confirm password
+3. Step 3: select favorite games
+4. `Create Account` -> sign up -> sign in -> persist onboarding completion -> save `favorite_games` to `/api/profile/me/` -> route to `/(tabs)/news`
 
 Validation gates:
-- Email must match a basic email pattern.
-- Username must be at least 3 characters.
-- Password must be at least 8 characters.
+- Email must match a valid email pattern.
+- Username must be 3-30 characters using letters, numbers, `_`, or `-`.
+- Password must be at least 10 characters and include upper, lower, and number.
 - Confirm password must match.
+- At least one favorite game must be selected.
 
 Notes:
 - OAuth/social-provider buttons are intentionally removed from onboarding.
-- Favorite games, play style, platform, and other preferences now belong to post-signup profile setup, not account creation.
+- Favorite games are saved during onboarding because the backend feed already uses profile interests for ranking.
+- Other preferences remain post-signup profile work.
 
 ## Feed Flow
 

@@ -1,6 +1,6 @@
 # Frontend Checklist Status
 
-Last updated: 2026-03-01
+Last updated: 2026-03-15
 
 ## Completed
 
@@ -36,9 +36,12 @@ Last updated: 2026-03-01
 - Group swipe pan-responder tuned to reduce native-gesture blocking.
 - Expo Go overlay lockup caveat documented in Android guides.
 
-8. Onboarding validation hardening
-- Birthdate requires valid `MMDDYYYY`.
-- Date must be strictly before current day.
+8. Onboarding flow hardening
+- Email/password signup only.
+- 3-step flow: identity -> security -> preferences.
+- Username validation tightened.
+- Password validation tightened.
+- Favorite games from onboarding are saved into the backend profile.
 
 9. Settings safety actions
 - Profile Settings includes bottom `Delete Account` action.

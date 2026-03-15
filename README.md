@@ -1,54 +1,93 @@
-# GameMate (Expo + React Native)
+# GameMate
 
-GameMate is a mobile-first social gaming app built with Expo Router and React Native.
+GameMate is a mobile-first social gaming app with:
+- Expo Router + React Native frontend
+- Django + DRF backend
+- JWT auth
+- profile-driven feed recommendations
+- groups, social connections, messaging, notifications, and QR profile discovery
 
-## Current App Status (2026-03-01)
+## Current State
 
-- Tabs: `Feed`, `Groups`, `Social`, `Profile`
-- Platform focus: Android-first validation (iOS not fully tested in this environment)
-- Type check gate: `npx tsc --noEmit` (passing)
-- Runtime: Expo SDK 54 + RN 0.81 + Expo Router 6
+Frontend stack:
+- Expo SDK 54
+- React Native 0.81
+- Expo Router 6
+- TypeScript
 
-## Key Implemented UX
+Backend stack:
+- Django
+- Django REST Framework
+- PostgreSQL
+- SimpleJWT
+- Sentry
 
-- Feed
-  - Full-screen vertical feed with infinite looping content
-  - Comment drawer + inline replies
-  - Save/share/report actions
-  - Optimistic like toggle with undo toast
+Main tabs:
+- `Feed`
+- `Groups`
+- `Social`
+- `Profile`
 
-- Groups
-  - Discover list, create group, detail screen
-  - Swipe recommendation modal (right join / left pass)
-  - Optimistic join with undo toast
-  - Cached joined/deleted state and last-opened group
+Validation status:
+- Android-first testing is active
+- iOS coverage is thinner than Android
+- `npx tsc --noEmit` is the current frontend type gate
 
-- Search (`/(tabs)/ai-advisor`)
-  - Video-first ranking model
-  - Top 2 AI picks + next 8 search results
-  - Fixed search bar + 2-column infinite vertical grid
-  - Debounced search, recents, filter chips, continue surface
-  - Local autocomplete suggestions
+## Product Areas Implemented
 
-- App-level UX foundation
-  - Global toast provider
-  - Reusable skeletons (`SkeletonAvatar`, `SkeletonLine`, `SkeletonList`)
-  - Reusable `EmptyState`, `FilterChips`, `RecentSearchList`
-  - Local cache hook for offline snapshot behavior
-  - Android keyboard compatibility guards for Samsung-class IME behavior
+Auth and onboarding:
+- email/password login
+- 3-step account creation flow
+- stronger username and password validation on the client
+- onboarding game preferences saved into the backend profile after signup
 
-- Onboarding validation
-  - Date of birth input is strict `MMDDYYYY`
-  - Date must be valid calendar date and strictly earlier than current day
+Profile:
+- real `/api/profile/me/` integration
+- edit/save persistence
+- favorite games stored in backend profile data
+- QR code generation and scanning for user discovery
+
+Feed:
+- real `/api/feed/` integration
+- explain flow
+- like/share/skip actions
+- loading, empty, and error states
+
+Social:
+- friend requests and friend list
+- profile handoff from feed/social surfaces
+- QR scan -> profile lookup flow
+
+Messaging:
+- thread list
+- open thread
+- send message
+
+Groups:
+- group list
+- create group
+- detail, join, and leave flows
+
+Notifications:
+- notification list
+- backend mark-read support exists
 
 ## Project Structure
 
-- Routes: `app/`
-  - Main tabs and hidden routes in `app/(tabs)/`
-- Shared UI: `src/components/ui/`
-- App/data logic: `src/lib/`
-- AI client contracts: `src/ai/advisorClient.ts`
-- Documentation: `docs/`
+- `app/`
+  - Expo Router routes, including auth and tab screens
+- `services/`
+  - API/domain clients used by screens
+- `src/components/ui/`
+  - shared UI primitives
+- `src/context/`
+  - auth/session state
+- `src/lib/`
+  - cache, navigation, QR parsing, responsive helpers, theme
+- `docs/`
+  - active flow, build, handoff, and roadmap notes
+- `gamemate-backend/`
+  - Django backend project
 
 ## Run Locally
 
@@ -65,7 +104,7 @@ cp .env.example .env
 # EXPO_PUBLIC_API_URL=http://192.168.1.183:8000
 ```
 
-### Useful Commands
+Useful commands:
 
 ```bash
 # Type check
@@ -78,6 +117,12 @@ npx expo export:embed --eager --platform android --dev false
 npx eas build --platform android --profile preview
 npx eas build --platform android --profile production
 ```
+
+## Scope Notes
+
+- Auth is email/password only in the current product flow.
+- Third-party auth providers are intentionally out of scope right now.
+- Avatar and post media are URL-based only; upload/storage pipeline is out of scope.
 
 ## Persistence Note
 
@@ -93,15 +138,13 @@ When using Expo Go performance overlays (draw-over-app), some Android devices ca
 - [Build Status](docs/BUILD_STATUS.md)
 - [Android Build Guide](docs/ANDROID_BUILD_GUIDE.md)
 - [Mobile Workflow Notes](docs/MOBILE_WORKFLOW_NOTES.md)
+- [Integration Roadmap](docs/GAMEMATE_INTEGRATION_ROADMAP.md)
 - [Guidelines](docs/GUIDELINES.md)
 - [Attributions](docs/ATTRIBUTIONS.md)
 - [Frontend Checklist Status](docs/FRONTEND_CHECKLIST_STATUS.md)
 - [Frontend Handoff Checklist](docs/FRONTEND_HANDOFF_CHECKLIST.md)
-- [Frontend Scope](docs/FRONTEND_SCOPE.md)
-- [Frontend Audit (2026-03-01)](docs/FRONTEND_AUDIT_2026-03-01.md)
 - [Navigation Flows](docs/FLOWS.md)
 - [Backend Contracts](docs/FLOWS_BACKEND.md)
 - [Backend Implementation Notes](docs/BACKEND_IMPLEMENTATION_NOTES.md)
 - [AI Handoff](docs/AI_HANDOFF.md)
-- [Architecture](docs/ARCHITECTURE.md)
 - [Design System](docs/DESIGN_SYSTEM_MOBILE.md)

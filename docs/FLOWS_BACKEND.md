@@ -1,6 +1,6 @@
 # Backend API Contracts + Handoff (v1)
 
-Last updated: 2026-03-07
+Last updated: 2026-03-15
 Owner: Mobile + Backend handoff
 
 This is the canonical backend contract for the current Expo app state.
@@ -8,16 +8,39 @@ This is the canonical backend contract for the current Expo app state.
 ## Current Implemented Snapshot (2026-03-07)
 
 Implemented now:
-- `POST /api/auth/token/`, `POST /api/auth/token/refresh/`, `POST /api/auth/logout/` (custom JWT views)
+- `POST /api/auth/signup/`
+- `POST /api/auth/token/`
+- `POST /api/auth/token/refresh/`
+- `POST /api/auth/logout/`
 - `GET /api/accounts/me/`
-- `GET /api/groups/` (DRF page-number pagination, page size `3`)
-- `POST /api/groups/`, `GET /api/groups/{id}/`, `PATCH /api/groups/{id}/`, `DELETE /api/groups/{id}/`
+- `GET /api/profile/me/`
+- `PATCH /api/profile/me/`
+- `GET /api/profile/{username}/`
+- `GET /api/profile/{username}/posts/`
+- `GET /api/feed/`
+- `GET /api/feed/explain/{post_id}/`
+- `GET /api/posts/`, `POST /api/posts/`, `GET /api/posts/{id}/`, `PATCH /api/posts/{id}/`, `DELETE /api/posts/{id}/`
+- `POST /api/posts/{id}/like/`, `POST /api/posts/{id}/unlike/`, `POST /api/posts/{id}/share/`, `POST /api/posts/{id}/skip/`
+- `GET /api/groups/`, `POST /api/groups/`, `GET /api/groups/{id}/`, `PATCH /api/groups/{id}/`, `DELETE /api/groups/{id}/`
 - `POST /api/groups/{id}/join/`, `POST /api/groups/{id}/leave/`, `GET /api/groups/{id}/members/`
 - `POST /api/groups/{id}/invite/`, `POST /api/groups/{id}/promote/`
+- `GET /api/friends/`, `GET /api/friends/requests/`
+- `POST /api/friends/request/{user_id}/`, `POST /api/friends/request/{connection_id}/accept/`
+- `POST /api/friends/request/{connection_id}/reject/`, `POST /api/friends/request/{connection_id}/cancel/`
+- `GET /api/friends/search/?q=...`
+- `GET /api/messages/conversations/`, `POST /api/messages/conversations/direct/`
+- `GET /api/messages/conversations/{conversation_id}/messages/`
+- `POST /api/messages/conversations/{conversation_id}/messages/send/`
+- `POST /api/messages/conversations/{conversation_id}/read/`
+- `GET /api/notifications/`, `PATCH /api/notifications/{id}/read/`, `POST /api/notifications/read-all/`
 
 Security settings currently active:
-- Global throttles: `anon=100/day`, `user=1000/day`
+- Global throttles: `anon=20/hour`, `user=500/hour`
+- Signup throttle: `20/hour` per IP
 - Login throttle on `/api/auth/token/`: `10/min` per IP
+- Friend request send throttle: `10/hour` per IP
+- Message send throttle: `30/min` per IP
+- Post create throttle: `20/hour` per IP
 
 ## 1) Scope
 
@@ -85,15 +108,15 @@ Frontend references:
 ## 3) Endpoint Matrix (Feature -> Route)
 
 ### Auth + Account
-- `POST /api/auth/signup` (public)
-- `POST /api/auth/login` (public)
-- `POST /api/auth/social-login` (public)
-- `GET /api/me`
-- `PATCH /api/me`
-- `DELETE /api/me`
-- `POST /api/users/password/change`
-- `POST /api/users/email/send-verify`
-- `POST /api/users/phone/verify`
+- `POST /api/auth/signup/` (public)
+- `POST /api/auth/token/` (public)
+- `POST /api/auth/token/refresh/` (public)
+- `POST /api/auth/logout/` (public)
+- `GET /api/accounts/me/`
+- `GET /api/profile/me/`
+- `PATCH /api/profile/me/`
+- `GET /api/profile/{username}/`
+- `GET /api/profile/{username}/posts/`
 
 ### Preferences + Settings
 - `GET /api/me/notifications`
@@ -147,9 +170,9 @@ Frontend references:
 - `DELETE /api/notifications/:id`
 
 ### QR
-- `GET /api/qr/my-code`
-- `PATCH /api/qr/my-code`
-- `GET /api/qr/scan?code=...`
+- no dedicated backend QR endpoint
+- app generates text payloads like `gm:user:{username}`
+- scanning resolves through `GET /api/profile/{username}/`
 
 ## 4) Detailed Contracts (P0)
 

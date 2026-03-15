@@ -1,6 +1,6 @@
 # Mobile Workflow Notes (Expo / React Native)
 
-Last updated: 2026-03-01
+Last updated: 2026-03-15
 
 ## 1) Implementation Checklist (Working Preview Build)
 
@@ -37,11 +37,11 @@ Use this checklist before calling the preview build "ready":
 - Video preview cards are tappable and open preview route.
 
 7. Onboarding validation gates
-- Birthdate input accepts only `MMDDYYYY`.
-- Birthdate must be a real date and strictly earlier than current day.
-- Continue remains disabled until date + terms checks pass.
+- Email and username validation should block invalid public identifiers early.
+- Password validation should be stricter than minimum backend length for better client UX.
+- Preference capture should save directly into backend profile data when the feed depends on it.
 
-## 1.1) 2026-03-01 Checklist Execution Log
+## 1.1) 2026-03-15 Checklist Execution Log
 
 Completed this pass:
 1. Skeleton loading system (expanded primitives)
@@ -78,6 +78,16 @@ Completed this pass:
 - Added shared Android input compatibility props for Samsung keyboard/input stability.
 - Added runtime docs note for Expo Go overlay lockups during app switching.
 
+9. Auth and onboarding cleanup
+- Login/onboarding now use email/password only.
+- Third-party auth provider buttons are intentionally excluded from current product scope.
+- Onboarding captures favorite games and writes them to `/api/profile/me/` after signup.
+
+10. QR profile discovery
+- QR payloads use an app-owned text format, not web URLs.
+- Scanner validates QR format locally before routing.
+- Backend profile lookup remains the source of truth for existence and permissions.
+
 Still open:
 - Cross-device cold-start persistence verification matrix (Android and iOS) after AsyncStorage install.
 - Backend-driven autocomplete suggestions.
@@ -108,6 +118,12 @@ Still open:
 - Root cause pattern: static action sheet + non-threaded comments.
 - Fix pattern: threaded drawer, inline reply composer, live append and count updates.
 - Growth: social-feed interactions now modeled as stateful thread flows.
+
+### Problem E: Onboarding drifted away from backend truth
+- Symptom: signup UI and profile/feed personalization were disconnected.
+- Root cause pattern: onboarding was simplified too far and stopped writing preferences into the real backend profile.
+- Fix pattern: keep onboarding minimal, but preserve one preference step when backend feed ranking depends on it.
+- Growth: onboarding is now treated as part of data integrity, not just marketing UI.
 
 ## 3) Optimization Log (Applied)
 
@@ -239,6 +255,20 @@ When any user-facing mobile flow changes, update these docs in the same pass:
 
 6. `docs/FRONTEND_CHECKLIST_STATUS.md`
 - Keep component/hook checklist truthfully marked complete/partial/missing.
+
+## 11) Current High-Value Rules
+
+1. Email/password only means exactly that
+- If auth providers are out of scope, remove them from the UI and the docs.
+
+2. Onboarding should only keep steps that change backend truth
+- Preferences that affect feed ranking belong in onboarding.
+- Decorative or speculative preference steps do not.
+
+3. QR profile discovery is app-specific, not URL-based
+- Encode only a public identifier.
+- Validate format before routing.
+- Let the backend decide whether the target profile exists or is visible.
 
 ## 9) Offline Cache Guarantee Rule
 

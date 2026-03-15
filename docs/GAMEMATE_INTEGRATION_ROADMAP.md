@@ -1,15 +1,20 @@
 # GameMate Integration Roadmap
 
-Last updated: 2026-03-12
+Last updated: 2026-03-15
 Owner: Product integration pass (mobile + backend)
 
-## Status Note (2026-03-13)
+## Status Note (2026-03-15)
 - Feed integration criteria are met:
   - real `/api/feed/` data renders
   - like/share/skip interactions wired
   - explain flow wired (`/api/feed/explain/{post_id}/`)
   - refresh + continuous scrolling behavior in place
-- Next work session target: post-creation validation pass and end-to-end QA.
+- Profile integration criteria are largely met:
+  - real profile read/update
+  - persistence after relaunch
+  - new-user empty states
+  - onboarding preferences saved to backend profile
+- Current focus has moved from broad integration into stabilization and proof flows.
 
 ## Current State
 
@@ -28,12 +33,15 @@ Mostly built:
 - observability
 
 ### Frontend Integration
-Actually wired:
+Actually wired in major areas:
 - login
 - token persistence
+- onboarding
 - `/api/accounts/me/`
-- groups list
-- group create
+- `/api/profile/me/`
+- `/api/feed/`
+- groups list/create/detail
+- social/messages/notifications primary screens
 
 ### Service Layer
 Mostly exists, but not all screens use it yet.
@@ -44,9 +52,9 @@ Real gap:
 
 ## Progress View
 - Backend architecture: `95–100%`
-- API wrapper/service layer: `80–85%`
-- Screen integration: `30–35%`
-- End-to-end product: `~30%`
+- API wrapper/service layer: `85–90%`
+- Screen integration: `70–80%`
+- End-to-end product: `65–75%`
 
 ## Correct Next Phase
 Do not build more backend first.

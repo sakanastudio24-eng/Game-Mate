@@ -24,12 +24,12 @@ Roadmap reference:
 
 ## 3) Onboarding
 
-- [x] Step flow wired: Welcome -> Email -> Birthdate -> Preferences
+- [x] Step flow wired: Identity -> Security -> Preferences
 - [x] Email gate exists
-- [x] Birthdate input is strict `MMDDYYYY` (8 digits)
-- [x] Birthdate must be valid calendar date
-- [x] Birthdate must be strictly earlier than current day
-- [x] Terms acceptance required before continue
+- [x] Username validation exists
+- [x] Password strength validation exists
+- [x] Favorite game preferences are captured in onboarding
+- [x] Favorite game preferences are saved into backend profile data after signup
 
 ## 4) Feed
 

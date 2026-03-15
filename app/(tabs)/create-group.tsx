@@ -8,7 +8,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Input } from "../../src/components/ui/Input";
 import { useAuth } from "../../src/context/AuthContext";
-import { SESSION_EXPIRED_MESSAGE } from "../../src/lib/auth-messages";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { Screen } from "../../src/components/ui/Screen";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
@@ -42,6 +42,13 @@ export default function CreateGroupScreen() {
   const [mediaSource, setMediaSource] = useState("Upload");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isSessionExpiredError = isSessionExpiredMessage(errors.api);
+
+  const handleExit = () => {
+    if (isSubmitting) return;
+    setErrors({});
+    router.replace("/(tabs)/groups");
+  };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -89,7 +96,7 @@ export default function CreateGroupScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Create Group" showBackButton />
+      <Header title="Create Group" showBackButton onBack={handleExit} />
 
       <Card style={styles.card}>
         <Text style={[styles.label, { fontSize: responsive.bodySize }]}>Group Name *</Text>
@@ -224,8 +231,16 @@ export default function CreateGroupScreen() {
       >
         Create Group
       </Button>
+      <Button variant="secondary" fullWidth size="large" onPress={handleExit} disabled={isSubmitting}>
+        Cancel
+      </Button>
 
       {errors.api ? <Text style={styles.error}>{errors.api}</Text> : null}
+      {isSessionExpiredError ? (
+        <Button variant="secondary" fullWidth size="large" onPress={() => router.replace("/login" as any)}>
+          Sign In
+        </Button>
+      ) : null}
     </Screen>
   );
 }

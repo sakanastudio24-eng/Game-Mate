@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Dialog, Portal, Text, TextInput } from "react-native-paper";
@@ -11,6 +12,7 @@ import { colors, spacing } from "../../src/lib/theme";
 // Backend integration: PUT /api/user/email, /api/user/password, /api/user/2fa, DELETE /api/user in Phase B
 
 export default function AccountSettingsScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -55,7 +57,7 @@ export default function AccountSettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Account Settings" showBackButton />
+      <Header title="Account Settings" showBackButton onBack={() => router.replace("/(tabs)/settings")} />
 
       {/* Email Section */}
       <View style={styles.section}>

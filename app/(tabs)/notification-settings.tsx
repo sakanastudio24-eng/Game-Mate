@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
@@ -177,6 +178,7 @@ const INITIAL_PREFERENCES: NotificationPreferences = {
 };
 
 export default function NotificationSettingsScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const { value: notifPrefs, setValue: setNotifPrefs } = useLocalCache<NotificationPreferences>(
     "settings:notification-preferences:v2",
@@ -267,7 +269,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Notifications" showBackButton />
+      <Header title="Notifications" showBackButton onBack={() => router.replace("/(tabs)/settings")} />
 
       <Card style={styles.section}>
         <Text accessibilityRole="header" style={[styles.sectionTitle, { fontSize: responsive.captionSize }]}>
@@ -438,4 +440,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-

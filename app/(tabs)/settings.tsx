@@ -36,7 +36,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Profile Settings" showBackButton />
+      <Header title="Profile Settings" showBackButton onBack={() => router.replace("/(tabs)/profile")} />
 
       <Card style={styles.profileCard}>
         <View style={styles.profileRow}>

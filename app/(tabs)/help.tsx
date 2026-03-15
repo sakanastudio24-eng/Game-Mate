@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
@@ -18,6 +19,7 @@ interface FAQItem {
 }
 
 export default function HelpScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -62,7 +64,7 @@ export default function HelpScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Help & Support" showBackButton />
+      <Header title="Help & Support" showBackButton onBack={() => router.replace("/(tabs)/settings")} />
 
       <View style={styles.introContainer}>
         <Text style={[styles.introText, { fontSize: responsive.bodySize }]}>

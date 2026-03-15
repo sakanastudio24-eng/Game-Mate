@@ -29,7 +29,7 @@ export default function PrivacySettingsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Privacy & Security" showBackButton />
+      <Header title="Privacy & Security" showBackButton onBack={() => router.replace("/(tabs)/settings")} />
 
       <Card style={styles.section}>
         <Text

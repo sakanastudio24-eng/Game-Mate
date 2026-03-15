@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
@@ -14,6 +15,7 @@ interface BlockedUser {
 }
 
 export default function PrivacyDetailScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const [profilePublic, setProfilePublic] = useState(true);
   const [allowFriendRequests, setAllowFriendRequests] = useState(true);
@@ -33,7 +35,7 @@ export default function PrivacyDetailScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Privacy Settings" showBackButton />
+      <Header title="Privacy Settings" showBackButton onBack={() => router.replace("/(tabs)/privacy-settings")} />
 
       <View style={styles.sectionContainer}>
         <Text

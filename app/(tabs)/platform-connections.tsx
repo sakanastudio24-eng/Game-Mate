@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useState } from "react";
 import { StyleSheet } from "react-native";
@@ -9,6 +10,7 @@ import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 export default function PlatformConnectionsScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const [connections, setConnections] = useState({
     playstation: false,
@@ -24,7 +26,7 @@ export default function PlatformConnectionsScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Platform Connections" showBackButton />
+      <Header title="Platform Connections" showBackButton onBack={() => router.replace("/(tabs)/settings")} />
 
       <Card style={styles.section}>
         <Text

@@ -21,8 +21,9 @@ This ensures the user returns to the previous page instead of hard-jumping to ho
 
 ## Top-Level Routing
 
-- `app/index.tsx` -> redirects to `/(tabs)/news`
-- `app/onboarding.tsx` -> onboarding flow, completes into `/(tabs)/news`
+- `app/index.tsx` -> redirects to `/(tabs)/news` when authenticated, otherwise `/login`
+- `app/login.tsx` -> returning-user sign-in screen
+- `app/onboarding.tsx` -> minimal account-creation flow, completes into `/(tabs)/news`
 - `app/(tabs)/_layout.tsx` -> tab shell + hidden stack-like tab routes
 
 Main tabs:
@@ -34,23 +35,24 @@ Main tabs:
 ## Onboarding Flow
 
 Entry:
-- `/onboarding`
+- `/login` -> tap `Create Account`
 
 Sequence:
-1. Welcome
-2. Email
-3. Birthdate
-4. Preferences
-5. Complete -> route to `/(tabs)/news`
+1. Enter `email`
+2. Enter `username`
+3. Enter `password`
+4. Confirm `password`
+5. `Create Account` -> sign up -> sign in -> persist onboarding completion -> route to `/(tabs)/news`
 
 Validation gates:
-- Email step: requires basic valid email pattern (`includes("@")` in current client rule).
-- Birthdate step:
-  - format must be `MMDDYYYY` (8 numeric chars)
-  - must map to a real calendar date
-  - must be strictly earlier than current local day
-  - terms acceptance must be enabled
-- Preferences step: at least 1 genre, play style selected, platform selected.
+- Email must match a basic email pattern.
+- Username must be at least 3 characters.
+- Password must be at least 8 characters.
+- Confirm password must match.
+
+Notes:
+- OAuth/social-provider buttons are intentionally removed from onboarding.
+- Favorite games, play style, platform, and other preferences now belong to post-signup profile setup, not account creation.
 
 ## Feed Flow
 
@@ -160,6 +162,17 @@ Collection flow:
 1. Videos/Games/Groups each have an add-first tile entry.
 2. Add flow routes to create collection/group screen.
 3. Saved profile collections persist through local cache hook.
+4. `Edit Profile` back, cancel, and save all return explicitly to `/(tabs)/profile`.
+
+Create flow exits:
+- `/(tabs)/create-collection`
+  - cancel -> `/(tabs)/profile`
+  - review back -> step 1 only
+  - successful video publish -> `/(tabs)/news`
+  - successful non-video create -> `/(tabs)/profile`
+- `/(tabs)/create-group`
+  - cancel -> `/(tabs)/groups`
+  - successful create -> `/(tabs)/groups`
 
 ## Settings and Account Flow
 

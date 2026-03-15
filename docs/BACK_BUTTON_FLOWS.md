@@ -55,6 +55,18 @@ Back navigation must behave like a stack pop, not a route loop.
 - Back press:
   - `Edit Profile -> Profile`
 
+### Create content flows
+
+- Path:
+  - `Profile -> Create Collection`
+- Back press:
+  - `Create Collection -> Profile`
+
+- Path:
+  - `Groups -> Create Group`
+- Back press:
+  - `Create Group -> Groups`
+
 ## Manual Test Matrix
 
 1. Header back (deep flow)
@@ -74,6 +86,11 @@ Back navigation must behave like a stack pop, not a route loop.
 
 4. No ping-pong rule
 - Repeated back presses must not alternate between two screens.
+
+5. Explicit form exits
+- `Edit Profile` back/cancel must discard unsaved draft changes.
+- `Create Collection` cancel must not fall through to feed.
+- `Create Group` cancel must not fall through to profile/feed.
 
 ## Failure Signs
 

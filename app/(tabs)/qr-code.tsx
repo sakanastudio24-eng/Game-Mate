@@ -90,7 +90,7 @@ export default function QRCodeScreen() {
   ) as (result: BarcodeScanningResult) => void;
 
   return (
-    <Screen>
+    <Screen scrollable>
       <Header title="QR Code" showBackButton />
 
       <View style={styles.tabSelector}>
@@ -349,7 +349,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   scanCard: {
-    flex: 1,
     marginBottom: spacing.lg,
   },
   scanStage: {

@@ -67,6 +67,43 @@ def _create_direct_conversation_response(request):
     )
 
 
+def _list_conversations_response(request):
+    """Return the inbox preview list for the authenticated requester."""
+
+    data = build_conversation_list(request.user)
+    return Response({"success": True, "count": len(data), "results": data}, status=200)
+
+
+def _list_conversation_messages_response(request, conversation_id):
+    """Return one conversation history for an allowed participant."""
+
+    try:
+        conversation = get_participant_conversation(conversation_id, request.user)
+        payload = get_conversation_messages(conversation, request.user, mark_read=True)
+    except (DomainNotFoundError, DomainPermissionError, DomainValidationError) as exc:
+        return _error_response(exc)
+
+    return Response({"success": True, "count": len(payload), "results": payload}, status=200)
+
+
+def _send_conversation_message_response(request, conversation_id):
+    """Send one message into a conversation using shared validation and throttling."""
+
+    try:
+        _enforce_message_send_throttle(request)
+        conversation = get_participant_conversation(conversation_id, request.user)
+        content = request.data.get("content")
+        if content is None:
+            content = request.data.get("body")
+        message = send_conversation_message(conversation, request.user, content)
+    except Throttled:
+        raise
+    except (DomainNotFoundError, DomainPermissionError, DomainValidationError) as exc:
+        return _error_response(exc)
+
+    return Response({"success": True, "data": {"message_id": message.id}}, status=201)
+
+
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def list_conversations(request):
@@ -75,8 +112,7 @@ def list_conversations(request):
     if request.method == "POST":
         return _create_direct_conversation_response(request)
 
-    data = build_conversation_list(request.user)
-    return Response({"success": True, "count": len(data), "results": data}, status=200)
+    return _list_conversations_response(request)
 
 
 @api_view(["POST"])
@@ -93,15 +129,9 @@ def list_conversation_messages(request, conversation_id):
     """GET history or POST new message for one accessible conversation."""
 
     if request.method == "POST":
-        return send_conversation_message_view(request, conversation_id)
+        return _send_conversation_message_response(request, conversation_id)
 
-    try:
-        conversation = get_participant_conversation(conversation_id, request.user)
-        payload = get_conversation_messages(conversation, request.user, mark_read=True)
-    except (DomainNotFoundError, DomainPermissionError, DomainValidationError) as exc:
-        return _error_response(exc)
-
-    return Response({"success": True, "count": len(payload), "results": payload}, status=200)
+    return _list_conversation_messages_response(request, conversation_id)
 
 
 @api_view(["POST"])
@@ -109,19 +139,7 @@ def list_conversation_messages(request, conversation_id):
 def send_conversation_message_view(request, conversation_id):
     """Send one message to a conversation if requester is a participant."""
 
-    try:
-        _enforce_message_send_throttle(request)
-        conversation = get_participant_conversation(conversation_id, request.user)
-        content = request.data.get("content")
-        if content is None:
-            content = request.data.get("body")
-        message = send_conversation_message(conversation, request.user, content)
-    except Throttled:
-        raise
-    except (DomainNotFoundError, DomainPermissionError, DomainValidationError) as exc:
-        return _error_response(exc)
-
-    return Response({"success": True, "data": {"message_id": message.id}}, status=201)
+    return _send_conversation_message_response(request, conversation_id)
 
 
 @api_view(["POST"])
@@ -150,7 +168,7 @@ def mark_conversation_read_view(request, conversation_id):
 def list_threads(request):
     """Legacy alias to list conversations."""
 
-    return list_conversations(request)
+    return _list_conversations_response(request)
 
 
 @api_view(["POST"])
@@ -181,7 +199,7 @@ def create_thread(request, user_id):
 def send_message(request, thread_id):
     """Legacy alias to send conversation message by old route naming."""
 
-    return send_conversation_message_view(request, thread_id)
+    return _send_conversation_message_response(request, thread_id)
 
 
 @api_view(["GET"])
@@ -189,4 +207,4 @@ def send_message(request, thread_id):
 def get_messages(request, thread_id):
     """Legacy alias to list conversation messages by old route naming."""
 
-    return list_conversation_messages(request, thread_id)
+    return _list_conversation_messages_response(request, thread_id)

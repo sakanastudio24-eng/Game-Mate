@@ -1037,7 +1037,14 @@ export default function NewsScreen() {
               accessibilityRole="button"
               accessibilityLabel="Close comments drawer"
             />
-            <View style={styles.drawerSheet}>
+            <View
+              style={[
+                styles.drawerSheet,
+                {
+                  paddingBottom: bottomSafeInset + spacing.xs,
+                },
+              ]}
+            >
               <View style={styles.drawerHandle} />
               <Text style={styles.drawerTitle}>Comments</Text>
               <Text style={styles.drawerSubtitle}>{commentsTarget.title}</Text>

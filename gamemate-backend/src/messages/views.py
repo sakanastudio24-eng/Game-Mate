@@ -1,5 +1,6 @@
 """Message API endpoints backed by service-layer domain logic."""
 
+from rest_framework.exceptions import Throttled
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from messages.services.message_service import (
     mark_conversation_read,
     send_message as send_conversation_message,
 )
+from messages.throttles import MessageSendThrottle
 from messages.services.thread_service import (
     build_conversation_list,
     get_or_create_direct_conversation,
@@ -25,6 +27,14 @@ def _error_response(exc):
     if isinstance(exc, DomainValidationError):
         return Response({"success": False, "message": str(exc)}, status=400)
     return Response({"success": False, "message": "Request failed."}, status=400)
+
+
+def _enforce_message_send_throttle(request):
+    """Apply message-send throttling inside the shared send path."""
+
+    throttle = MessageSendThrottle()
+    if not throttle.allow_request(request, None):
+        raise Throttled(wait=throttle.wait())
 
 
 def _create_direct_conversation_response(request):
@@ -100,11 +110,14 @@ def send_conversation_message_view(request, conversation_id):
     """Send one message to a conversation if requester is a participant."""
 
     try:
+        _enforce_message_send_throttle(request)
         conversation = get_participant_conversation(conversation_id, request.user)
         content = request.data.get("content")
         if content is None:
             content = request.data.get("body")
         message = send_conversation_message(conversation, request.user, content)
+    except Throttled:
+        raise
     except (DomainNotFoundError, DomainPermissionError, DomainValidationError) as exc:
         return _error_response(exc)
 

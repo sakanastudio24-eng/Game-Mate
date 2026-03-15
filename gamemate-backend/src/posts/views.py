@@ -88,7 +88,25 @@ class PostViewSet(viewsets.ModelViewSet):
             post=post,
             interaction_type="like",
         )
+        invalidate_like_count_cache(post.id)
+        invalidate_trending_post_ids_cache()
         return Response({"success": True}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["post"])
+    def unlike(self, request, pk=None):
+        """Remove a stored like interaction for the current user and post."""
+        post = self.get_object()
+        deleted, _ = PostInteraction.objects.filter(
+            user=request.user,
+            post=post,
+            interaction_type="like",
+        ).delete()
+        invalidate_like_count_cache(post.id)
+        invalidate_trending_post_ids_cache()
+        return Response(
+            {"success": True, "data": {"removed": deleted > 0}},
+            status=status.HTTP_200_OK,
+        )
 
     @action(detail=True, methods=["post"])
     def share(self, request, pk=None):

@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
-from posts.models import Post
+from posts.models import Post, PostInteraction
 
 
 # Permission regression tests for owner-only post mutations.
@@ -194,3 +194,81 @@ class PostValidationTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("game", response.data.get("errors", {}))
+
+
+# Interaction reversal tests for like/unlike behavior.
+class PostUnlikeTests(APITestCase):
+    """Ensure like removal stays idempotent and count-safe."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="liker@gamemate.dev",
+            username="liker",
+            password="likerpass123",
+        )
+        self.owner = User.objects.create_user(
+            email="creator@gamemate.dev",
+            username="creator",
+            password="creatorpass123",
+        )
+        self.post = Post.objects.create(
+            creator=self.owner,
+            game="Apex Legends",
+            title="Ranked clip",
+            description="Late game wipe",
+        )
+        self.like_url = f"/api/posts/{self.post.id}/like/"
+        self.unlike_url = f"/api/posts/{self.post.id}/unlike/"
+        self.client.force_authenticate(user=self.user)
+
+    def test_user_can_remove_like_cleanly(self):
+        """Unlike should delete the existing like record."""
+        PostInteraction.objects.create(
+            user=self.user,
+            post=self.post,
+            interaction_type="like",
+        )
+
+        response = self.client.post(self.unlike_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["data"]["removed"])
+        self.assertEqual(
+            PostInteraction.objects.filter(
+                user=self.user,
+                post=self.post,
+                interaction_type="like",
+            ).count(),
+            0,
+        )
+
+    def test_repeated_unlike_does_not_drift_state(self):
+        """Unlike should remain safe when no like exists."""
+        response = self.client.post(self.unlike_url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data["data"]["removed"])
+        self.assertEqual(
+            PostInteraction.objects.filter(
+                user=self.user,
+                post=self.post,
+                interaction_type="like",
+            ).count(),
+            0,
+        )
+
+    def test_like_then_unlike_keeps_single_state_transition(self):
+        """Like then unlike should end with zero like records."""
+        like_response = self.client.post(self.like_url)
+        unlike_response = self.client.post(self.unlike_url)
+
+        self.assertEqual(like_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(unlike_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            PostInteraction.objects.filter(
+                user=self.user,
+                post=self.post,
+                interaction_type="like",
+            ).count(),
+            0,
+        )

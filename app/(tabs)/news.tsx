@@ -30,6 +30,7 @@ import { ActionSheet } from "../../src/components/ui/ActionSheet";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { Button } from "../../src/components/ui/Button";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { AUTHOR_AVATARS, NEWS_FEED, NewsFeedItem } from "../../src/lib/content-data";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 import { useAuth } from "../../src/context/AuthContext";
@@ -520,7 +521,7 @@ export default function NewsScreen() {
 
     if (!accessToken) {
       setIsFeedLoading(false);
-      setFeedError("Sign in is required to load your feed.");
+      setFeedError(SESSION_EXPIRED_MESSAGE);
       return;
     }
 
@@ -575,10 +576,7 @@ export default function NewsScreen() {
   }, [authLoading, fetchBackendFeed]);
 
   const requiresSignInRecovery = useMemo(() => {
-    return (
-      !accessToken ||
-      /sign in is required|session expired/i.test(feedError ?? "")
-    );
+    return !accessToken || isSessionExpiredMessage(feedError);
   }, [accessToken, feedError]);
 
   const handleFeedRecovery = useCallback(() => {

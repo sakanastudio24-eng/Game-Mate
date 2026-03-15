@@ -1,290 +1,77 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Animated,
-  Easing,
-  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from "react-native";
 import { Text } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { signup } from "../services/auth";
+import { Button } from "../src/components/ui/Button";
+import { Input } from "../src/components/ui/Input";
 import { useAuth } from "../src/context/AuthContext";
-import { androidKeyboardCompatProps } from "../src/lib/androidInput";
-import { useResponsive } from "../src/lib/responsive";
 import { primeHomeContentCache } from "../src/lib/content-data";
 import { setCompletedOnboarding } from "../src/lib/onboarding-store";
-import { useReducedMotionPreference } from "../src/lib/accessibility";
+import { useResponsive } from "../src/lib/responsive";
+import { colors, spacing } from "../src/lib/theme";
 
-type Step = "welcome" | "email" | "birthdate" | "preferences";
-
-const GENRES = [
-  "FPS",
-  "RPG",
-  "MOBA",
-  "Battle Royale",
-  "MMO",
-  "Sports",
-  "Racing",
-  "Strategy",
-] as const;
-
-const PLAY_STYLES = [
-  { id: "casual", label: "Casual", description: "Play for fun", icon: "heart-outline" },
-  {
-    id: "competitive",
-    label: "Competitive",
-    description: "Climb the ranks",
-    icon: "trophy-outline",
-  },
-  {
-    id: "social",
-    label: "Social",
-    description: "Make friends",
-    icon: "account-group-outline",
-  },
-  {
-    id: "achievement",
-    label: "Achievement Hunter",
-    description: "Complete everything",
-    icon: "star-outline",
-  },
-] as const;
-
-const PLATFORM_OPTIONS = [
-  { id: "playstation", label: "PlayStation", icon: "sony-playstation" },
-  { id: "computer", label: "Computer", icon: "monitor" },
-  { id: "phone", label: "Phone", icon: "cellphone" },
-  { id: "switch", label: "Switch", icon: "nintendo-switch" },
-  { id: "none", label: "None", icon: "close-circle-outline" },
-] as const;
-
-const SOCIAL_AUTH = [
-  { id: "google", label: "Continue with Google", icon: "google" },
-  { id: "steam", label: "Continue with Steam", icon: "steam" },
-  {
-    id: "playstation",
-    label: "Continue with PlayStation",
-    icon: "sony-playstation",
-  },
-  { id: "xbox", label: "Continue with Xbox", icon: "microsoft-xbox" },
-] as const;
-
-function sanitizeBirthdateInput(value: string): string {
-  return value.replace(/\D/g, "").slice(0, 8);
-}
-
-function isBirthdateBeforeToday(value: string): boolean {
-  if (value.length !== 8) return false;
-
-  const month = Number(value.slice(0, 2));
-  const day = Number(value.slice(2, 4));
-  const year = Number(value.slice(4, 8));
-
-  if (!Number.isInteger(month) || !Number.isInteger(day) || !Number.isInteger(year)) {
-    return false;
-  }
-  if (month < 1 || month > 12) return false;
-  if (day < 1 || day > 31) return false;
-  if (year < 1900) return false;
-
-  const candidate = new Date(year, month - 1, day);
-  if (
-    candidate.getFullYear() !== year ||
-    candidate.getMonth() !== month - 1 ||
-    candidate.getDate() !== day
-  ) {
-    return false;
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return candidate.getTime() < today.getTime();
+function isValidEmail(value: string) {
+  return /\S+@\S+\.\S+/.test(value.trim());
 }
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { loginUser } = useAuth();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
+  const { loginUser } = useAuth();
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
-  const [step, setStep] = useState<Step>("welcome");
+
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [birthdate, setBirthdate] = useState("");
-  const [acceptEmails, setAcceptEmails] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [playStyle, setPlayStyle] = useState("");
-  const [platform, setPlatform] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
-  const stepTitleSize = responsive.isSmallPhone ? 24 : responsive.isLargePhone ? 30 : 28;
-  const platformChipWidth = responsive.isSmallPhone ? "100%" : "48.5%";
-  const reduceMotion = useReducedMotionPreference();
 
-  const stepTransition = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (reduceMotion) {
-      stepTransition.setValue(1);
-      return;
-    }
-
-    stepTransition.setValue(0);
-    Animated.timing(stepTransition, {
-      toValue: 1,
-      duration: responsive.motionBase,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [reduceMotion, responsive.motionBase, step, stepTransition]);
-
-  useEffect(() => {
-    const keyboardShowEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const keyboardHideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    const showSub = Keyboard.addListener(keyboardShowEvent, () => setKeyboardOpen(true));
-    const hideSub = Keyboard.addListener(keyboardHideEvent, () => setKeyboardOpen(false));
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
-  const stepAnimatedStyle = {
-    opacity: stepTransition,
-    transform: [
-      {
-        translateY: stepTransition.interpolate({
-          inputRange: [0, 1],
-          outputRange: [Math.max(10, responsive.screenEntranceOffset + 4), 0],
-        }),
-      },
-    ],
-  };
-
-  const keyboardBuffer = useMemo(() => {
-    if (!keyboardOpen || step !== "email") return 0;
-    if (responsive.isSmallPhone) return Platform.OS === "ios" ? 210 : 170;
-    if (responsive.isLargePhone) return Platform.OS === "ios" ? 165 : 130;
-    return Platform.OS === "ios" ? 180 : 145;
-  }, [keyboardOpen, responsive.isLargePhone, responsive.isSmallPhone, step]);
-
-  const keyboardVerticalOffset = useMemo(() => {
-    if (Platform.OS !== "ios") return 0;
-    if (responsive.isSmallPhone) return safeTop + 6;
-    if (responsive.isLargePhone) return safeTop + 18;
-    return safeTop + 12;
-  }, [responsive.isLargePhone, responsive.isSmallPhone, safeTop]);
-
-  const progress = useMemo(() => {
-    if (step === "email") return 1;
-    if (step === "birthdate") return 2;
-    if (step === "preferences") return 3;
-    return 0;
-  }, [step]);
-
-  const isValidBirthdate = useMemo(
-    () => isBirthdateBeforeToday(birthdate),
-    [birthdate],
-  );
-
-  const birthdateHintMessage = useMemo(() => {
-    if (birthdate.length === 0) return "Use 8 digits only (MMDDYYYY)";
-    if (birthdate.length < 8) return "Date of birth must be 8 digits (MMDDYYYY).";
-    if (!isValidBirthdate) return "Enter a valid date in MMDDYYYY format before today.";
-    return "You look good to go.";
-  }, [birthdate.length, isValidBirthdate]);
-
-  const canContinue = useMemo(() => {
-    if (step === "welcome") return true;
-    if (step === "email") {
-      return (
-        email.includes("@") &&
-        username.trim().length >= 3 &&
-        password.length >= 8 &&
-        password === confirmPassword
-      );
-    }
-    if (step === "birthdate") return acceptTerms && isValidBirthdate;
-    return selectedGenres.length > 0 && playStyle.length > 0 && platform.length > 0;
-  }, [
-    acceptTerms,
-    confirmPassword,
-    email,
-    isValidBirthdate,
-    password,
-    platform.length,
-    playStyle,
-    selectedGenres.length,
-    step,
-    username,
-  ]);
-
-  const emailStepMissingOptions = useMemo(() => {
-    const issues: string[] = [];
-    if (!email.includes("@")) issues.push("Enter a valid email address.");
-    if (username.trim().length < 3) issues.push("Username must be at least 3 characters.");
-    if (password.length < 8) issues.push("Password must be at least 8 characters.");
+  const issues = useMemo(() => {
+    const nextIssues: string[] = [];
+    if (!isValidEmail(email)) nextIssues.push("Enter a valid email address.");
+    if (username.trim().length < 3) nextIssues.push("Username must be at least 3 characters.");
+    if (password.length < 8) nextIssues.push("Password must be at least 8 characters.");
     if (confirmPassword.length > 0 && password !== confirmPassword) {
-      issues.push("Passwords must match.");
+      nextIssues.push("Passwords must match.");
     }
-    return issues;
+    return nextIssues;
   }, [confirmPassword, email, password, username]);
 
-  const stepMissingOptions = useMemo(() => {
-    if (step === "email") return emailStepMissingOptions;
+  const canSubmit = useMemo(
+    () =>
+      isValidEmail(email) &&
+      username.trim().length >= 3 &&
+      password.length >= 8 &&
+      password === confirmPassword,
+    [confirmPassword, email, password, username],
+  );
 
-    if (step === "birthdate") {
-      const issues: string[] = [];
-      if (!isValidBirthdate) issues.push("Enter a valid birthdate before today.");
-      if (!acceptTerms) issues.push("Accept Terms of Service and Privacy Policy.");
-      return issues;
-    }
+  const handleCreateAccount = async () => {
+    if (!canSubmit || submitting) return;
 
-    if (step === "preferences") {
-      const issues: string[] = [];
-      if (selectedGenres.length === 0) issues.push("Select at least one genre.");
-      if (!playStyle) issues.push("Choose one play style.");
-      if (!platform) issues.push("Choose a primary platform.");
-      return issues;
-    }
-
-    return [];
-  }, [
-    acceptTerms,
-    emailStepMissingOptions,
-    isValidBirthdate,
-    platform,
-    playStyle,
-    selectedGenres.length,
-    step,
-  ]);
-
-  const finishOnboarding = async () => {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedUsername = username.trim();
 
-    setSubmitting(true);
     setSubmitError(null);
+    setSubmitting(true);
     try {
       await signup(normalizedEmail, normalizedUsername, password);
       await loginUser(normalizedEmail, password);
-      primeHomeContentCache();
       await setCompletedOnboarding(true);
+      primeHomeContentCache();
       router.replace("/(tabs)/news");
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Unable to create account.");
@@ -293,516 +80,169 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleNext = async () => {
-    if (!canContinue || submitting) return;
-    if (submitError) setSubmitError(null);
-
-    if (step === "welcome") {
-      setStep("email");
-      return;
-    }
-
-    if (step === "email") {
-      setStep("birthdate");
-      return;
-    }
-
-    if (step === "birthdate") {
-      setStep("preferences");
-      return;
-    }
-
-    await finishOnboarding();
-  };
-
-  const toggleGenre = (genre: string) => {
-    setSelectedGenres((prev) => {
-      if (prev.includes(genre)) return prev.filter((item) => item !== genre);
-      if (prev.length >= 5) return prev;
-      return [...prev, genre];
-    });
-  };
-
-  const handleSocialAuth = () => {
-    setStep("email");
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.keyboardRoot}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={keyboardVerticalOffset}
+      keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + 8 : 0}
     >
       <ScrollView
-        style={styles.container}
+        style={styles.screen}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: safeTop + spacing.md,
+            paddingBottom: safeBottom + spacing.xl,
+            paddingHorizontal: responsive.horizontalPadding,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
-        contentContainerStyle={[styles.content, { paddingBottom: safeBottom + 20 + keyboardBuffer }]}
+        showsVerticalScrollIndicator={false}
       >
         <View
           style={[
-            styles.inner,
+            styles.shell,
             {
-              paddingTop: safeTop + 14,
-              paddingHorizontal: responsive.horizontalPadding,
               maxWidth: responsive.contentMaxWidth,
               alignSelf: "center",
-            width: "100%",
-          },
-        ]}
-      >
-        <View style={styles.headerBlock}>
-          <Text style={styles.brandText}>Welcome to Game Mate</Text>
-          <Text
-            accessibilityRole="header"
-            style={[styles.heading, { fontSize: responsive.titleSize }]}
-          >
-            Create Account
-          </Text>
+              width: "100%",
+            },
+          ]}
+        >
+          <View style={styles.heroCard}>
+            <View style={styles.heroBadge}>
+              <MaterialCommunityIcons name="gamepad-variant-outline" size={28} color="#1A1A1A" />
+            </View>
+            <Text style={[styles.kicker, { fontSize: responsive.captionSize + 1 }]}>GAME MATE</Text>
+            <Text
+              style={[
+                styles.heroTitle,
+                {
+                  fontSize: responsive.titleSize + (responsive.isSmallPhone ? 0 : 2),
+                  lineHeight: Math.round((responsive.titleSize + (responsive.isSmallPhone ? 0 : 2)) * 1.05),
+                },
+              ]}
+            >
+              Build your player identity. Find squads. Share the win.
+            </Text>
+            <Text style={[styles.heroCopy, { fontSize: responsive.bodySize }]}>
+              Create your account to unlock your feed, groups, messages, and profile.
+            </Text>
 
-          {step !== "welcome" && (
-            <View style={styles.progressRow}>
-              {[1, 2, 3].map((index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.progressBar,
-                    index <= progress ? styles.progressBarActive : undefined,
-                  ]}
-                />
+            <View style={styles.heroPoints}>
+              {[
+                "Create a real player profile",
+                "Join or build gaming groups",
+                "Share clips and stay in the loop",
+              ].map((point) => (
+                <View key={point} style={styles.heroPointRow}>
+                  <MaterialCommunityIcons name="check-circle" size={16} color={colors.primary} />
+                  <Text style={styles.heroPointText}>{point}</Text>
+                </View>
               ))}
             </View>
-          )}
-        </View>
+          </View>
 
-        <Animated.View style={stepAnimatedStyle}>
-          {step === "welcome" && (
-            <View style={styles.stepSection}>
-              <View style={styles.welcomeHero}>
-                <View style={styles.logoCircle}>
-                  <MaterialCommunityIcons name="gamepad-variant" size={72} color="#1A1A1A" />
-                </View>
-                <Text style={styles.appTitle}>Game Mate</Text>
-                <Text style={styles.welcomeCopy}>Your Gaming Community Hub</Text>
-              </View>
+          <View style={styles.formCard}>
+            <Text style={[styles.formTitle, { fontSize: responsive.sectionTitleSize }]}>Create Account</Text>
+            <Text style={[styles.formCopy, { fontSize: responsive.bodySmallSize }]}>
+              Email and password only. You can finish profile setup after signup.
+            </Text>
 
-              <Text style={styles.authHint}>Sign in with your gaming account</Text>
-              <View style={styles.authList}>
-                {SOCIAL_AUTH.map((provider, index) => (
-                  <View key={provider.id} style={{ marginTop: index === 0 ? 0 : 0 }}>
-                    <Pressable
-                      onPress={handleSocialAuth}
-                      accessibilityRole="button"
-                      accessibilityLabel={provider.label}
-                      style={({ pressed }) => [
-                        styles.authButton,
-                        { minHeight: responsive.buttonHeightMedium },
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={provider.icon as any}
-                        size={20}
-                        color="#F5F5F5"
-                        style={styles.authIcon}
-                      />
-                      <Text style={styles.authLabel}>{provider.label}</Text>
-                    </Pressable>
-                  </View>
-                ))}
-              </View>
+            <Input
+              label="Email"
+              accessibilityLabel="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              keyboardType="email-address"
+              placeholder="you@gamemate.dev"
+              fullWidth
+            />
 
-              <View style={styles.orRow}>
-                <View style={styles.orLine} />
-                <Text style={styles.orText}>or</Text>
-                <View style={styles.orLine} />
-              </View>
+            <Input
+              label="Username"
+              accessibilityLabel="Username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="username"
+              textContentType="username"
+              placeholder="playername"
+              fullWidth
+            />
 
-              <Pressable
-                onPress={handleNext}
-                accessibilityRole="button"
-                accessibilityLabel="Continue with email"
-                style={({ pressed }) => [
-                  styles.primaryWideButton,
-                  { minHeight: responsive.buttonHeightLarge },
-                  pressed && styles.pressed,
-                ]}
-              >
-                <MaterialCommunityIcons name="email-outline" size={20} color="#1A1A1A" />
-                <Text style={styles.primaryWideButtonText}>Continue with Email</Text>
-              </Pressable>
-            </View>
-          )}
+            <Input
+              label="Password"
+              accessibilityLabel="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="password-new"
+              textContentType="newPassword"
+              placeholder="At least 8 characters"
+              fullWidth
+            />
 
-          {step === "email" && (
-            <View style={styles.stepSection}>
-              <Text
-                accessibilityRole="header"
-                style={[styles.stepTitle, { fontSize: stepTitleSize }]}
-              >
-                Create Your Account
-              </Text>
-              <Text style={styles.stepCopy}>Set your account details to get started</Text>
+            <Input
+              label="Confirm Password"
+              accessibilityLabel="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="password-new"
+              textContentType="newPassword"
+              placeholder="Re-enter password"
+              fullWidth
+            />
 
-              <Text style={styles.fieldLabel}>Email Address</Text>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="gamer@example.com"
-                  placeholderTextColor="#999"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  {...androidKeyboardCompatProps}
-                  accessibilityLabel="Email address"
-                  style={styles.input}
-                />
-                {email.includes("@") && (
-                  <View style={styles.validBadge}>
-                    <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
-                  </View>
-                )}
-              </View>
-
-              <Text style={styles.fieldLabel}>Username</Text>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder="your_username"
-                  placeholderTextColor="#999"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  {...androidKeyboardCompatProps}
-                  accessibilityLabel="Username"
-                  style={styles.input}
-                />
-                {username.trim().length >= 3 && (
-                  <View style={styles.validBadge}>
-                    <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
-                  </View>
-                )}
-              </View>
-
-              <Text style={styles.fieldLabel}>Password</Text>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="At least 8 characters"
-                  placeholderTextColor="#999"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  secureTextEntry
-                  {...androidKeyboardCompatProps}
-                  accessibilityLabel="Password"
-                  style={styles.input}
-                />
-              </View>
-
-              <Text style={styles.fieldLabel}>Confirm Password</Text>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Re-enter password"
-                  placeholderTextColor="#999"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  secureTextEntry
-                  {...androidKeyboardCompatProps}
-                  accessibilityLabel="Confirm password"
-                  style={styles.input}
-                />
-                {password.length >= 8 && confirmPassword.length > 0 && password === confirmPassword && (
-                  <View style={styles.validBadge}>
-                    <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />
-                  </View>
-                )}
-              </View>
-
-              {password.length > 0 && password.length < 8 ? (
-                <Text style={styles.validationHint}>Password must be at least 8 characters.</Text>
-              ) : null}
-              {confirmPassword.length > 0 && password !== confirmPassword ? (
-                <Text style={styles.validationHint}>Passwords do not match.</Text>
-              ) : null}
-
-              {emailStepMissingOptions.length > 0 ? (
-                <View style={styles.missingOptionsWrap}>
-                  {emailStepMissingOptions.map((issue) => (
-                    <Text key={issue} style={styles.missingOptionText}>
-                      • {issue}
-                    </Text>
-                  ))}
-                </View>
-              ) : null}
-
-              <Pressable
-                onPress={() => setAcceptEmails((prev) => !prev)}
-                accessibilityRole="checkbox"
-                accessibilityLabel="Send product and gaming updates"
-                accessibilityState={{ checked: acceptEmails }}
-                style={({ pressed }) => [
-                  styles.checkboxRow,
-                  acceptEmails ? styles.checkboxRowActive : undefined,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={[styles.checkbox, acceptEmails ? styles.checkboxOn : undefined]}>
-                  {acceptEmails && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
-                </View>
-                <Text style={styles.checkboxText}>
-                  Send me updates about Game Mate features and gaming news
-                </Text>
-              </Pressable>
-            </View>
-          )}
-
-          {step === "birthdate" && (
-            <View style={styles.stepSection}>
-              <Text
-                accessibilityRole="header"
-                style={[styles.stepTitle, { fontSize: stepTitleSize }]}
-              >
-                When Were You Born?
-              </Text>
-              <Text style={styles.stepCopy}>We need this to verify your age</Text>
-
-              <Text style={styles.fieldLabel}>Date of Birth</Text>
-              <View style={styles.inputWrap}>
-                <TextInput
-                  value={birthdate}
-                  onChangeText={(value) => setBirthdate(sanitizeBirthdateInput(value))}
-                  placeholder="MMDDYYYY"
-                  placeholderTextColor="#999"
-                  accessibilityLabel="Date of birth"
-                  keyboardType="number-pad"
-                  {...androidKeyboardCompatProps}
-                  maxLength={8}
-                  style={styles.input}
-                />
-                <MaterialCommunityIcons
-                  name="calendar-month-outline"
-                  size={20}
-                  color="#777"
-                  style={styles.inputTrailingIcon}
-                />
-              </View>
-              <Text
-                style={[
-                  styles.birthdateHint,
-                  birthdate.length === 8 && !isValidBirthdate ? styles.birthdateHintError : undefined,
-                  birthdate.length === 8 && isValidBirthdate ? styles.birthdateHintSuccess : undefined,
-                ]}
-              >
-                {birthdateHintMessage}
-              </Text>
-
-              <Pressable
-                onPress={() => setAcceptTerms((prev) => !prev)}
-                accessibilityRole="checkbox"
-                accessibilityLabel="Agree to terms and privacy policy"
-                accessibilityState={{ checked: acceptTerms }}
-                style={({ pressed }) => [
-                  styles.checkboxRow,
-                  acceptTerms ? styles.checkboxRowActive : undefined,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={[styles.checkbox, acceptTerms ? styles.checkboxOn : undefined]}>
-                  {acceptTerms && <MaterialCommunityIcons name="check" size={16} color="#1A1A1A" />}
-                </View>
-                <View style={styles.termsTextWrap}>
-                  <Text style={styles.checkboxText}>
-                    I agree to the <Text style={styles.linkText}>Terms of Service</Text> and{" "}
-                    <Text style={styles.linkText}>Privacy Policy</Text>
-                  </Text>
-                  <Text style={styles.securityHint}>Your data is secure and encrypted.</Text>
-                </View>
-              </Pressable>
-            </View>
-          )}
-
-          {step === "preferences" && (
-            <View style={styles.stepSection}>
-              <Text
-                accessibilityRole="header"
-                style={[styles.stepTitle, { fontSize: stepTitleSize }]}
-              >
-                What Do You Like to Play?
-              </Text>
-              <Text style={styles.stepCopy}>Select up to 5 genres (minimum 1)</Text>
-
-              <View style={styles.genreGrid}>
-                {GENRES.map((genre) => {
-                  const selected = selectedGenres.includes(genre);
-                  return (
-                    <Pressable
-                      key={genre}
-                      onPress={() => toggleGenre(genre)}
-                      accessibilityRole="checkbox"
-                      accessibilityLabel={`Genre ${genre}`}
-                      accessibilityState={{ checked: selected }}
-                      style={({ pressed }) => [
-                        styles.genreChip,
-                        selected ? styles.genreChipSelected : undefined,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Text style={[styles.genreChipText, selected ? styles.genreChipTextSelected : undefined]}>
-                        {genre}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <Text
-                accessibilityRole="header"
-                style={[styles.stepTitle, styles.playStyleTitle, { fontSize: stepTitleSize }]}
-              >
-                How Do You Play?
-              </Text>
-              <Text style={styles.stepCopy}>Choose your primary play style</Text>
-
-              <View style={styles.playStyleList}>
-                {PLAY_STYLES.map((style) => {
-                  const selected = playStyle === style.id;
-                  return (
-                    <Pressable
-                      key={style.id}
-                      onPress={() => setPlayStyle(style.id)}
-                      accessibilityRole="radio"
-                      accessibilityLabel={`${style.label} play style`}
-                      accessibilityState={{ selected }}
-                      style={({ pressed }) => [
-                        styles.playStyleRow,
-                        selected ? styles.playStyleRowSelected : undefined,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <View
-                        style={[
-                          styles.playStyleIconWrap,
-                          selected ? styles.playStyleIconWrapSelected : undefined,
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name={style.icon as any}
-                          size={20}
-                          color={selected ? "#1A1A1A" : "#444"}
-                        />
-                      </View>
-                      <View style={styles.playStyleTextWrap}>
-                        <Text style={[styles.playStyleLabel, selected ? styles.playStyleLabelSelected : undefined]}>
-                          {style.label}
-                        </Text>
-                        <Text style={[styles.playStyleDescription, selected ? styles.playStyleDescriptionSelected : undefined]}>
-                          {style.description}
-                        </Text>
-                      </View>
-                      {selected && (
-                        <View style={styles.playStyleCheck}>
-                          <MaterialCommunityIcons name="check" size={16} color="#FF9F66" />
-                        </View>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <Text
-                accessibilityRole="header"
-                style={[styles.stepTitle, styles.platformTitle, { fontSize: stepTitleSize }]}
-              >
-                Where Do You Play?
-              </Text>
-              <Text style={styles.stepCopy}>Choose your primary platform</Text>
-
-              <View style={styles.platformGrid}>
-                {PLATFORM_OPTIONS.map((item) => {
-                  const selected = platform === item.id;
-                  return (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => setPlatform(item.id)}
-                      accessibilityRole="radio"
-                      accessibilityLabel={`${item.label} platform`}
-                      accessibilityState={{ selected }}
-                      style={({ pressed }) => [
-                        styles.platformChip,
-                        {
-                          width: platformChipWidth,
-                          minHeight: responsive.buttonHeightSmall,
-                        },
-                        selected ? styles.platformChipSelected : undefined,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={item.icon as any}
-                        size={20}
-                        color={selected ? "#1A1A1A" : "#555"}
-                      />
-                      <Text
-                        style={[
-                          styles.platformChipLabel,
-                          selected ? styles.platformChipLabelSelected : undefined,
-                        ]}
-                      >
-                        {item.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
-        </Animated.View>
-
-        {step !== "welcome" && (
-          <View style={styles.footer}>
-            {!canContinue && stepMissingOptions.length > 0 ? (
-              <View style={styles.missingOptionsWrap}>
-                {stepMissingOptions.map((issue) => (
-                  <Text key={`${step}-${issue}`} style={styles.missingOptionText}>
+            {issues.length > 0 ? (
+              <View style={styles.issueList}>
+                {issues.map((issue) => (
+                  <Text key={issue} style={styles.issueText}>
                     • {issue}
                   </Text>
                 ))}
               </View>
             ) : null}
+
             {submitError ? <Text style={styles.submitError}>{submitError}</Text> : null}
-            <Pressable
-              onPress={handleNext}
-              accessibilityRole="button"
-              accessibilityLabel={
-                step === "email"
-                  ? "Continue to date of birth step"
-                  : step === "birthdate"
-                    ? "Continue to preferences step"
-                    : "Finish onboarding"
-              }
-              accessibilityState={{ disabled: !canContinue || submitting }}
-              style={({ pressed }) => [
-                styles.nextButton,
-                !canContinue || submitting ? styles.nextButtonDisabled : undefined,
-                pressed && styles.pressed,
-              ]}
+
+            <Button
+              variant="primary"
+              fullWidth
+              size="large"
+              onPress={handleCreateAccount}
+              disabled={!canSubmit || submitting}
+              loading={submitting}
             >
-              {submitting ? (
-                <Text style={styles.nextButtonLoading}>...</Text>
-              ) : (
-                <MaterialCommunityIcons name="chevron-right" size={36} color="#1A1A1A" />
-              )}
+              {submitting ? "Creating Account..." : "Create Account"}
+            </Button>
+
+            <Pressable
+              onPress={() => {
+                if (submitting) return;
+                router.replace("/login" as any);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Already have an account? Sign in"
+              style={({ pressed }) => [styles.signInRow, pressed && styles.pressed]}
+            >
+              <Text style={styles.signInCopy}>Already have an account?</Text>
+              <Text style={styles.signInAction}>Sign In</Text>
             </Pressable>
-            <Text style={styles.stepFootnote}>
-              {step === "email" ? "Step 1 of 3" : step === "birthdate" ? "Step 2 of 3" : "Step 3 of 3"}
-            </Text>
           </View>
-        )}
-      </View>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -811,394 +251,112 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   keyboardRoot: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.background,
   },
-  container: {
+  screen: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: colors.background,
   },
   content: {
-    minHeight: "100%",
-    paddingTop: 0,
-    paddingBottom: 40,
+    flexGrow: 1,
   },
-  inner: {
+  shell: {
     flex: 1,
+    justifyContent: "center",
   },
-  headerBlock: {
-    marginBottom: 18,
+  heroCard: {
+    backgroundColor: "#232323",
+    borderWidth: 1,
+    borderColor: "#383838",
+    borderRadius: 28,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
   },
-  brandText: {
-    color: "#8A8A8A",
-    fontSize: 13,
-    marginBottom: 8,
+  heroBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
   },
-  heading: {
-    color: "#1A1A1A",
+  kicker: {
+    color: colors.primary,
     fontWeight: "800",
+    letterSpacing: 1.2,
+    marginBottom: spacing.sm,
   },
-  progressRow: {
+  heroTitle: {
+    color: colors.text,
+    fontWeight: "800",
+    marginBottom: spacing.sm,
+  },
+  heroCopy: {
+    color: colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: spacing.md,
+  },
+  heroPoints: {
+    gap: spacing.sm,
+  },
+  heroPointRow: {
     flexDirection: "row",
-    marginTop: 14,
+    alignItems: "center",
+    gap: spacing.sm,
   },
-  progressBar: {
-    width: 48,
-    height: 4,
-    borderRadius: 4,
-    backgroundColor: "#D0D0D0",
-    marginRight: 8,
+  heroPointText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: "600",
   },
-  progressBarActive: {
-    backgroundColor: "#FF9F66",
-  },
-  stepSection: {
-    flex: 1,
-  },
-  welcomeHero: {
+  formCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 24,
-    backgroundColor: "#1A1A1A",
-    paddingHorizontal: 24,
-    paddingVertical: 30,
-    alignItems: "center",
-    marginBottom: 20,
+    padding: spacing.lg,
   },
-  logoCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#FF9F66",
-    marginBottom: 14,
-  },
-  appTitle: {
-    color: "#F5F5F5",
-    fontSize: 30,
+  formTitle: {
+    color: colors.text,
     fontWeight: "800",
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
-  welcomeCopy: {
-    color: "#B0B0B0",
-    textAlign: "center",
-    fontSize: 15,
+  formCopy: {
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
   },
-  authHint: {
-    color: "#666",
-    fontSize: 13,
-    marginBottom: 10,
-    textAlign: "center",
-    fontWeight: "600",
+  issueList: {
+    marginBottom: spacing.sm,
   },
-  authList: {
-    marginBottom: 8,
-  },
-  authButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#2A2A2A",
-    borderWidth: 1,
-    borderColor: "#3A3A3A",
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginBottom: 10,
-  },
-  authIcon: {
-    marginRight: 8,
-  },
-  authLabel: {
-    color: "#F5F5F5",
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  orRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  orLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#D0D0D0",
-  },
-  orText: {
-    color: "#8A8A8A",
-    marginHorizontal: 10,
-    fontWeight: "600",
-  },
-  primaryWideButton: {
-    backgroundColor: "#FF9F66",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-  },
-  primaryWideButtonText: {
-    color: "#1A1A1A",
-    fontSize: 16,
-    fontWeight: "800",
-    marginLeft: 6,
-  },
-  stepTitle: {
-    color: "#1A1A1A",
-    fontSize: 28,
-    fontWeight: "800",
-    marginBottom: 6,
-  },
-  stepCopy: {
-    color: "#777",
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    color: "#1A1A1A",
+  issueText: {
+    color: colors.destructive,
     fontSize: 12,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 8,
-  },
-  inputWrap: {
-    position: "relative",
-    marginBottom: 16,
-  },
-  birthdateHint: {
-    color: "#777",
-    fontSize: 12,
-    marginTop: -8,
-    marginBottom: 12,
-  },
-  birthdateHintError: {
-    color: "#EF4444",
-  },
-  birthdateHintSuccess: {
-    color: "#22C55E",
-  },
-  validationHint: {
-    color: "#B44E2B",
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 12,
-  },
-  missingOptionsWrap: {
-    marginBottom: 12,
-    paddingHorizontal: 2,
-    gap: 4,
-  },
-  missingOptionText: {
-    color: "#B44E2B",
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  input: {
-    backgroundColor: "#E8E8E8",
-    borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    color: "#1A1A1A",
-    fontSize: 16,
-  },
-  inputTrailingIcon: {
-    position: "absolute",
-    right: 14,
-    top: 14,
-  },
-  validBadge: {
-    position: "absolute",
-    right: 12,
-    top: 10,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#66FF9F",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkboxRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: "#E8E8E8",
-    borderRadius: 12,
-    padding: 12,
-  },
-  checkboxRowActive: {
-    borderWidth: 1,
-    borderColor: "#FF9F66",
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 8,
-    backgroundColor: "#D0D0D0",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  checkboxOn: {
-    backgroundColor: "#FF9F66",
-  },
-  checkboxText: {
-    color: "#333",
-    flex: 1,
-    lineHeight: 20,
-  },
-  termsTextWrap: {
-    flex: 1,
-  },
-  linkText: {
-    color: "#FF9F66",
-    fontWeight: "700",
-  },
-  securityHint: {
-    color: "#777",
-    marginTop: 4,
-    fontSize: 12,
-  },
-  genreGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -4,
-  },
-  genreChip: {
-    width: "50%",
-    paddingHorizontal: 4,
-    marginBottom: 8,
-  },
-  genreChipSelected: {},
-  genreChipText: {
-    backgroundColor: "#E8E8E8",
-    borderRadius: 12,
-    paddingVertical: 12,
-    textAlign: "center",
-    color: "#333",
-    fontWeight: "800",
-    fontSize: 13,
-  },
-  genreChipTextSelected: {
-    backgroundColor: "#FF9F66",
-    color: "#1A1A1A",
-  },
-  playStyleTitle: {
-    marginTop: 6,
-  },
-  playStyleList: {
-    marginTop: 6,
-  },
-  playStyleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#E8E8E8",
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 8,
-  },
-  playStyleRowSelected: {
-    backgroundColor: "#FF9F66",
-  },
-  playStyleIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#D8D8D8",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
-  playStyleIconWrapSelected: {
-    backgroundColor: "#FFCCB3",
-  },
-  playStyleTextWrap: {
-    flex: 1,
-  },
-  playStyleLabel: {
-    color: "#1A1A1A",
-    fontSize: 15,
-    fontWeight: "800",
-    marginBottom: 2,
-  },
-  playStyleLabelSelected: {
-    color: "#1A1A1A",
-  },
-  playStyleDescription: {
-    color: "#666",
-    fontSize: 12,
-  },
-  playStyleDescriptionSelected: {
-    color: "#4A3A30",
-  },
-  playStyleCheck: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#1A1A1A",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  platformTitle: {
-    marginTop: 6,
-  },
-  platformGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  platformChip: {
-    width: "48.5%",
-    backgroundColor: "#E8E8E8",
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginBottom: 8,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  platformChipSelected: {
-    backgroundColor: "#FF9F66",
-  },
-  platformChipLabel: {
-    color: "#333",
-    fontWeight: "800",
-    fontSize: 13,
-    marginLeft: 6,
-  },
-  platformChipLabelSelected: {
-    color: "#1A1A1A",
-  },
-  footer: {
-    alignItems: "center",
-    marginTop: 20,
+    lineHeight: 18,
   },
   submitError: {
-    color: "#B44E2B",
-    fontSize: 12,
-    textAlign: "center",
-    marginBottom: 8,
-    maxWidth: 320,
+    color: colors.destructive,
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: spacing.sm,
   },
-  nextButton: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+  signInRow: {
+    marginTop: spacing.md,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FF9F66",
+    gap: spacing.xs,
   },
-  nextButtonDisabled: {
-    backgroundColor: "#D0D0D0",
+  signInCopy: {
+    color: colors.textSecondary,
+    fontSize: 13,
   },
-  stepFootnote: {
-    color: "#777",
-    fontSize: 12,
-    marginTop: 8,
-  },
-  nextButtonLoading: {
-    color: "#1A1A1A",
-    fontSize: 18,
+  signInAction: {
+    color: colors.primary,
+    fontSize: 13,
     fontWeight: "800",
-    letterSpacing: 2,
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.78,
   },
 });

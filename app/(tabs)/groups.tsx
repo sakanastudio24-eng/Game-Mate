@@ -36,6 +36,7 @@ import {
 import { useDebouncedValue } from "../../src/lib/hooks/useDebouncedValue";
 import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { useAuth } from "../../src/context/AuthContext";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { mockCurrentUser } from "../../src/lib/mockData";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
 import { useResponsive } from "../../src/lib/responsive";
@@ -285,6 +286,7 @@ export default function GroupsScreen() {
   const [membershipSubmittingIds, setMembershipSubmittingIds] = useState<Set<string>>(new Set());
   const [apiLoading, setApiLoading] = useState(true);
   const [apiError, setApiError] = useState<string | null>(null);
+  const isSessionExpiredError = isSessionExpiredMessage(apiError);
   const [aiSwipeVisible, setAiSwipeVisible] = useState(false);
   const [aiSwipeLoading, setAiSwipeLoading] = useState(false);
   const [aiSwipeError, setAiSwipeError] = useState<string | null>(null);
@@ -295,7 +297,7 @@ export default function GroupsScreen() {
   const loadGroups = useCallback(async () => {
     if (!accessToken) {
       setApiGroups([]);
-      setApiError("Sign in to load groups.");
+      setApiError(SESSION_EXPIRED_MESSAGE);
       setApiLoading(false);
       return;
     }
@@ -817,12 +819,18 @@ export default function GroupsScreen() {
               <Text style={styles.emptyTitle}>Unable to load groups</Text>
               <Text style={styles.emptyCopy}>{apiError}</Text>
               <Pressable
-                onPress={() => void loadGroups()}
+                onPress={() => {
+                  if (isSessionExpiredError) {
+                    router.replace("/login" as any);
+                    return;
+                  }
+                  void loadGroups();
+                }}
                 accessibilityRole="button"
-                accessibilityLabel="Retry loading groups"
+                accessibilityLabel={isSessionExpiredError ? "Sign in again" : "Retry loading groups"}
                 style={({ pressed }) => [styles.loadMoreButton, pressed && styles.pressed, { marginTop: spacing.sm }]}
               >
-                <Text style={styles.loadMoreText}>Retry</Text>
+                <Text style={styles.loadMoreText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
               </Pressable>
             </View>
           </View>
@@ -849,8 +857,10 @@ export default function GroupsScreen() {
       discoverableGroups.length,
       apiError,
       apiLoading,
+      isSessionExpiredError,
       loadGroups,
       loadMoreGroups,
+      router,
       responsive.buttonHeightMedium,
       responsive.contentMaxWidth,
       responsive.horizontalPadding,

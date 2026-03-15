@@ -8,6 +8,7 @@ import { Card } from "../../src/components/ui/Card";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { useAuth } from "../../src/context/AuthContext";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -105,11 +106,13 @@ export default function NotificationsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const isSessionExpiredError = isSessionExpiredMessage(loadError);
 
   const fetchNotifications = useCallback(
     async (refresh = false) => {
       if (!accessToken) {
         setNotifications([]);
+        setLoadError(SESSION_EXPIRED_MESSAGE);
         setIsLoading(false);
         setIsRefreshing(false);
         return;
@@ -272,11 +275,15 @@ export default function NotificationsScreen() {
           <Text style={styles.stateText}>{loadError}</Text>
           <Pressable
             onPress={() => {
+              if (isSessionExpiredError) {
+                router.replace("/login" as any);
+                return;
+              }
               void fetchNotifications();
             }}
             style={styles.retryButton}
           >
-            <Text style={styles.retryText}>Retry</Text>
+            <Text style={styles.retryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
           </Pressable>
         </View>
       ) : notifications.length > 0 ? (

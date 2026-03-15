@@ -18,7 +18,7 @@ import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
-import { SESSION_EXPIRED_MESSAGE } from "../../src/lib/auth-messages";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -49,6 +49,7 @@ export default function GroupDetailScreen() {
   const [isSubmittingMembership, setIsSubmittingMembership] = useState(false);
   const [isSubmittingOwnerAction, setIsSubmittingOwnerAction] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const isSessionExpiredError = isSessionExpiredMessage(loadError);
   const [activeTab, setActiveTab] = useState<GroupTab>("overview");
   const [inviteInput, setInviteInput] = useState("");
   const [promoteInput, setPromoteInput] = useState("");
@@ -230,8 +231,17 @@ export default function GroupDetailScreen() {
         <View style={styles.stateContainer}>
           <MaterialCommunityIcons name="alert-circle-outline" size={44} color={colors.destructive} />
           <Text style={styles.stateText}>{loadError}</Text>
-          <Pressable onPress={() => void loadGroup()} style={styles.retryButton}>
-            <Text style={styles.retryText}>Retry</Text>
+          <Pressable
+            onPress={() => {
+              if (isSessionExpiredError) {
+                router.replace("/login" as any);
+                return;
+              }
+              void loadGroup();
+            }}
+            style={styles.retryButton}
+          >
+            <Text style={styles.retryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
           </Pressable>
         </View>
       ) : !group ? (

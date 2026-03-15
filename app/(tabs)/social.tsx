@@ -11,10 +11,12 @@ import {
   type ConnectionItem,
   type PendingConnectionItem,
 } from "../../services/connections";
+import { listThreads, type ThreadItem } from "../../services/messages";
 import { AnimatedEntrance } from "../../src/components/ui/AnimatedEntrance";
 import { useToast } from "../../src/components/ui/ToastProvider";
 import { useAuth } from "../../src/context/AuthContext";
 import { androidKeyboardCompatProps } from "../../src/lib/androidInput";
+import { SESSION_EXPIRED_MESSAGE, isSessionExpiredMessage } from "../../src/lib/auth-messages";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
@@ -31,17 +33,6 @@ interface FriendItem {
   avatar: string;
 }
 
-interface MessageItem {
-  id: string;
-  userId: string;
-  user: string;
-  message: string;
-  time: string;
-  unread: number;
-  online: boolean;
-  avatar: string;
-}
-
 interface RequestItem {
   id: string;
   userId: string;
@@ -52,168 +43,6 @@ interface RequestItem {
   games: string[];
   avatar: string;
 }
-
-const onlineFriends: FriendItem[] = [
-  {
-    id: "1",
-    name: "ProGamer92",
-    game: "Playing Valorant",
-    statusText: "In Competitive",
-    level: 45,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1642792247757-c212e8ba9af9?w=200&h=200&fit=crop",
-  },
-  {
-    id: "3",
-    name: "EchoPlayer",
-    game: "Playing CS2",
-    statusText: "In Match",
-    level: 38,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1572704764530-5b5da1f5a973?w=200&h=200&fit=crop",
-  },
-  {
-    id: "4",
-    name: "NovaStrike",
-    game: "Playing Overwatch 2",
-    statusText: "In Queue",
-    level: 52,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1759701546655-d90ec831aa52?w=200&h=200&fit=crop",
-  },
-  {
-    id: "7",
-    name: "RiftRunner",
-    game: "Playing Valorant",
-    statusText: "In Ranked",
-    level: 49,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=200&h=200&fit=crop",
-  },
-  {
-    id: "8",
-    name: "StormByte",
-    game: "Playing Overwatch 2",
-    statusText: "In Party",
-    level: 36,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1615109398623-88346a601842?w=200&h=200&fit=crop",
-  },
-];
-
-const offlineFriends: FriendItem[] = [
-  {
-    id: "2",
-    name: "SkyWalker",
-    statusText: "2 hours ago",
-    level: 42,
-    online: false,
-    avatar:
-      "https://images.unsplash.com/photo-1599220274056-a6cdbe06c2c0?w=200&h=200&fit=crop",
-  },
-  {
-    id: "5",
-    name: "PlayerEater",
-    statusText: "1 day ago",
-    level: 28,
-    online: false,
-    avatar:
-      "https://images.unsplash.com/photo-1637767125552-b89f5e1ab923?w=200&h=200&fit=crop",
-  },
-  {
-    id: "6",
-    name: "NoobMaster",
-    statusText: "3 days ago",
-    level: 35,
-    online: false,
-    avatar:
-      "https://images.unsplash.com/photo-1633286464918-4d78c8424b59?w=200&h=200&fit=crop",
-  },
-  {
-    id: "9",
-    name: "ZenCrate",
-    statusText: "4 hours ago",
-    level: 40,
-    online: false,
-    avatar:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop",
-  },
-  {
-    id: "10",
-    name: "NeonPulse",
-    statusText: "Yesterday",
-    level: 27,
-    online: false,
-    avatar:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop",
-  },
-];
-
-const messageItems: MessageItem[] = [
-  {
-    id: "m1",
-    userId: "1",
-    user: "ProGamer92",
-    message: "Want to queue up?",
-    time: "2m ago",
-    unread: 2,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1642792247757-c212e8ba9af9?w=200&h=200&fit=crop",
-  },
-  {
-    id: "m2",
-    userId: "3",
-    user: "EchoPlayer",
-    message: "GG last night!",
-    time: "1h ago",
-    unread: 0,
-    online: true,
-    avatar:
-      "https://images.unsplash.com/photo-1572704764530-5b5da1f5a973?w=200&h=200&fit=crop",
-  },
-  {
-    id: "m3",
-    userId: "2",
-    user: "SkyWalker",
-    message: "Check this strat",
-    time: "3h ago",
-    unread: 1,
-    online: false,
-    avatar:
-      "https://images.unsplash.com/photo-1599220274056-a6cdbe06c2c0?w=200&h=200&fit=crop",
-  },
-];
-
-const initialRequests: RequestItem[] = [
-  {
-    id: "r1",
-    userId: "4",
-    connectionId: -1,
-    direction: "incoming",
-    name: "NovaStrike",
-    mutualFriends: 5,
-    games: ["Overwatch 2", "CS2"],
-    avatar:
-      "https://images.unsplash.com/photo-1613063022614-dc11527f5ece?w=200&h=200&fit=crop",
-  },
-  {
-    id: "r2",
-    userId: "1",
-    connectionId: -2,
-    direction: "incoming",
-    name: "ProGamer92",
-    mutualFriends: 3,
-    games: ["Valorant"],
-    avatar:
-      "https://images.unsplash.com/photo-1628501899963-43bb8e2423e1?w=200&h=200&fit=crop",
-  },
-];
 
 export default function SocialScreen() {
   const router = useRouter();
@@ -227,10 +56,13 @@ export default function SocialScreen() {
   const [search, setSearch] = useState("");
   const [friends, setFriends] = useState<FriendItem[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
+  const [threads, setThreads] = useState<ThreadItem[]>([]);
   const [isFriendsLoading, setIsFriendsLoading] = useState(false);
   const [isRequestsLoading, setIsRequestsLoading] = useState(false);
+  const [isThreadsLoading, setIsThreadsLoading] = useState(false);
   const [acceptingRequestIds, setAcceptingRequestIds] = useState<Set<number>>(new Set());
   const [socialError, setSocialError] = useState<string | null>(null);
+  const isSessionExpiredError = isSessionExpiredMessage(socialError);
   const profileAvatarSize = responsive.isSmallPhone ? 48 : responsive.isLargePhone ? 58 : 54;
   const actionCircleSize = Math.max(responsive.touchTargetMin, 42);
 
@@ -284,6 +116,7 @@ export default function SocialScreen() {
     if (!accessToken) {
       setFriends([]);
       setIsFriendsLoading(false);
+      setSocialError(SESSION_EXPIRED_MESSAGE);
       return;
     }
     setIsFriendsLoading(true);
@@ -303,6 +136,7 @@ export default function SocialScreen() {
     if (!accessToken) {
       setRequests([]);
       setIsRequestsLoading(false);
+      setSocialError(SESSION_EXPIRED_MESSAGE);
       return;
     }
     setIsRequestsLoading(true);
@@ -311,20 +145,41 @@ export default function SocialScreen() {
       setRequests(rows.map(toRequestItem));
       setSocialError(null);
     } catch (error) {
-      setRequests(initialRequests);
+      setRequests([]);
       setSocialError(error instanceof Error ? error.message : "Unable to load requests.");
     } finally {
       setIsRequestsLoading(false);
     }
   }, [accessToken, toRequestItem]);
 
+  const loadThreads = useCallback(async () => {
+    if (!accessToken) {
+      setThreads([]);
+      setIsThreadsLoading(false);
+      setSocialError(SESSION_EXPIRED_MESSAGE);
+      return;
+    }
+    setIsThreadsLoading(true);
+    try {
+      const rows = await listThreads(accessToken);
+      setThreads(rows);
+      setSocialError(null);
+    } catch (error) {
+      setThreads([]);
+      setSocialError(error instanceof Error ? error.message : "Unable to load messages.");
+    } finally {
+      setIsThreadsLoading(false);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
     void loadFriends();
     void loadPendingRequests();
-  }, [loadFriends, loadPendingRequests]);
+    void loadThreads();
+  }, [loadFriends, loadPendingRequests, loadThreads]);
 
   const filteredOnline = useMemo(() => {
-    const source = friends.length > 0 || accessToken ? friends : onlineFriends;
+    const source = accessToken ? friends : [];
     const q = search.trim().toLowerCase();
     const online = source.filter((friend) => friend.online);
     if (!q) return online;
@@ -332,7 +187,7 @@ export default function SocialScreen() {
   }, [accessToken, friends, search]);
 
   const filteredOffline = useMemo(() => {
-    const source = friends.length > 0 || accessToken ? friends : offlineFriends;
+    const source = accessToken ? friends : [];
     const q = search.trim().toLowerCase();
     const offline = source.filter((friend) => !friend.online);
     if (!q) return offline;
@@ -340,12 +195,29 @@ export default function SocialScreen() {
   }, [accessToken, friends, search]);
 
   const filteredMessages = useMemo(() => {
+    const selfUsername = String(user?.username ?? "");
+    const liveMessages = threads.map((thread) => {
+      const peerName =
+        (thread.participants ?? []).find(
+          (participant) => participant && participant !== selfUsername,
+        ) ?? "Player";
+      return {
+        id: `thread-${thread.thread_id}`,
+        userId: "",
+        user: peerName,
+        message: thread.last_message || "No messages yet",
+        time: "",
+        unread: Math.max(0, Number(thread.unread ?? 0)),
+        online: false,
+        avatar: createAvatarUrl(peerName),
+      };
+    });
     const q = search.trim().toLowerCase();
-    if (!q) return messageItems;
-    return messageItems.filter((message) =>
+    if (!q) return liveMessages;
+    return liveMessages.filter((message) =>
       [message.user, message.message].join(" ").toLowerCase().includes(q),
     );
-  }, [search]);
+  }, [createAvatarUrl, search, threads, user?.username]);
 
   const filteredRequests = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -652,79 +524,90 @@ export default function SocialScreen() {
       )}
 
       {activeTab === "messages" && (
-        <FlatList
-          data={filteredMessages}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <AnimatedEntrance preset="card" delay={80} staggerIndex={index}>
-              <View
-                style={{
-                  paddingHorizontal: responsive.horizontalPadding,
-                  maxWidth: responsive.contentMaxWidth,
-                  alignSelf: "center",
-                  width: "100%",
-                }}
-              >
-                <Pressable
-                  onPress={() =>
-                    router.push(
-                      `/(tabs)/chat?userId=${item.userId}&title=${encodeURIComponent(item.user)}`,
-                    )
-                  }
-                  accessibilityRole="button"
-                  accessibilityLabel={`Open chat with ${item.user}. ${item.message}`}
-                  style={({ pressed }) => [
-                    styles.messageCard,
-                    {
-                      borderRadius: responsive.cardRadius,
-                      padding: responsive.cardPadding,
-                    },
-                    pressed && styles.pressed,
-                  ]}
+        isThreadsLoading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.loadingText}>Loading messages...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredMessages}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, index }) => (
+              <AnimatedEntrance preset="card" delay={80} staggerIndex={index}>
+                <View
+                  style={{
+                    paddingHorizontal: responsive.horizontalPadding,
+                    maxWidth: responsive.contentMaxWidth,
+                    alignSelf: "center",
+                    width: "100%",
+                  }}
                 >
-                  <View style={styles.messageAvatarWrap}>
-                    <Image
-                      source={{ uri: item.avatar }}
-                      style={[
-                        styles.messageAvatar,
-                        {
-                          width: profileAvatarSize,
-                          height: profileAvatarSize,
-                          borderRadius: profileAvatarSize / 2,
-                        },
-                      ]}
-                    />
-                    {item.online ? <View style={styles.friendOnlineDot} /> : null}
-                  </View>
-
-                  <View style={styles.messageInfo}>
-                    <View style={styles.messageTopRow}>
-                      <Text style={styles.messageUser}>{item.user}</Text>
-                      <Text style={styles.messageTime}>{item.time}</Text>
+                  <Pressable
+                    onPress={() =>
+                      router.push(`/(tabs)/chat?title=${encodeURIComponent(item.user)}`)
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open chat with ${item.user}. ${item.message}`}
+                    style={({ pressed }) => [
+                      styles.messageCard,
+                      {
+                        borderRadius: responsive.cardRadius,
+                        padding: responsive.cardPadding,
+                      },
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <View style={styles.messageAvatarWrap}>
+                      <Image
+                        source={{ uri: item.avatar }}
+                        style={[
+                          styles.messageAvatar,
+                          {
+                            width: profileAvatarSize,
+                            height: profileAvatarSize,
+                            borderRadius: profileAvatarSize / 2,
+                          },
+                        ]}
+                      />
+                      {item.online ? <View style={styles.friendOnlineDot} /> : null}
                     </View>
-                    <Text style={styles.messagePreview} numberOfLines={1}>
-                      {item.message}
-                    </Text>
-                  </View>
 
-                  {item.unread > 0 ? (
-                    <View style={styles.unreadBadge}>
-                      <Text style={styles.unreadText}>{item.unread}</Text>
+                    <View style={styles.messageInfo}>
+                      <View style={styles.messageTopRow}>
+                        <Text style={styles.messageUser}>{item.user}</Text>
+                        <Text style={styles.messageTime}>{item.time}</Text>
+                      </View>
+                      <Text style={styles.messagePreview} numberOfLines={1}>
+                        {item.message}
+                      </Text>
                     </View>
-                  ) : null}
-                </Pressable>
+
+                    {item.unread > 0 ? (
+                      <View style={styles.unreadBadge}>
+                        <Text style={styles.unreadText}>{item.unread}</Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                </View>
+              </AnimatedEntrance>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>
+                  {search.trim() ? "No messages found" : "No conversations yet"}
+                </Text>
+                <Text style={styles.emptyCopy}>
+                  {search.trim()
+                    ? "Try another search keyword."
+                    : "Accepted connections and shared chats will appear here."}
+                </Text>
               </View>
-            </AnimatedEntrance>
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>No messages found</Text>
-              <Text style={styles.emptyCopy}>Try another search keyword.</Text>
-            </View>
-          }
-          contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
-          showsVerticalScrollIndicator={false}
-        />
+            }
+            contentContainerStyle={[styles.listContent, { paddingBottom: 96 + safeBottom }]}
+            showsVerticalScrollIndicator={false}
+          />
+        )
       )}
 
       {activeTab === "requests" && (
@@ -838,14 +721,19 @@ export default function SocialScreen() {
           <Text style={styles.errorText}>{socialError}</Text>
           <Pressable
             onPress={() => {
+              if (isSessionExpiredError) {
+                router.replace("/login" as any);
+                return;
+              }
               void loadFriends();
               void loadPendingRequests();
+              void loadThreads();
             }}
             accessibilityRole="button"
-            accessibilityLabel="Retry loading social data"
+            accessibilityLabel={isSessionExpiredError ? "Sign in again" : "Retry loading social data"}
             style={({ pressed }) => [styles.errorRetryButton, pressed && styles.pressed]}
           >
-            <Text style={styles.errorRetryText}>Retry</Text>
+            <Text style={styles.errorRetryText}>{isSessionExpiredError ? "Sign In" : "Retry"}</Text>
           </Pressable>
         </View>
       ) : null}

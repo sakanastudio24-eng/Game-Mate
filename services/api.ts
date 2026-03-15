@@ -8,6 +8,30 @@ function normalizeBaseUrl(url: string) {
   return url.replace(/\/+$/, "");
 }
 
+function isPrivateNetworkHost(host: string) {
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "10.0.2.2"
+  ) {
+    return true;
+  }
+
+  if (host.startsWith("192.168.")) return true;
+  if (host.startsWith("10.")) return true;
+
+  const match = host.match(/^172\.(\d+)\./);
+  if (match) {
+    const secondOctet = Number(match[1]);
+    if (secondOctet >= 16 && secondOctet <= 31) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function stripHtmlDebugError(payload: string) {
   const normalized = payload.toLowerCase();
   const looksLikeHtml = normalized.includes("<!doctype html") || normalized.includes("<html");
@@ -71,7 +95,30 @@ function resolveBaseUrl() {
 
 const BASE_URL = normalizeBaseUrl(resolveBaseUrl());
 
+function getBaseUrlConfigurationError() {
+  try {
+    const parsed = new URL(BASE_URL);
+    if (!__DEV__ && isPrivateNetworkHost(parsed.hostname)) {
+      return "Production builds must use a public EXPO_PUBLIC_API_URL, not localhost or a private LAN address.";
+    }
+  } catch {
+    return "EXPO_PUBLIC_API_URL is invalid. Use a full public URL such as https://api.gamemate.app.";
+  }
+
+  if (!__DEV__ && !process.env.EXPO_PUBLIC_API_URL?.trim()) {
+    return "Production builds require EXPO_PUBLIC_API_URL to point to a public backend.";
+  }
+
+  return null;
+}
+
+const BASE_URL_CONFIGURATION_ERROR = getBaseUrlConfigurationError();
+
 async function performRequest(endpoint: string, options: RequestInit, token?: string) {
+  if (BASE_URL_CONFIGURATION_ERROR) {
+    throw new Error(BASE_URL_CONFIGURATION_ERROR);
+  }
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),

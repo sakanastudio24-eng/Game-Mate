@@ -135,6 +135,11 @@ python manage.py createsuperuser
 
 For phone testing, keep the backend on `0.0.0.0:8000`, not `127.0.0.1:8000`.
 
+Production requirement:
+- installed builds must use a public backend URL such as `https://api.gamemate.app`
+- do not ship a build pointed at `localhost`, `127.0.0.1`, or a private LAN IP
+- the app now guards against private/local API URLs in non-dev builds
+
 ## Environment Files
 
 Committed examples:

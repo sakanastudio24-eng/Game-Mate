@@ -14,6 +14,19 @@ export type ProfileData = {
   };
 };
 
+export type PublicProfileData = {
+  username: string;
+  bio: string;
+  avatar_url: string;
+  favorite_games: string[];
+  visibility?: ProfileVisibility;
+  stats?: {
+    posts?: number;
+    friends?: number;
+    groups?: number;
+  };
+};
+
 type Envelope<T> = { success?: boolean; data?: T };
 
 export type ProfilePayload = {
@@ -53,7 +66,7 @@ export async function getProfileByUsername(token: string, username: string) {
     { method: "GET" },
     token,
   );
-  return unwrapData(payload);
+  return unwrapData<PublicProfileData>(payload);
 }
 
 export async function getProfilePostsByUsername(token: string, username: string) {

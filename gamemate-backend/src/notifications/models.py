@@ -1,9 +1,13 @@
+"""Notification model used for user-specific activity alerts."""
+
 from django.conf import settings
 from django.db import models
 
 
 # Notification event delivered to a target user.
 class Notification(models.Model):
+    """Stores one notification event and optional navigation metadata."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

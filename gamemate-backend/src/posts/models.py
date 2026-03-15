@@ -50,6 +50,10 @@ class PostInteraction(models.Model):
     class Meta:
         unique_together = ("user", "post", "interaction_type")
 
+    def __str__(self):
+        """Return one compact interaction label for admin/debug output."""
+        return f"{self.user_id}:{self.interaction_type}:{self.post_id}"
+
 
 # Share record used for post-to-friend delivery history.
 class PostShare(models.Model):
@@ -67,3 +71,7 @@ class PostShare(models.Model):
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        """Return compact share direction for admin/debug output."""
+        return f"{self.sender_id}->{self.receiver_id}:{self.post_id}"

@@ -1,9 +1,13 @@
+"""Models for friend requests and accepted social connections."""
+
 from django.conf import settings
 from django.db import models
 
 
 # Connection request model used for friend graph and social features.
 class Connection(models.Model):
+    """One directional request row that becomes a friendship when accepted."""
+
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("accepted", "Accepted"),

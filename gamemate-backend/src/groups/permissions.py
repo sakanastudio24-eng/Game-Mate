@@ -1,13 +1,12 @@
+"""Object-level permission classes for group access control."""
+
 from rest_framework.permissions import BasePermission
 from .models import GroupMembership
 
 
 # Object-level permission: allow public groups and enforce membership for private groups.
 class CanViewGroup(BasePermission):
-    """
-    Public groups: any authenticated user can view.
-    Private groups: owner or member only.
-    """
+    """Allow public groups broadly and private groups only to owner or members."""
 
     def has_object_permission(self, request, view, obj):
         """Allow visibility based on privacy flag and requester membership."""
@@ -20,9 +19,8 @@ class CanViewGroup(BasePermission):
 
 # Object-level permission: allow owner or member access.
 class IsGroupMember(BasePermission):
-    """
-    Allow if user is the owner OR has a membership row for this group.
-    """
+    """Allow access when requester owns the group or already belongs to it."""
+
     def has_object_permission(self, request, view, obj):
         """Allow access when requester owns the group or has a membership row."""
         if obj.owner_id == request.user.id:
@@ -32,9 +30,8 @@ class IsGroupMember(BasePermission):
 
 # Object-level permission: allow only group owner access.
 class IsGroupOwner(BasePermission):
-    """
-    Allow only if user is the owner.
-    """
+    """Allow only the group owner to perform role-sensitive actions."""
+
     def has_object_permission(self, request, view, obj):
         """Allow access only when requester is the group owner."""
         return obj.owner_id == request.user.id

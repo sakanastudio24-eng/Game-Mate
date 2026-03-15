@@ -73,9 +73,11 @@ class FeedService:
         )
 
         if trending_post_ids:
+            # Preserve cached ordering so hot-post caching stays useful during ranking.
             posts_by_id = {post.id: post for post in posts_qs.filter(id__in=trending_post_ids)}
             posts = [posts_by_id[post_id] for post_id in trending_post_ids if post_id in posts_by_id]
         else:
+            # Fallback path keeps feed alive even when cache is cold or missing.
             posts = list(posts_qs.order_by("-created_at")[:80])
 
         if not posts:
@@ -84,6 +86,7 @@ class FeedService:
         like_counts = get_cached_like_counts([post.id for post in posts])
 
         for post in posts:
+            # Attach computed counts directly so scoring does not repeat aggregate work.
             post.like_count = int(like_counts.get(post.id, 0))
             post.share_count = int(getattr(post, "share_count", 0))
             post.skip_count = int(getattr(post, "skip_count", 0))
@@ -117,6 +120,7 @@ class FeedService:
             for idx, candidate in enumerate(remaining):
                 effective_score = candidate["score"]
                 if candidate["post"].game in recent_games:
+                    # Penalize repeated recent games instead of hard-filtering them out.
                     effective_score -= 2
 
                 if best_effective_score is None or effective_score > best_effective_score:
@@ -170,6 +174,7 @@ class FeedService:
                 if explore_post.id in used_post_ids:
                     continue
 
+                # Explore slots intentionally ignore personalized score to add discovery.
                 output.append(
                     {
                         "post": explore_post,

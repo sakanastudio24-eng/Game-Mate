@@ -1,3 +1,5 @@
+"""Serializers for auth payloads and profile responses."""
+
 from rest_framework import serializers
 
 from .models import Profile, User
@@ -14,12 +16,14 @@ class SignupSerializer(serializers.ModelSerializer):
         fields = ["email", "username", "password"]
 
     def validate_email(self, value):
+        """Normalize email input and block duplicate account registration."""
         normalized = value.strip().lower()
         if User.objects.filter(email__iexact=normalized).exists():
             raise serializers.ValidationError("Email is already in use.")
         return normalized
 
     def validate_username(self, value):
+        """Normalize username input and enforce uniqueness and minimum length."""
         normalized = value.strip()
         if len(normalized) < 3:
             raise serializers.ValidationError("Username must be at least 3 characters.")
@@ -28,6 +32,7 @@ class SignupSerializer(serializers.ModelSerializer):
         return normalized
 
     def create(self, validated_data):
+        """Create the user with Django password hashing instead of raw storage."""
         password = validated_data.pop("password")
         user = User(**validated_data)
         user.set_password(password)
@@ -40,6 +45,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     """Serialize public profile fields for account/me responses."""
 
     def validate_favorite_games(self, value):
+        """Keep favorite games trimmed, unique, and small enough for profile use."""
         if not isinstance(value, list):
             raise serializers.ValidationError("favorite_games must be an array of strings.")
 

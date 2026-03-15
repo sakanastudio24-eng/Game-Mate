@@ -215,6 +215,28 @@ Avatar URL:
 
 * must be valid URL
 * optional
+* URL metadata only; backend upload/storage is out of scope for v1
+
+---
+
+# Media Scope
+
+GameMate backend v1 does **not** implement a file upload pipeline.
+
+That means:
+
+* avatars are stored as `avatar_url` strings only
+* post media is stored as `video_url` strings only
+* there is no upload endpoint, storage bucket integration, or media processing pipeline in scope
+
+This is intentional for v1 so the backend remains focused on:
+
+* auth
+* profiles
+* feed logic
+* groups
+* messaging
+* notifications
 
 ---
 

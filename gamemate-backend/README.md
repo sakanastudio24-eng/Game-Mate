@@ -24,6 +24,13 @@ Production-style v1 backend for GameMate built on Django + DRF + PostgreSQL.
 - explainable feed
 - notifications
 
+## Explicit Scope Boundaries
+- avatar and post media are URL-based only
+- direct file upload/storage pipeline is not implemented in v1
+- no avatar upload endpoint is provided
+- no post media upload endpoint is provided
+- frontend clients should supply valid external/media-hosted URLs when using `avatar_url` or `video_url`
+
 ## Setup
 ```bash
 python3 -m venv .venv
@@ -121,6 +128,7 @@ Accounts/Profile:
 - `PATCH /api/profile/me/`
 - `GET /api/profile/{username}/`
 - `GET /api/profile/{username}/posts/`
+- `avatar_url` is URL-only metadata; upload handling is out of scope
 
 Groups:
 - `GET /api/groups/` (paginated)
@@ -148,6 +156,7 @@ Posts/Feed:
 - `POST /api/share/{post_id}/{user_id}/`
 - `GET /api/feed/`
 - `GET /api/feed/explain/{post_id}/`
+- `video_url` is URL-only metadata; media upload/storage is out of scope
 
 Connections:
 - `GET /api/friends/`

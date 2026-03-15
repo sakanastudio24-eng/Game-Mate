@@ -5,6 +5,10 @@
 **Auth:** JWT Bearer
 **Base URL (local):** `http://127.0.0.1:8000`
 
+Media scope note:
+- `avatar_url` and `video_url` are URL-based fields only
+- file upload/storage endpoints are not implemented in backend v1
+
 All protected routes require:
 
 `Authorization: Bearer <access_token>`
@@ -171,6 +175,10 @@ Visibility rules:
 - `public`: any authenticated user can view
 - `friends_only`: owner and accepted friends only
 
+Avatar/media note:
+- `avatar_url` is stored as a URL string only
+- avatar upload handling is intentionally out of scope for this version
+
 ---
 
 ## Groups
@@ -329,6 +337,10 @@ Responses:
 ---
 
 ## Posts + Feed
+
+Media note:
+- `video_url` is optional URL metadata only
+- backend v1 does not implement file upload, transcoding, or media storage
 
 ### GET `/api/posts/`
 Paginated list (`success/count/next/previous/results`) of non-deleted posts.

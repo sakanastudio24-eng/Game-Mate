@@ -30,7 +30,7 @@ const mediaSources = ["None", "Upload", "Camera"];
 
 export default function CreateGroupScreen() {
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, expireSession } = useAuth();
   const responsive = useResponsive();
   const [groupName, setGroupName] = useState("");
   const [selectedGame, setSelectedGame] = useState("Valorant");
@@ -237,7 +237,16 @@ export default function CreateGroupScreen() {
 
       {errors.api ? <Text style={styles.error}>{errors.api}</Text> : null}
       {isSessionExpiredError ? (
-        <Button variant="secondary" fullWidth size="large" onPress={() => router.replace("/login" as any)}>
+        <Button
+          variant="secondary"
+          fullWidth
+          size="large"
+          onPress={() => {
+            void expireSession().finally(() => {
+              router.replace("/login" as any);
+            });
+          }}
+        >
           Sign In
         </Button>
       ) : null}

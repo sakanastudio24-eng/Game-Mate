@@ -48,7 +48,7 @@ interface RequestItem {
 export default function SocialScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, expireSession } = useAuth();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const safeTop = Math.max(insets.top, responsive.safeTopInset) + responsive.headerTopSpacing;
@@ -733,7 +733,9 @@ export default function SocialScreen() {
           <Pressable
             onPress={() => {
               if (isSessionExpiredError) {
-                router.replace("/login" as any);
+                void expireSession().finally(() => {
+                  router.replace("/login" as any);
+                });
                 return;
               }
               void loadFriends();

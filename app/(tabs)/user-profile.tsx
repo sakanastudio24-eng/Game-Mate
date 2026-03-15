@@ -22,7 +22,7 @@ type ProfileStatus = "online" | "offline" | "in-game";
 export default function UserProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken } = useAuth();
+  const { accessToken, expireSession } = useAuth();
   const params = useLocalSearchParams<{
     userId?: string;
     name?: string;
@@ -180,7 +180,9 @@ export default function UserProfileScreen() {
             variant="primary"
             onPress={() => {
               if (isSessionExpiredError) {
-                router.replace("/login");
+                void expireSession().finally(() => {
+                  router.replace("/login" as any);
+                });
                 return;
               }
               void loadRemoteProfile();

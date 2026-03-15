@@ -44,7 +44,7 @@ const avatarOptions = [
 export default function EditProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, expireSession } = useAuth();
   const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;
   const {
     value: cachedProfile,
@@ -144,7 +144,9 @@ export default function EditProfileScreen() {
   };
 
   const handleSessionRecovery = () => {
-    router.replace("/login" as any);
+    void expireSession().finally(() => {
+      router.replace("/login" as any);
+    });
   };
 
   return (

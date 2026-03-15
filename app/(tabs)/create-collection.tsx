@@ -68,7 +68,7 @@ export default function CreateCollectionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ type?: string | string[] }>();
   const responsive = useResponsive();
-  const { accessToken } = useAuth();
+  const { accessToken, expireSession } = useAuth();
 
   const type = useMemo(() => resolveType(params.type), [params.type]);
   const copy = flowCopy[type];
@@ -347,7 +347,11 @@ export default function CreateCollectionScreen() {
               variant="secondary"
               size="large"
               fullWidth
-              onPress={() => router.replace("/login" as any)}
+              onPress={() => {
+                void expireSession().finally(() => {
+                  router.replace("/login" as any);
+                });
+              }}
               disabled={isSubmitting}
             >
               Sign In

@@ -102,7 +102,7 @@ function formatRelativeTime(timestamp: string) {
 export default function NotificationsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken } = useAuth();
+  const { accessToken, expireSession } = useAuth();
   const [notifications, setNotifications] = useState<UiNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -284,7 +284,9 @@ export default function NotificationsScreen() {
           <Pressable
             onPress={() => {
               if (isSessionExpiredError) {
-                router.replace("/login" as any);
+                void expireSession().finally(() => {
+                  router.replace("/login" as any);
+                });
                 return;
               }
               void fetchNotifications();

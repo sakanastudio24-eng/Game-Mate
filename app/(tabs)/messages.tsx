@@ -26,7 +26,7 @@ interface Conversation {
 export default function MessagesScreen() {
   const router = useRouter();
   const responsive = useResponsive();
-  const { accessToken, user, logoutUser } = useAuth();
+  const { accessToken, user, expireSession } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [threads, setThreads] = useState<ThreadItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -157,11 +157,11 @@ export default function MessagesScreen() {
 
   const handleSessionExpiredAction = useCallback(async () => {
     try {
-      await logoutUser();
+      await expireSession();
     } finally {
       router.replace("/login" as any);
     }
-  }, [logoutUser, router]);
+  }, [expireSession, router]);
 
   return (
     <Screen scrollable={false}>

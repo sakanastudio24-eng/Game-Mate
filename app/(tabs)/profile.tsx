@@ -102,7 +102,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const insets = useSafeAreaInsets();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, expireSession } = useAuth();
   const safeTop = Math.max(insets.top, responsive.safeTopInset);
   const safeBottom = Math.max(insets.bottom, responsive.safeBottomInset);
   const profileErrorBottomOffset = safeBottom + 74;
@@ -730,7 +730,9 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => {
               if (isSessionExpiredError) {
-                router.replace("/login" as any);
+                void expireSession().finally(() => {
+                  router.replace("/login" as any);
+                });
                 return;
               }
               void loadProfile();

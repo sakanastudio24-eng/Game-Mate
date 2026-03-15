@@ -257,7 +257,7 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
 
 export default function NewsScreen() {
   const router = useRouter();
-  const { accessToken, loading: authLoading } = useAuth();
+  const { accessToken, loading: authLoading, expireSession } = useAuth();
   const params = useLocalSearchParams<{
     focusVideoId?: string;
     focusFrom?: string;
@@ -581,11 +581,13 @@ export default function NewsScreen() {
 
   const handleFeedRecovery = useCallback(() => {
     if (requiresSignInRecovery) {
-      router.replace("/login");
+      void expireSession().finally(() => {
+        router.replace("/login" as any);
+      });
       return;
     }
     void fetchBackendFeed("refresh");
-  }, [fetchBackendFeed, requiresSignInRecovery, router]);
+  }, [expireSession, fetchBackendFeed, requiresSignInRecovery, router]);
 
   useEffect(() => {
     if (refreshParam !== "1") return;

@@ -11,6 +11,7 @@ type AuthState = {
   authSuccess: string | null;
   loginUser: (email: string, password: string) => Promise<void>;
   logoutUser: () => Promise<void>;
+  expireSession: () => Promise<void>;
   clearAuthMessages: () => void;
 };
 
@@ -132,6 +133,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const expireSession = async () => {
+    setLoading(true);
+    setAccessToken(null);
+    setUser(null);
+    setAuthSuccess(null);
+    setAuthError(SESSION_EXPIRED_MESSAGE);
+    try {
+      await clearTokens();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = useMemo(
     () => ({
       user,
@@ -141,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authSuccess,
       loginUser,
       logoutUser,
+      expireSession,
       clearAuthMessages,
     }),
     [accessToken, authError, authSuccess, loading, user],

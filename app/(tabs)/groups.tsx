@@ -248,7 +248,7 @@ const GroupDiscoverCard = memo(function GroupDiscoverCard({
 
 export default function GroupsScreen() {
   const router = useRouter();
-  const { accessToken } = useAuth();
+  const { accessToken, expireSession } = useAuth();
   const responsive = useResponsive();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
@@ -821,7 +821,9 @@ export default function GroupsScreen() {
               <Pressable
                 onPress={() => {
                   if (isSessionExpiredError) {
-                    router.replace("/login" as any);
+                    void expireSession().finally(() => {
+                      router.replace("/login" as any);
+                    });
                     return;
                   }
                   void loadGroups();

@@ -41,7 +41,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const params = useLocalSearchParams<ChatRouteParams>();
-  const { accessToken, user, logoutUser } = useAuth();
+  const { accessToken, user, expireSession } = useAuth();
   const { showToast } = useToast();
   const [activeThreadId, setActiveThreadId] = useState<number | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -184,11 +184,11 @@ export default function ChatScreen() {
 
   const handleSessionExpiredAction = useCallback(async () => {
     try {
-      await logoutUser();
+      await expireSession();
     } finally {
       router.replace("/login" as any);
     }
-  }, [logoutUser, router]);
+  }, [expireSession, router]);
 
   return (
     <Screen scrollable={false}>

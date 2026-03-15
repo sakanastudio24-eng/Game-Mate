@@ -40,7 +40,7 @@ export default function GroupDetailScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const params = useLocalSearchParams<GroupDetailParams>();
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, expireSession } = useAuth();
   const { showToast } = useToast();
   const [group, setGroup] = useState<GroupItem | null>(null);
   const [members, setMembers] = useState<GroupMember[]>([]);
@@ -234,7 +234,9 @@ export default function GroupDetailScreen() {
           <Pressable
             onPress={() => {
               if (isSessionExpiredError) {
-                router.replace("/login" as any);
+                void expireSession().finally(() => {
+                  router.replace("/login" as any);
+                });
                 return;
               }
               void loadGroup();

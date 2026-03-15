@@ -36,6 +36,37 @@ That means a transient failure can break continuity between:
 2. what the device remembers
 3. what the backend actually stored
 
+## Additional Issue: Android Keyboard Gap
+
+### Problem
+
+On Android, focusing the email field created a black gap at the bottom of the onboarding screen.
+
+The gap did not exist before input focus, which made it look like a hidden footer or mystery navigation block even though no visible component owned that space.
+
+### Root Cause
+
+This was caused by Android keyboard avoidance resizing the onboarding root after the text field focused.
+
+The screen was using `KeyboardAvoidingView` in a way that was appropriate for iOS but unstable for this Android layout.
+
+### Fix
+
+The onboarding screen now:
+
+- disables `KeyboardAvoidingView` behavior on Android
+- keeps keyboard avoidance only on iOS
+- sets onboarding background color explicitly
+- aligns Android navigation bar color with the onboarding background
+
+### Rule
+
+For this onboarding flow:
+
+- no bottom gap should appear after focusing an input
+- Android should not use keyboard avoidance that resizes the entire screen
+- inline validation should stay next to the relevant field, not fall into the footer area
+
 ## Correct Product Rule
 
 Onboarding should behave like a temporary draft until final completion succeeds.

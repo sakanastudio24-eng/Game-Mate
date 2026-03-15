@@ -59,6 +59,7 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [selectedGames, setSelectedGames] = useState<string[]>([]);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -78,6 +79,7 @@ export default function EditProfileScreen() {
       setBio(profile.bio || "");
       setSelectedGames(profile.favorite_games || []);
       setAvatarUrl(profile.avatar_url || "");
+      setShowAvatarPicker(false);
       setCachedProfile(profile);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : "Unable to load profile.");
@@ -91,6 +93,7 @@ export default function EditProfileScreen() {
     setBio(cachedProfile.bio || "");
     setSelectedGames(cachedProfile.favorite_games || []);
     setAvatarUrl(cachedProfile.avatar_url || "");
+    setShowAvatarPicker(false);
     if (
       cachedProfile.bio ||
       cachedProfile.avatar_url ||
@@ -139,6 +142,7 @@ export default function EditProfileScreen() {
     setBio(cachedProfile.bio || "");
     setSelectedGames(cachedProfile.favorite_games || []);
     setAvatarUrl(cachedProfile.avatar_url || "");
+    setShowAvatarPicker(false);
     setError("");
     router.replace("/(tabs)/profile");
   };
@@ -184,54 +188,52 @@ export default function EditProfileScreen() {
         >
           Profile Picture
         </Text>
-        <View style={styles.avatarDisplay}>
+        <Pressable
+          onPress={() => setShowAvatarPicker((prev) => !prev)}
+          accessibilityRole="button"
+          accessibilityLabel="Change profile picture"
+          style={({ pressed }) => [styles.avatarDisplay, pressed && styles.pressed]}
+        >
           <ExpoImage
             source={{ uri: avatarUrl || avatarOptions[0] }}
             style={styles.avatarLargeImage}
             contentFit="cover"
           />
-        </View>
+        </Pressable>
+        <Text style={styles.avatarHint}>Tap photo to change</Text>
 
-        <View style={styles.avatarGrid}>
-          {avatarOptions.map((avatar) => (
-            <Pressable
-              key={avatar}
-              onPress={() => setAvatarUrl(avatar)}
-              accessibilityRole="button"
-              accessibilityLabel="Select avatar image"
-              accessibilityState={{ selected: avatarUrl === avatar }}
-              style={[
-                styles.avatarOption,
-                {
-                  width: responsive.iconButtonSize + 14,
-                  height: responsive.iconButtonSize + 14,
-                  borderRadius: (responsive.iconButtonSize + 14) / 2,
-                },
-                avatarUrl === avatar && styles.avatarOptionSelected,
-              ]}
-            >
-              <ExpoImage
-                source={{ uri: avatar }}
-                style={styles.avatarOptionImage}
-                contentFit="cover"
-              />
-            </Pressable>
-          ))}
-        </View>
+        {showAvatarPicker ? (
+          <View style={styles.avatarGrid}>
+            {avatarOptions.map((avatar) => (
+              <Pressable
+                key={avatar}
+                onPress={() => {
+                  setAvatarUrl(avatar);
+                  setShowAvatarPicker(false);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Select avatar image"
+                accessibilityState={{ selected: avatarUrl === avatar }}
+                style={[
+                  styles.avatarOption,
+                  {
+                    width: responsive.iconButtonSize + 14,
+                    height: responsive.iconButtonSize + 14,
+                    borderRadius: (responsive.iconButtonSize + 14) / 2,
+                  },
+                  avatarUrl === avatar && styles.avatarOptionSelected,
+                ]}
+              >
+                <ExpoImage
+                  source={{ uri: avatar }}
+                  style={styles.avatarOptionImage}
+                  contentFit="cover"
+                />
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
       </Card>
-
-      <Input
-        label="Avatar URL (optional)"
-        accessibilityLabel="Avatar URL"
-        value={avatarUrl}
-        onChangeText={setAvatarUrl}
-        placeholder="https://example.com/avatar.png"
-        autoCapitalize="none"
-        autoCorrect={false}
-        autoComplete="off"
-        keyboardType="url"
-        fullWidth
-      />
 
       {/* Username */}
       <Input
@@ -301,7 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   avatarDisplay: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   avatarLargeImage: {
     width: 96,
@@ -315,6 +317,11 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "center",
     gap: spacing.md,
+  },
+  avatarHint: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    marginBottom: spacing.lg,
   },
   avatarOption: {
     width: 56,

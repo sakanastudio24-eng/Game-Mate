@@ -1,20 +1,22 @@
 {
   "expo": {
     "name": "GameMate",
-    "slug": "GameMate",
+    "slug": "gamemate",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "gamemate",
+    "platforms": ["ios", "android"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
+      "bundleIdentifier": "com.zech1v1.gamemate",
       "supportsTablet": true
     },
     "android": {
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.zech1v1.GameMate"
+      "package": "com.zech1v1.gamemate"
     },
     "androidNavigationBar": {
       "backgroundColor": "#F5F5F5",

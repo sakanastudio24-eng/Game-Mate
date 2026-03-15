@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { BarCodeScanner, type BarCodeScannedCallback } from "expo-barcode-scanner";
+import { CameraView, type BarcodeScanningResult, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import QRCode from "react-native-qrcode-svg";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -22,8 +22,8 @@ export default function QRCodeScreen() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"mycode" | "scan">("mycode");
   const [accentColor, setAccentColor] = useState(colors.primary);
-  const [scanPermission, setScanPermission] = useState<boolean | null>(null);
   const [hasScanned, setHasScanned] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
   const qrSize = responsive.isSmallPhone ? 216 : responsive.isLargePhone ? 264 : 240;
   const qrValue = useMemo(() => buildUserQrValue(user?.username), [user?.username]);
@@ -31,31 +31,16 @@ export default function QRCodeScreen() {
   const colorOptions = [colors.primary, "#66BAFF", "#66FF9F", "#FF6BA6"];
 
   useEffect(() => {
-    let mounted = true;
-
     if (activeTab !== "scan") {
       setHasScanned(false);
-      return () => {
-        mounted = false;
-      };
+      return;
     }
 
-    BarCodeScanner.requestPermissionsAsync()
-      .then(({ status }) => {
-        if (mounted) {
-          setScanPermission(status === "granted");
-        }
-      })
-      .catch(() => {
-        if (mounted) {
-          setScanPermission(false);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [activeTab]);
+    if (!permission) return;
+    if (!permission.granted) {
+      void requestPermission();
+    }
+  }, [activeTab, permission, requestPermission]);
 
   const handleShare = useCallback(async () => {
     if (!qrValue) {
@@ -84,7 +69,7 @@ export default function QRCodeScreen() {
     [router, user?.username],
   );
 
-  const handleScan = useCallback<BarCodeScannedCallback>(
+  const handleScan = useCallback(
     ({ data }) => {
       if (hasScanned) return;
 
@@ -102,7 +87,7 @@ export default function QRCodeScreen() {
       openScannedProfile(username);
     },
     [hasScanned, openScannedProfile],
-  );
+  ) as (result: BarcodeScanningResult) => void;
 
   return (
     <Screen>
@@ -226,12 +211,12 @@ export default function QRCodeScreen() {
       ) : (
         <Card style={styles.scanCard}>
           <View style={styles.scanStage}>
-            {scanPermission ? (
+            {permission?.granted ? (
               <View style={styles.cameraWrap}>
-                <BarCodeScanner
-                  onBarCodeScanned={hasScanned ? undefined : handleScan}
+                <CameraView
+                  onBarcodeScanned={hasScanned ? undefined : handleScan}
                   style={StyleSheet.absoluteFillObject}
-                  barCodeTypes={[BarCodeScanner.Constants.BarCodeType.qr]}
+                  barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
                 />
                 <View pointerEvents="none" style={styles.scanOverlay}>
                   <View style={styles.scanFrame} />
@@ -241,7 +226,7 @@ export default function QRCodeScreen() {
               <View style={styles.scanPlaceholder}>
                 <MaterialCommunityIcons name="camera-off" size={56} color={colors.textMuted} />
                 <Text style={styles.scanText}>
-                  {scanPermission === false ? "Camera permission is required." : "Checking camera access..."}
+                  {permission ? "Camera permission is required." : "Checking camera access..."}
                 </Text>
                 <Text style={[styles.scanSubtext, { fontSize: responsive.bodySmallSize }]}>
                   Scan a GameMate QR code that contains `gm:user:username`.

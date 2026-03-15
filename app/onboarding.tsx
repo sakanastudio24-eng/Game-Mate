@@ -355,7 +355,8 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.keyboardRoot}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      enabled={Platform.OS === "ios"}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? safeTop + 8 : 0}
     >
       <ScrollView

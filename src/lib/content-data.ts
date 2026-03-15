@@ -67,7 +67,7 @@ export const AUTHOR_AVATARS: Record<string, string> = {
   PixelPulse:
     "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
   RespawnRadio:
-    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
   LobbyLegends:
     "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=100&h=100&fit=crop",
 };

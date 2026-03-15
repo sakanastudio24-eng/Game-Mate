@@ -18,6 +18,7 @@ export type OnboardingDraft = {
   confirmPassword?: string;
 };
 
+/** Returns whether onboarding has already been completed on this device. */
 export async function hasCompletedOnboarding(): Promise<boolean> {
   try {
     const stored = await AsyncStorage.getItem(ONBOARDING_KEY);
@@ -27,6 +28,7 @@ export async function hasCompletedOnboarding(): Promise<boolean> {
   }
 }
 
+/** Persists the device-level onboarding completion flag. */
 export async function setCompletedOnboarding(completed: boolean): Promise<void> {
   try {
     if (completed) {
@@ -39,6 +41,7 @@ export async function setCompletedOnboarding(completed: boolean): Promise<void> 
   }
 }
 
+/** Restores the saved onboarding draft from local and secure storage. */
 export async function getOnboardingDraft(): Promise<OnboardingDraft | null> {
   try {
     const [draftJson, secretJson] = await Promise.all([
@@ -63,6 +66,7 @@ export async function getOnboardingDraft(): Promise<OnboardingDraft | null> {
   }
 }
 
+/** Saves the current onboarding draft, splitting secrets into secure storage. */
 export async function saveOnboardingDraft(draft: OnboardingDraft): Promise<void> {
   try {
     const { password = "", confirmPassword = "", ...publicDraft } = draft;
@@ -81,6 +85,7 @@ export async function saveOnboardingDraft(draft: OnboardingDraft): Promise<void>
   }
 }
 
+/** Clears any saved onboarding draft after successful completion or reset. */
 export async function clearOnboardingDraft(): Promise<void> {
   try {
     await Promise.all([

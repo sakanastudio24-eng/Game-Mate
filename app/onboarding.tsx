@@ -50,10 +50,12 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S{10,}$/;
 
+/** Normalizes birthdate input to an eight-digit MMDDYYYY string. */
 function sanitizeBirthdateInput(value: string): string {
   return value.replace(/\D/g, "").slice(0, 8);
 }
 
+/** Validates that the supplied MMDDYYYY birthdate is real and before today. */
 function isBirthdateBeforeToday(value: string): boolean {
   if (value.length !== 8) return false;
 
@@ -80,18 +82,22 @@ function isBirthdateBeforeToday(value: string): boolean {
   return candidate.getTime() < today.getTime();
 }
 
+/** Returns whether an email matches the onboarding format requirements. */
 function isValidEmail(value: string) {
   return EMAIL_PATTERN.test(value.trim());
 }
 
+/** Returns whether a username matches the allowed public handle format. */
 function isValidUsername(value: string) {
   return USERNAME_PATTERN.test(value.trim());
 }
 
+/** Returns whether a password satisfies the onboarding strength policy. */
 function isStrongPassword(value: string) {
   return PASSWORD_PATTERN.test(value);
 }
 
+/** Builds the live password checklist shown during account creation. */
 function getPasswordChecks(value: string, confirmValue: string) {
   return [
     { key: "length", label: "At least 10 characters", passed: value.length >= 10 },
@@ -107,6 +113,7 @@ function getPasswordChecks(value: string, confirmValue: string) {
   ];
 }
 
+/** Runs the four-step email-first onboarding flow for account creation. */
 export default function OnboardingScreen() {
   const router = useRouter();
   const { loginUser } = useAuth();

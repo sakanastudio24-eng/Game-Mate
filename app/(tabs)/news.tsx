@@ -93,6 +93,7 @@ const FEED_REASON_LABELS: Record<string, string> = {
   freshness_boost: "Fresh content",
 };
 
+/** Converts backend reason keys into readable labels for explain surfaces. */
 function formatReasonLabel(reason: string): string {
   if (FEED_REASON_LABELS[reason]) return FEED_REASON_LABELS[reason];
   return reason
@@ -102,6 +103,7 @@ function formatReasonLabel(reason: string): string {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+/** Resolves a displayable author name from varying backend creator shapes. */
 function getPostAuthor(post: PostItem): string {
   if (typeof post.creator === "string" && post.creator.trim()) {
     return post.creator.trim();
@@ -118,6 +120,7 @@ function getPostAuthor(post: PostItem): string {
   return "GameMate";
 }
 
+/** Formats an ISO timestamp into the feed's short display date. */
 function toDisplayDate(isoDate: string): string {
   const value = new Date(isoDate);
   if (Number.isNaN(value.getTime())) return "Recently";
@@ -128,6 +131,7 @@ function toDisplayDate(isoDate: string): string {
   });
 }
 
+/** Resolves a stable feed thumbnail, falling back to seeded imagery when needed. */
 function toThumbnail(post: PostItem, index: number): string {
   const candidate = (post.video_url ?? "").trim();
   const isImageUrl = /\.(png|jpe?g|webp|gif|bmp|avif)(\?.*)?$/i.test(candidate);
@@ -135,6 +139,7 @@ function toThumbnail(post: PostItem, index: number): string {
   return NEWS_FEED[index % NEWS_FEED.length]?.thumbnail ?? THUMBNAIL_FALLBACK;
 }
 
+/** Maps backend feed metadata into the app's user-facing category buckets. */
 function toCategory(post: PostItem): NewsFeedItem["category"] {
   const source = post.feed_meta?.source ?? "";
   if (source.includes("tournament")) return "esports";
@@ -143,6 +148,7 @@ function toCategory(post: PostItem): NewsFeedItem["category"] {
   return "fyp";
 }
 
+/** Extracts the top explain reasons attached to a backend-ranked post. */
 function toWhyReasons(post: PostItem): string[] {
   const rawReasons = post.feed_meta?.reasons ?? [];
   const mapped = rawReasons
@@ -152,6 +158,7 @@ function toWhyReasons(post: PostItem): string[] {
   return unique.slice(0, 3);
 }
 
+/** Adapts a backend feed post into the feed screen's local render model. */
 function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
   const signals = post.feed_meta?.signals ?? {};
   const title = (post.title ?? "").trim() || "Untitled";
@@ -190,6 +197,7 @@ function mapPostToNewsItem(post: PostItem, index: number): FeedSeed {
   };
 }
 
+/** Duplicates a seed list into one named playback loop with unique feed ids. */
 function createLoop(seed: FeedSeed[], loopIndex: number, loopLabel = "loop"): FeedEntry[] {
   return seed.map((item, index) => ({
     ...item,
@@ -197,6 +205,7 @@ function createLoop(seed: FeedSeed[], loopIndex: number, loopLabel = "loop"): Fe
   }));
 }
 
+/** Builds the initial client-side looping feed from a seed list. */
 function createInitialFeed(seed: FeedSeed[]): FeedEntry[] {
   const items: FeedEntry[] = [];
   for (let loop = 0; loop < INITIAL_LOOP_COUNT; loop += 1) {
@@ -205,6 +214,7 @@ function createInitialFeed(seed: FeedSeed[]): FeedEntry[] {
   return items;
 }
 
+/** Shuffles feed seed content while avoiding an unchanged first item when possible. */
 function shuffleFeedSeed(seed: FeedSeed[], previousFirstId?: string): FeedSeed[] {
   if (seed.length <= 1) return seed;
   const shuffled = [...seed];
@@ -221,6 +231,7 @@ function shuffleFeedSeed(seed: FeedSeed[], previousFirstId?: string): FeedSeed[]
   return shuffled;
 }
 
+/** Formats engagement counts for the feed action rail. */
 function compactNumber(value: number): string {
   if (value >= 1000) {
     return `${(value / 1000).toFixed(1)}k`;
@@ -228,12 +239,14 @@ function compactNumber(value: number): string {
   return String(value);
 }
 
+/** Truncates feed titles to a short overlay-safe word count. */
 function truncateFeedTitle(title: string, maxWords = 6): string {
   const words = title.trim().split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return title;
   return `${words.slice(0, maxWords).join(" ")}...`;
 }
 
+/** Returns the seeded comment preview for a feed item before live replies exist. */
 function buildCommentPreview(item: FeedEntry): CommentItem[] {
   if (item.id === "viral-1") {
     return [
@@ -322,6 +335,7 @@ function buildCommentPreview(item: FeedEntry): CommentItem[] {
   ];
 }
 
+/** Renders the full-screen vertical feed, drawers, and interaction flows. */
 export default function NewsScreen() {
   const router = useRouter();
   const { accessToken, loading: authLoading, expireSession } = useAuth();

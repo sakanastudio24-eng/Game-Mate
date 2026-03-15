@@ -19,6 +19,7 @@ import { colors, spacing } from "../../src/lib/theme";
 
 type ProfileStatus = "online" | "offline" | "in-game";
 
+/** Displays either a backend-loaded public profile or a legacy param-driven fallback profile. */
 export default function UserProfileScreen() {
   const router = useRouter();
   const responsive = useResponsive();

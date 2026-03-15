@@ -41,10 +41,12 @@ export const GROUPS_PAGE_SIZE = 3;
 
 let isHomeContentPrimed = false;
 
+/** Marks the home/feed content cache as primed after onboarding or warm startup. */
 export function primeHomeContentCache(): void {
   isHomeContentPrimed = true;
 }
 
+/** Returns whether the home/feed content cache has already been primed. */
 export function homeContentPrimed(): boolean {
   return isHomeContentPrimed;
 }

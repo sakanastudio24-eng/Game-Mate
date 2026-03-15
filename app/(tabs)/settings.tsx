@@ -16,6 +16,7 @@ import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 
+/** Renders profile settings and keeps the header identity card in sync with the profile tab. */
 export default function SettingsScreen() {
   const router = useRouter();
   const responsive = useResponsive();

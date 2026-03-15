@@ -50,6 +50,7 @@ const CATEGORY_FILTERS: FilterChipOption[] = [
   { id: "streams", label: "Streams" },
 ];
 
+/** Formats large engagement counts into compact search-card labels. */
 function compactNumber(value: number): string {
   if (value >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1)}M`;
@@ -60,6 +61,7 @@ function compactNumber(value: number): string {
   return String(value);
 }
 
+/** Parses or synthesizes a sortable timestamp for ranking freshness. */
 function normalizedDate(dateText: string, fallbackIndex: number): number {
   const parsed = Date.parse(dateText);
   if (Number.isNaN(parsed)) {
@@ -68,6 +70,7 @@ function normalizedDate(dateText: string, fallbackIndex: number): number {
   return parsed;
 }
 
+/** Tokenizes a search string into normalized lowercase query terms. */
 function normalizeTokens(value: string): string[] {
   return value
     .toLowerCase()
@@ -76,6 +79,7 @@ function normalizeTokens(value: string): string[] {
     .filter(Boolean);
 }
 
+/** Creates an abortable delay used to debounce AI-assisted search refreshes. */
 function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -93,6 +97,7 @@ function abortableDelay(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
+/** Renders the video search surface and routes ordered results into the feed. */
 export default function AIAdvisorScreen() {
   const router = useRouter();
   const responsive = useResponsive();

@@ -140,6 +140,7 @@ const showcaseSeed: DemoProfileSeed = {
   ],
 };
 
+/** Returns the frontend-only showcase profile overlay for the seeded demo account. */
 export function getDemoProfileSeedForUser(
   user: { username?: string | null; email?: string | null } | null | undefined,
 ): DemoProfileSeed | null {

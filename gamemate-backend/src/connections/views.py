@@ -3,12 +3,13 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.db.models.functions import Lower
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Connection
 from .serializers import ConnectionSerializer
+from .throttles import FriendRequestThrottle
 
 User = get_user_model()
 
@@ -37,6 +38,7 @@ def _serialize_relationship_state(request_user, target_user):
 # Send a connection request from current user to target user.
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@throttle_classes([FriendRequestThrottle])
 def send_request(request, user_id):
     """Create a pending friend request from the requester to the target user."""
 

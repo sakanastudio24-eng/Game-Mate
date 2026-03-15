@@ -143,6 +143,9 @@ REST_FRAMEWORK = {
         "user": "500/hour",
         "login": "10/min",
         "signup": "20/hour",
+        "friend_request": "10/hour",
+        "message_send": "30/min",
+        "post_create": "20/hour",
     },
 }
 

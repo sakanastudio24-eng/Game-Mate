@@ -1,8 +1,20 @@
+from django.conf import settings
+from django.core.cache import cache
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
 from connections.models import Connection
+
+
+TEST_REST_FRAMEWORK = {
+    **settings.REST_FRAMEWORK,
+    "DEFAULT_THROTTLE_RATES": {
+        **settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
+        "friend_request": "1/min",
+    },
+}
 
 
 # Regression tests for request rejection, cancellation, and user search.
@@ -98,3 +110,36 @@ class ConnectionFlowTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["message"], "Incoming request already exists.")
         self.assertEqual(Connection.objects.count(), 1)
+
+
+@override_settings(REST_FRAMEWORK=TEST_REST_FRAMEWORK)
+class ConnectionThrottleTests(APITestCase):
+    """Ensure outgoing friend requests are rate limited intentionally."""
+
+    def setUp(self):
+        cache.clear()
+        self.sender = User.objects.create_user(
+            email="sender-throttle@gamemate.dev",
+            username="sender_throttle",
+            password="senderpass123",
+        )
+        self.first_target = User.objects.create_user(
+            email="first-target@gamemate.dev",
+            username="first_target",
+            password="targetpass123",
+        )
+        self.second_target = User.objects.create_user(
+            email="second-target@gamemate.dev",
+            username="second_target",
+            password="targetpass123",
+        )
+        self.client.force_authenticate(user=self.sender)
+
+    def test_send_request_is_throttled_after_limit(self):
+        """Second rapid outgoing request should receive a throttle response."""
+
+        first_response = self.client.post(f"/api/friends/request/{self.first_target.id}/")
+        second_response = self.client.post(f"/api/friends/request/{self.second_target.id}/")
+
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second_response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)

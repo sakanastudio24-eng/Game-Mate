@@ -1,4 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import * as SystemUI from "expo-system-ui";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -139,6 +140,12 @@ export default function OnboardingScreen() {
       useNativeDriver: true,
     }).start();
   }, [reduceMotion, responsive.motionBase, step, stepTransition]);
+
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync("#F5F5F5").catch(() => {
+      // Keep onboarding resilient even if the platform ignores background updates.
+    });
+  }, []);
 
   const stepAnimatedStyle = {
     opacity: stepTransition,
@@ -301,7 +308,7 @@ export default function OnboardingScreen() {
           styles.content,
           {
             paddingTop: safeTop + 14,
-            paddingBottom: safeBottom + 24,
+            paddingBottom: safeBottom + 8,
             minHeight: scrollEnabled ? undefined : "100%",
           },
         ]}

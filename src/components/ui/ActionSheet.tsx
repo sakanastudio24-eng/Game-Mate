@@ -90,10 +90,10 @@ const styles = StyleSheet.create({
   },
   scrim: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.46)",
+    backgroundColor: colors.scrim,
   },
   sheet: {
-    backgroundColor: "#1F1F1F",
+    backgroundColor: colors.surfaceOverlay,
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     paddingHorizontal: spacing.md,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     overflow: "hidden",
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
   },
   optionButton: {
     minHeight: 50,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     alignItems: "center",
     justifyContent: "center",
   },

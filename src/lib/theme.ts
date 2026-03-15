@@ -5,18 +5,31 @@ import { MD3LightTheme } from "react-native-paper";
 export const colors = {
   primary: "#FF9F66", // Orange - primary action
   secondary: "#66FF9F", // Green - secondary accent
+  onPrimary: "#1A1A1A", // High-contrast text/icons on orange actions
   online: "#66FF9F", // Green - online status
+  away: "#FACC15",
+  busy: "#F87171",
+  offline: "#6B7280",
+  info: "#66BAFF",
+  highlight: "#FFD700",
   destructive: "#FF6B6B", // Red - destructive actions
   background: "#1A1A1A", // Dark background
   surface: "#2D2D2D", // Elevated surfaces (cards)
   card: "#2D2D2D", // Alias used by migrated screens
+  surfaceRaised: "#242424",
+  surfaceInset: "#1E1E1E",
+  surfaceOverlay: "#1F1F1F",
+  surfaceMuted: "#2A2A2A",
+  surfaceSoft: "#222222",
   text: "#F5F5F5", // Light text
   textSecondary: "#B0B0B0", // Secondary text
   textMuted: "#B0B0B0", // Alias used by migrated screens
   border: "#3D3D3D", // Border/divider color
+  borderStrong: "#444444",
   success: "#51CF66", // Green - success states
   warning: "#FFD43B", // Yellow - warning states
   error: "#FF6B6B", // Red - error states
+  scrim: "rgba(0,0,0,0.46)",
 };
 
 export const spacing = {

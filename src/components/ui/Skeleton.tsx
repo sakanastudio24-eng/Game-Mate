@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     padding: 14,
   },
   row: {

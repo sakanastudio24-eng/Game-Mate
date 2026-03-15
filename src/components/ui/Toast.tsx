@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: colors.surfaceInset,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     flexDirection: "row",

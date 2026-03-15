@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   wrap: {
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#242424",
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 14,
     padding: spacing.md,
     alignItems: "center",
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: "#1E1E1E",
+    backgroundColor: colors.surfaceInset,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.sm,

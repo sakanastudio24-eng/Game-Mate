@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: "#222222",
+    backgroundColor: colors.surfaceSoft,
     padding: spacing.sm,
   },
   headerRow: {

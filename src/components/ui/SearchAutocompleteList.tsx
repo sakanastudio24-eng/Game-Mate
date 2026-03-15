@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: "#232323",
+    backgroundColor: colors.surfaceSoft,
     padding: spacing.sm,
   },
   title: {

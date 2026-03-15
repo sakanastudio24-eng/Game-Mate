@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from .feed import score_post
 from .models import Post, PostInteraction, PostShare
+from .permissions import IsPostOwner
 from .serializers import PostSerializer
 from .serializers_interaction import PostInteractionSerializer
 from posts.services.cache_service import (
@@ -31,6 +32,13 @@ class PostViewSet(viewsets.ModelViewSet):
     )
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """Require ownership for post mutation actions."""
+        perms = [IsAuthenticated()]
+        if self.action in ["update", "partial_update", "destroy", "restore"]:
+            perms.append(IsPostOwner())
+        return perms
 
     def perform_create(self, serializer):
         """Attach authenticated user as post creator on create."""
@@ -62,6 +70,7 @@ class PostViewSet(viewsets.ModelViewSet):
                 {"success": False, "message": "Post not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        self.check_object_permissions(request, post)
 
         post.is_deleted = False
         post.deleted_at = None

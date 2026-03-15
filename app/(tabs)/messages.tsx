@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
@@ -70,6 +71,13 @@ export default function MessagesScreen() {
   useEffect(() => {
     void loadThreads();
   }, [loadThreads]);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadThreads();
+      return undefined;
+    }, [loadThreads]),
+  );
 
   const conversations = useMemo<Conversation[]>(() => {
     const selfUsername = String(user?.username ?? "");

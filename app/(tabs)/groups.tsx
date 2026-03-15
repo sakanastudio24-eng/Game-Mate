@@ -624,7 +624,12 @@ export default function GroupsScreen() {
                   <MaterialCommunityIcons name="magnify" size={20} color={colors.text} />
                 </Pressable>
                 <Pressable
-                  onPress={() => router.push("/(tabs)/qr-code")}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/(tabs)/qr-code",
+                      params: { source: "groups" },
+                    } as any)
+                  }
                   accessibilityRole="button"
                   accessibilityLabel="Open QR code"
                   style={({ pressed }) => [

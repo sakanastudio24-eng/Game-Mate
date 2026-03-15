@@ -165,7 +165,7 @@ export default function MessagesScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Messages" showBackButton />
+      <Header title="Messages" showBackButton onBack={() => router.replace("/(tabs)/social")} />
 
       <Searchbar
         placeholder="Search conversations..."
@@ -242,7 +242,12 @@ export default function MessagesScreen() {
 
       <FAB
         icon="pencil"
-        onPress={() => router.push("/(tabs)/search-players" as any)}
+        onPress={() =>
+          router.push({
+            pathname: "/(tabs)/search-players",
+            params: { source: "messages" },
+          } as any)
+        }
         style={styles.fab}
         color={colors.background}
       />

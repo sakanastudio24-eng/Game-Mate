@@ -154,7 +154,7 @@ export default function MatchmakingScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Matchmaking" showBackButton />
+      <Header title="Matchmaking" showBackButton onBack={() => router.replace("/(tabs)/groups")} />
 
       <View style={styles.filterContainer}>
         <SegmentedButtons

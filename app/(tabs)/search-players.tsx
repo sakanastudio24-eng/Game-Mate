@@ -1,3 +1,4 @@
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React, { useMemo, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
@@ -27,7 +28,9 @@ interface PlayerSearchResult {
 }
 
 export default function SearchPlayersScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
+  const params = useLocalSearchParams<{ source?: string }>();
   const { accessToken } = useAuth();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,6 +39,7 @@ export default function SearchPlayersScreen() {
   const [sendingPlayerIds, setSendingPlayerIds] = useState<Set<string>>(new Set());
 
   const allGenres = ["FPS", "RPG", "Strategy", "Sports", "Fighting", "MMO"];
+  const backTarget = params.source === "messages" ? "/(tabs)/messages" : "/(tabs)/social";
 
   const toggleGenre = (genre: string) => {
     setSelectedGenres((prev) =>
@@ -166,7 +170,7 @@ export default function SearchPlayersScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Find Players" showBackButton />
+      <Header title="Find Players" showBackButton onBack={() => router.replace(backTarget as any)} />
 
       <Searchbar
         placeholder="Search by name..."

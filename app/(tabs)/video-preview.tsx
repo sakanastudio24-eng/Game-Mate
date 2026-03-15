@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Alert, Image, Pressable, StyleSheet, View } from "react-native";
@@ -9,6 +9,7 @@ import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
 
 export default function VideoPreviewScreen() {
+  const router = useRouter();
   const responsive = useResponsive();
   const params = useLocalSearchParams<{
     videoId?: string;
@@ -28,7 +29,12 @@ export default function VideoPreviewScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="Video Preview" subtitle="Creator tools" showBackButton />
+      <Header
+        title="Video Preview"
+        subtitle="Creator tools"
+        showBackButton
+        onBack={() => router.replace("/(tabs)/profile")}
+      />
 
       <View style={styles.heroCard}>
         <Image source={{ uri: image }} style={styles.heroImage} accessibilityLabel={`${title} preview`} />

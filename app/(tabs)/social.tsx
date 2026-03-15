@@ -309,7 +309,12 @@ export default function SocialScreen() {
 
             <View style={styles.headerActions}>
               <Pressable
-                onPress={() => router.push("/(tabs)/search-players")}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/search-players",
+                    params: { source: "social" },
+                  } as any)
+                }
                 accessibilityRole="button"
                 accessibilityLabel="Find players"
                 style={({ pressed }) => [
@@ -326,7 +331,12 @@ export default function SocialScreen() {
               </Pressable>
 
               <Pressable
-                onPress={() => router.push("/(tabs)/qr-code")}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/qr-code",
+                    params: { source: "social" },
+                  } as any)
+                }
                 accessibilityRole="button"
                 accessibilityLabel="Open QR code"
                 style={({ pressed }) => [
@@ -458,6 +468,7 @@ export default function SocialScreen() {
                           status: item.online ? "online" : "offline",
                           currentGame: item.game?.replace("Playing ", ""),
                           level: String(item.level),
+                          source: "social",
                         },
                       })
                     }
@@ -653,6 +664,7 @@ export default function SocialScreen() {
                           name: item.name,
                           avatar: item.avatar,
                           status: "online",
+                          source: "social",
                         },
                       })
                     }

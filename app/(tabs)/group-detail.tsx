@@ -202,7 +202,11 @@ export default function GroupDetailScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title={group?.name ?? "Group"} showBackButton />
+      <Header
+        title={group?.name ?? "Group"}
+        showBackButton
+        onBack={() => router.replace("/(tabs)/groups")}
+      />
 
       <View style={styles.tabSelector}>
         {tabButtons.map((tab) => (
@@ -397,6 +401,8 @@ export default function GroupDetailScreen() {
                   params: {
                     userId: String(item.user_id),
                     name: item.username,
+                    source: "group",
+                    groupId: groupId ? String(groupId) : undefined,
                   },
                 })
               }

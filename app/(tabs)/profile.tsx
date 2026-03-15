@@ -239,6 +239,7 @@ export default function ProfileScreen() {
         image: video.image,
         duration: video.duration,
         views: video.views,
+        source: "profile",
       },
     } as any);
   };
@@ -261,7 +262,12 @@ export default function ProfileScreen() {
               ]}
             >
               <Pressable
-                onPress={() => router.push("/(tabs)/qr-code")}
+                onPress={() =>
+                  router.push({
+                    pathname: "/(tabs)/qr-code",
+                    params: { source: "profile" },
+                  } as any)
+                }
                 accessibilityRole="button"
                 accessibilityLabel="Open QR code"
                 style={({ pressed }) => [

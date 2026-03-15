@@ -423,6 +423,7 @@ export default function NewsScreen() {
           avatar: AUTHOR_AVATARS[item.author] || CURRENT_USER_AVATAR,
           status: "online",
           currentGame: item.game,
+          source: "feed",
         },
       });
     },

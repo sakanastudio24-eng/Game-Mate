@@ -368,6 +368,7 @@ export default function AIAdvisorScreen() {
         title="Search"
         subtitle={typeof params.source === "string" ? `Source: ${params.source}` : "Video search"}
         showBackButton
+        onBack={() => router.replace("/(tabs)/news")}
       />
 
       <View style={styles.fixedSearchWrap}>

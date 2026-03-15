@@ -195,6 +195,7 @@ export default function ChatScreen() {
       <Header
         title={threadTitle ?? "Chat"}
         showBackButton
+        onBack={() => router.replace("/(tabs)/messages")}
         rightAction={{
           icon: "phone",
           onPress: () => {},

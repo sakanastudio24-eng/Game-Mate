@@ -60,7 +60,12 @@ export default function ExploreScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Site Map" subtitle="Preview every route" showBackButton />
+      <Header
+        title="Site Map"
+        subtitle="Preview every route"
+        showBackButton
+        onBack={() => router.replace("/(tabs)/settings")}
+      />
 
       <Searchbar
         placeholder="Search routes..."

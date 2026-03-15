@@ -46,7 +46,7 @@ export default function DiscoverGroupsScreen() {
 
   return (
     <Screen scrollable={false}>
-      <Header title="Discover Groups" showBackButton />
+      <Header title="Discover Groups" showBackButton onBack={() => router.replace("/(tabs)/groups")} />
 
       {/* Search */}
       <Searchbar

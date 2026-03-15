@@ -32,7 +32,19 @@ export default function UserProfileScreen() {
     level?: string;
     username?: string;
     source?: string;
+    groupId?: string;
   }>();
+  const backTarget = useMemo(() => {
+    if (params.source === "qr") return "/(tabs)/qr-code";
+    if (params.source === "feed") return "/(tabs)/news";
+    if (params.source === "group") {
+      if (typeof params.groupId === "string" && params.groupId) {
+        return (`/(tabs)/group-detail?groupId=${params.groupId}` as any);
+      }
+      return "/(tabs)/groups";
+    }
+    return "/(tabs)/social";
+  }, [params.groupId, params.source]);
 
   const routeUsername = typeof params.username === "string" ? params.username.trim() : "";
   const isRemoteProfileMode = Boolean(routeUsername);
@@ -163,7 +175,7 @@ export default function UserProfileScreen() {
 
   return (
     <Screen scrollable>
-      <Header title={profile.username} showBackButton />
+      <Header title={profile.username} showBackButton onBack={() => router.replace(backTarget)} />
 
       {isRemoteProfileMode && remoteLoading && !remoteProfile ? (
         <Card style={styles.stateCard}>

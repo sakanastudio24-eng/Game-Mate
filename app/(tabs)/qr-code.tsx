@@ -1,6 +1,6 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { CameraView, type BarcodeScanningResult, useCameraPermissions } from "expo-camera";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import QRCode from "react-native-qrcode-svg";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, Share, StyleSheet, View } from "react-native";
@@ -19,6 +19,7 @@ import { colors, spacing } from "../../src/lib/theme";
 export default function QRCodeScreen() {
   const router = useRouter();
   const responsive = useResponsive();
+  const params = useLocalSearchParams<{ source?: string }>();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"mycode" | "scan">("mycode");
   const [accentColor, setAccentColor] = useState(colors.primary);
@@ -29,6 +30,12 @@ export default function QRCodeScreen() {
   const qrValue = useMemo(() => buildUserQrValue(user?.username), [user?.username]);
   const qrPreviewLabel = user?.username ? `@${user.username}` : "Signed-out profile";
   const colorOptions = [colors.primary, "#66BAFF", "#66FF9F", "#FF6BA6"];
+  const backTarget =
+    params.source === "groups"
+      ? "/(tabs)/groups"
+      : params.source === "social"
+        ? "/(tabs)/social"
+        : "/(tabs)/profile";
 
   useEffect(() => {
     if (activeTab !== "scan") {
@@ -91,7 +98,7 @@ export default function QRCodeScreen() {
 
   return (
     <Screen scrollable>
-      <Header title="QR Code" showBackButton />
+      <Header title="QR Code" showBackButton onBack={() => router.replace(backTarget as any)} />
 
       <View style={styles.tabSelector}>
         {["mycode", "scan"].map((tab) => (

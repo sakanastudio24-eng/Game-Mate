@@ -1,28 +1,48 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { Dialog, List, Portal, Text } from "react-native-paper";
+import { getMyProfile } from "../../services/profile";
 import { Button } from "../../src/components/ui/Button";
 import { Card } from "../../src/components/ui/Card";
 import { useAuth } from "../../src/context/AuthContext";
 import { Header } from "../../src/components/ui/Header";
 import { Screen } from "../../src/components/ui/Screen";
 import { useToast } from "../../src/components/ui/ToastProvider";
+import { useLocalCache } from "../../src/lib/hooks/useLocalCache";
 import { useResponsive } from "../../src/lib/responsive";
 import { colors, spacing } from "../../src/lib/theme";
-
-const SELF_AVATAR =
-  "https://images.unsplash.com/photo-1579975979101-7a3c3909d659?w=400&h=400&fit=crop";
+import { CURRENT_USER_AVATAR } from "../../src/lib/current-user";
 
 export default function SettingsScreen() {
   const router = useRouter();
   const responsive = useResponsive();
   const { showToast } = useToast();
-  const { user, logoutUser } = useAuth();
+  const { user, accessToken, logoutUser } = useAuth();
   const [deleteDialogVisible, setDeleteDialogVisible] = React.useState(false);
   const displayUsername = user?.username?.trim() || "Player";
   const displayEmail = user?.email?.trim() || "No email available";
+  const profileCacheKey = `profile:me:${user?.id ?? "anon"}`;
+  const { value: cachedProfile, setValue: setCachedProfile } = useLocalCache<{
+    avatar_url?: string;
+  }>(profileCacheKey, {});
+  const profileAvatar = cachedProfile.avatar_url?.trim() || CURRENT_USER_AVATAR;
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!accessToken) return undefined;
+      void getMyProfile(accessToken)
+        .then((profile) => {
+          setCachedProfile((previous) => ({ ...previous, avatar_url: profile.avatar_url }));
+        })
+        .catch(() => {
+          // Keep cached avatar if profile refresh fails here.
+        });
+      return undefined;
+    }, [accessToken, setCachedProfile]),
+  );
 
   const handleDeleteAccount = async () => {
     setDeleteDialogVisible(false);
@@ -41,7 +61,7 @@ export default function SettingsScreen() {
 
       <Card style={styles.profileCard}>
         <View style={styles.profileRow}>
-          <Image source={{ uri: SELF_AVATAR }} style={styles.profileAvatar} />
+          <Image source={{ uri: profileAvatar }} style={styles.profileAvatar} />
           <View style={styles.profileMeta}>
             <Text style={[styles.profileName, { fontSize: responsive.sectionTitleSize - 2 }]}>
               {displayUsername}

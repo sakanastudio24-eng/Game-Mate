@@ -2,6 +2,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { Text } from "react-native-paper";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing } from "../../lib/theme";
 
 export interface ActionSheetOption {
@@ -21,6 +22,8 @@ interface ActionSheetProps {
 }
 
 export function ActionSheet({ visible, title, subtitle, options, onClose }: ActionSheetProps) {
+  const insets = useSafeAreaInsets();
+
   const handleOptionPress = (onPress: () => void) => {
     onClose();
     onPress();
@@ -36,7 +39,7 @@ export function ActionSheet({ visible, title, subtitle, options, onClose }: Acti
     >
       <View style={styles.root}>
         <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Close menu" />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}>
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -95,7 +98,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 22,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
     borderTopWidth: 1,
     borderColor: colors.border,
   },

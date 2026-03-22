@@ -84,7 +84,8 @@ GameMate/
 ### Frontend
 
 ```bash
-npm install
+corepack enable
+pnpm install
 cp .env.example .env
 ```
 
@@ -103,15 +104,20 @@ EXPO_PUBLIC_API_URL=http://YOUR-MAC-LAN-IP:8000
 Start Expo:
 
 ```bash
-npx expo start -c
+pnpm start
 ```
 
 Useful frontend gates:
 
 ```bash
-npx tsc --noEmit
-npx expo export:embed --eager --platform android --dev false
+pnpm typecheck
+pnpm exec expo export:embed --eager --platform android --dev false
 ```
+
+Package manager policy:
+- use `pnpm` for all JS dependency changes and script execution
+- commit `pnpm-lock.yaml`, never `package-lock.json`
+- use repo-local CLIs through `pnpm` or `pnpm exec`, not global installs
 
 ### Backend
 

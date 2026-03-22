@@ -9,3 +9,8 @@ Docs are grouped by concern instead of kept flat.
 - `handoff/` scope, audit, API handoff, delivery status
 - `postmortems/` consolidated incidents and lessons
 - `reference/` durable supporting references
+
+JS package manager convention:
+- the frontend app uses `pnpm`
+- dependency changes should update `pnpm-lock.yaml`
+- do not reintroduce `package-lock.json`

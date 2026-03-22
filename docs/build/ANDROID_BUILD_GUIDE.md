@@ -20,10 +20,10 @@ EAS Build compiles your app in the cloud without requiring local Android SDK/NDK
 
 ```bash
 # Log in to Expo
-npx eas login
+pnpm exec eas login
 
 # Build for production
-npx eas build --platform android
+pnpm exec eas build --platform android
 
 # Output will be stored in EAS dashboard
 # You can download the APK or AAB from: https://expo.dev/builds
@@ -37,9 +37,9 @@ npx eas build --platform android
 
 **Build types supported:**
 
-- **Preview** (internal testing): `npx eas build --platform android --profile preview`
-- **Production** (app stores): `npx eas build --platform android --profile production`
-- **Development** (testing): `npx eas build --platform android --profile development`
+- **Preview** (internal testing): `pnpm exec eas build --platform android --profile preview`
+- **Production** (app stores): `pnpm exec eas build --platform android --profile production`
+- **Development** (testing): `pnpm exec eas build --platform android --profile development`
 
 ---
 
@@ -63,7 +63,7 @@ export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
 # Add to ~/.zshrc to persist
 
 # Then run
-npm run android
+pnpm android
 ```
 
 ---
@@ -73,7 +73,7 @@ npm run android
 ### 1. Create Expo Account & Login
 
 ```bash
-npx eas login
+pnpm exec eas login
 # Enter your email and password (or create new account)
 ```
 
@@ -82,11 +82,14 @@ npx eas login
 ```bash
 cd /Users/zech/Downloads/The-Big-One/GameMate
 
+# Install deps first
+pnpm install
+
 # Build for production
-npx eas build --platform android
+pnpm exec eas build --platform android
 
 # Or specifically
-npx eas build --platform android --profile production
+pnpm exec eas build --platform android --profile production
 ```
 
 ### 3. Follow the Prompts
@@ -125,10 +128,10 @@ This command is listed for reference only. Current project validation is Android
 
 ```bash
 # Build both simultaneously
-npx eas build --platform all
+pnpm exec eas build --platform all
 
 # Specify profile
-npx eas build --platform all --profile production
+pnpm exec eas build --platform all --profile production
 ```
 
 ---
@@ -145,12 +148,12 @@ npx eas build --platform all --profile production
 
 ```bash
 # Create app bundle instead of APK
-npx eas build --platform android --profile production
+pnpm exec eas build --platform android --profile production
 # Select "App Bundle (AAB)" when prompted
 
 # Configure submission in eas.json (add to submit section)
 # Then submit directly
-npx eas submit --platform android --build-id <BUILD_ID>
+pnpm exec eas submit --platform android --build-id <BUILD_ID>
 ```
 
 ---
@@ -161,7 +164,7 @@ npx eas submit --platform android --build-id <BUILD_ID>
 
 ```bash
 # Build for internal testing
-npx eas build --platform android --profile preview
+pnpm exec eas build --platform android --profile preview
 
 # Share APK link with testers
 # Download from EAS dashboard
@@ -171,17 +174,17 @@ npx eas build --platform android --profile preview
 
 ```bash
 # Build production AAB
-npx eas build --platform android --profile production
+pnpm exec eas build --platform android --profile production
 
 # Submit to Play Store
-npx eas submit --platform android --build-id <BUILD_ID>
+pnpm exec eas submit --platform android --build-id <BUILD_ID>
 ```
 
 ### Direct APK Distribution
 
 ```bash
 # Build APK for direct installation
-npx eas build --platform android
+pnpm exec eas build --platform android
 
 # Share APK file with users
 # They can install via adb or email
@@ -197,15 +200,15 @@ adb install GameMate.apk
 This means local build environment is not set up. Use cloud build instead:
 
 ```bash
-npx eas build --platform android # Uses EAS cloud
+pnpm exec eas build --platform android # Uses EAS cloud
 ```
 
 ### "Not logged in to Expo"
 
 ```bash
-npx eas login
+pnpm exec eas login
 # or
-npx eas register # If you don't have an account
+pnpm exec eas register # If you don't have an account
 ```
 
 ### Build Failed with Gradle Error
@@ -214,8 +217,8 @@ Check the EAS dashboard for detailed logs: `https://expo.dev/builds`
 
 Common fixes:
 
-- Update package dependencies: `npm install --force`
-- Clear build cache: `npx eas build --platform android --clear-cache`
+- Update package dependencies: `pnpm install`
+- Clear build cache: `pnpm exec eas build --platform android --clear-cache`
 - Check app.json for valid configuration
 
 ### Expo Go Runtime Overlay Can Cause Device Lockups
@@ -224,7 +227,7 @@ When using Expo Go performance monitor overlays or draw-over-app UI on Android, 
 
 Recommended practice:
 - Turn overlay/performance monitor off before backgrounding or swiping away the app.
-- If it happens, press Home, fully close Expo Go, then restart with `npx expo start -c`.
+- If it happens, press Home, fully close Expo Go, then restart with `pnpm start`.
 
 ### Keystore Issues
 
@@ -249,17 +252,17 @@ EAS manages keystores automatically on first build. Don't delete or share `keyst
 adb install GameMate.apk
 
 # Or if you have local build
-npx expo run:android
+pnpm android
 ```
 
 ### Download APK File
 
 ```bash
 # Get build ID from previous build
-npx eas build:list
+pnpm exec eas build:list
 
 # Download specific build
-eas build:download --id <BUILD_ID>
+pnpm exec eas build:download --id <BUILD_ID>
 ```
 
 ---
@@ -270,7 +273,7 @@ eas build:download --id <BUILD_ID>
 **Bundle ID:** com.zech1v1.gamemate  
 **Version:** 1.0.0  
 **Min Android:** API 21 (Android 5.0)  
-**React Native:** 0.75.2  
+**React Native:** 0.81.5  
 **Expo:** 54.0.0
 
 ---
@@ -302,26 +305,26 @@ All work is backed up to https://github.com/sakanastudio24-eng/Game-Mate
 
 ```bash
 # Development
-npm start                  # Start dev server
-npm run android           # Run on Android
-npm run ios               # Run on iOS (not tested in this project)
+pnpm start                # Start dev server
+pnpm android              # Run on Android
+pnpm ios                  # Run on iOS (not tested in this project)
 
 # Building
-npx eas build --platform android           # Cloud build
-npx eas build --platform android --local   # Local build (requires Java)
-npx eas build --platform all               # iOS + Android
+pnpm exec eas build --platform android           # Cloud build
+pnpm exec eas build --platform android --local   # Local build (requires Java)
+pnpm exec eas build --platform all               # iOS + Android
 
 # Testing
-npx expo run:android      # Run on emulator
-npx expo run:ios          # Run on iPhone simulator (not tested in this project)
+pnpm android              # Run on emulator/device
+pnpm ios                  # Run on iPhone simulator (not tested in this project)
 
 # Submitting
-npx eas submit --platform android --build-id <ID>
+pnpm exec eas submit --platform android --build-id <ID>
 
 # Debugging
-npm run lint             # Check for errors
-npx expo-doctor          # Check project health
-npx eas build:list       # Show build history
+pnpm lint                # Check for errors
+pnpm exec expo-doctor    # Check project health
+pnpm exec eas build:list # Show build history
 ```
 
 ---
